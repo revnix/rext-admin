@@ -172,10 +172,10 @@ export default function CheckoutSuccessPage() {
       }
       actions={
         <>
-          <Button asChild variant="outline">
+          <Button data-rec="show" asChild variant="outline">
             <Link href={settingsRoutes.plan as Route}>Plan</Link>
           </Button>
-          <Button asChild>
+          <Button data-rec="show" asChild>
             <Link href={"/" as Route}>Go to home</Link>
           </Button>
         </>

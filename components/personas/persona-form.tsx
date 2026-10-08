@@ -388,7 +388,9 @@ export function PersonaForm({
         description="A photo from your device or a link to one, never both. Without either, a Gravatar for the email is used if there is one."
       >
         <Field>
-          <FieldLabel htmlFor="persona-photo">Photo (optional)</FieldLabel>
+          <FieldLabel data-rec="show" htmlFor="persona-photo">
+            Photo (optional)
+          </FieldLabel>
           <div className="flex items-center gap-4">
             <Avatar className="size-16 rounded-md border">
               <AvatarImage src={avatarShown} alt="" className="object-cover" />
@@ -406,6 +408,7 @@ export function PersonaForm({
                 onChange={handleAvatarFile}
               />
               <Button
+                data-rec="show"
                 type="button"
                 variant="outline"
                 size="sm"
@@ -422,6 +425,7 @@ export function PersonaForm({
                       Removed when you save
                     </span>
                     <Button
+                      data-rec="show"
                       type="button"
                       variant="ghost"
                       size="sm"
@@ -432,6 +436,7 @@ export function PersonaForm({
                   </>
                 ) : (
                   <Button
+                    data-rec="show"
                     type="button"
                     variant="ghost"
                     size="sm"
@@ -446,6 +451,7 @@ export function PersonaForm({
                     {avatarFile.name}
                   </span>
                   <Button
+                    data-rec="show"
                     type="button"
                     variant="ghost"
                     size="sm"

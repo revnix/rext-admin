@@ -17,10 +17,10 @@ export default function CheckoutCancelPage() {
       description="Nothing was charged, and your plan hasn't changed."
       actions={
         <>
-          <Button asChild variant="outline">
+          <Button data-rec="show" asChild variant="outline">
             <Link href={"/" as Route}>Go to home</Link>
           </Button>
-          <Button asChild>
+          <Button data-rec="show" asChild>
             <Link href={"/pricing" as Route}>See the plans</Link>
           </Button>
         </>

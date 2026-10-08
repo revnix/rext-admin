@@ -35,7 +35,7 @@ export function UnsubscribeCard({ token }: { token: string | null }) {
           Open the unsubscribe link from your most recent Rext AI email, or sign
           in and turn emails off in your notification settings.
         </p>
-        <Button asChild variant="outline" className="w-full">
+        <Button data-rec="show" asChild variant="outline" className="w-full">
           <Link href={settingsRoutes.notifications as Route}>
             Notification settings
           </Link>
@@ -51,7 +51,7 @@ export function UnsubscribeCard({ token }: { token: string | null }) {
           Rext AI won't send you emails any more. You can turn the ones you want
           back on in your notification settings.
         </p>
-        <Button asChild variant="outline" className="w-full">
+        <Button data-rec="show" asChild variant="outline" className="w-full">
           <Link href={settingsRoutes.notifications as Route}>
             Notification settings
           </Link>
@@ -72,6 +72,7 @@ export function UnsubscribeCard({ token }: { token: string | null }) {
         </Notice>
       )}
       <Button
+        data-rec="show"
         type="button"
         className="w-full"
         onClick={() => unsubscribe.mutate(token)}

@@ -197,6 +197,7 @@ export function SiteSettingsSheet({
 
               <div className="flex flex-col items-start gap-3 border-t border-border pt-5">
                 <Button
+                  data-rec="show"
                   type="button"
                   variant="outline"
                   onClick={() => runTest(site)}
@@ -224,6 +225,7 @@ export function SiteSettingsSheet({
             </form>
             <SheetFooter>
               <Button
+                data-rec="show"
                 type="submit"
                 form="site-settings"
                 disabled={!canUpdate || !isDirty || isSubmitting}
@@ -231,6 +233,7 @@ export function SiteSettingsSheet({
                 {isSubmitting ? "Saving…" : "Save changes"}
               </Button>
               <Button
+                data-rec="show"
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}

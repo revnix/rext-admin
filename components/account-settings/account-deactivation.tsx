@@ -177,7 +177,11 @@ export function AccountDeactivation() {
 
         <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive" className="w-full sm:w-auto">
+            <Button
+              data-rec="show"
+              variant="destructive"
+              className="w-full sm:w-auto"
+            >
               <AlertTriangle />
               Deactivate my account
             </Button>
@@ -263,7 +267,12 @@ export function AccountDeactivation() {
                 <AlertDialogCancel disabled={busy}>
                   Keep my account
                 </AlertDialogCancel>
-                <Button type="submit" variant="destructive" disabled={busy}>
+                <Button
+                  data-rec="show"
+                  type="submit"
+                  variant="destructive"
+                  disabled={busy}
+                >
                   Deactivate account
                 </Button>
               </AlertDialogFooter>

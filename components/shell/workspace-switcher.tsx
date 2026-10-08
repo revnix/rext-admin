@@ -338,11 +338,16 @@ export function WorkspaceSwitcher({
             side="right"
             sideOffset={8}
           >
-            <DropdownMenuLabel className="text-caption font-medium text-muted-foreground">
+            <DropdownMenuLabel
+              data-rec="show"
+              className="text-caption font-medium text-muted-foreground"
+            >
               Workspaces
             </DropdownMenuLabel>
             {isLoading ? (
-              <DropdownMenuItem disabled>Loading…</DropdownMenuItem>
+              <DropdownMenuItem data-rec="show" disabled>
+                Loading…
+              </DropdownMenuItem>
             ) : workspaces.length === 0 ? (
               <p className="px-2 py-1.5 text-label text-muted-foreground">
                 No workspaces yet.
@@ -371,7 +376,7 @@ export function WorkspaceSwitcher({
             )}
             <DropdownMenuSeparator />
             {settingsUrl && (
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem data-rec="show" asChild>
                 <Link
                   href={settingsUrl as Route}
                   onClick={() => setOpenMobile(false)}
@@ -382,7 +387,7 @@ export function WorkspaceSwitcher({
                 </Link>
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem data-rec="show" asChild>
               <Link
                 href="/w"
                 onClick={() => setOpenMobile(false)}

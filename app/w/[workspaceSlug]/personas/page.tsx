@@ -169,7 +169,7 @@ export default function PersonasPage() {
   const newPersona = canCreate ? (
     <PersonaDialog
       trigger={
-        <Button>
+        <Button data-rec="show">
           <Plus aria-hidden />
           New persona
         </Button>

@@ -41,7 +41,7 @@ export function AnalyticsPreference() {
   return (
     <Field orientation="horizontal">
       <FieldContent>
-        <FieldLabel htmlFor="analytics-allowed">
+        <FieldLabel data-rec="show" htmlFor="analytics-allowed">
           Measure how I use Rext
         </FieldLabel>
         <FieldDescription id="analytics-allowed-help">

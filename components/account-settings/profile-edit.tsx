@@ -239,6 +239,7 @@ export function ProfileEdit() {
           {avatarPreview ? (
             <div className="flex flex-wrap gap-2">
               <Button
+                data-rec="show"
                 onClick={handleUploadAvatar}
                 disabled={uploadAvatarMutation.isPending}
               >
@@ -249,13 +250,18 @@ export function ProfileEdit() {
                 )}
                 Save photo
               </Button>
-              <Button variant="ghost" onClick={handleCancelAvatarChange}>
+              <Button
+                data-rec="show"
+                variant="ghost"
+                onClick={handleCancelAvatarChange}
+              >
                 Cancel
               </Button>
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
               <Button
+                data-rec="show"
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
               >
@@ -271,6 +277,7 @@ export function ProfileEdit() {
                   onConfirm={() => deleteAvatarMutation.mutate()}
                 >
                   <Button
+                    data-rec="show"
                     variant="ghost"
                     disabled={deleteAvatarMutation.isPending}
                   >
@@ -317,7 +324,9 @@ export function ProfileEdit() {
             {(field) => <Input {...field} autoComplete="nickname" />}
           </FieldController>
           <Field>
-            <FieldLabel htmlFor="profile-email">Email</FieldLabel>
+            <FieldLabel data-rec="show" htmlFor="profile-email">
+              Email
+            </FieldLabel>
             <Input id="profile-email" value={profile.email} readOnly disabled />
             <FieldDescription>
               {profile.email_verified ? (
@@ -326,6 +335,7 @@ export function ProfileEdit() {
                 <>
                   Not verified yet.{" "}
                   <button
+                    data-rec="show"
                     type="button"
                     className="font-medium text-foreground underline underline-offset-4 disabled:opacity-50"
                     onClick={() => resendMutation.mutate()}

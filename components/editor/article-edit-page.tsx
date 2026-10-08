@@ -294,7 +294,7 @@ function ArticleEditor({
   return (
     <div className="flex h-full flex-col bg-background">
       <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-card px-3 md:px-4">
-        <Button asChild size="sm" variant="ghost">
+        <Button data-rec="show" asChild size="sm" variant="ghost">
           <Link href={articleHref} aria-label="Back to the article">
             <ArrowLeft size={16} aria-hidden />
             <span className="hidden md:inline">Article</span>
@@ -307,6 +307,7 @@ function ArticleEditor({
           <SaveStatus state={state} savedAt={savedAt} />
         </div>
         <Button
+          data-rec="show"
           size="sm"
           variant="ghost"
           aria-label="Outline"
@@ -317,6 +318,7 @@ function ArticleEditor({
         </Button>
         {hasChecks ? (
           <Button
+            data-rec="show"
             size="sm"
             variant="ghost"
             aria-label="Checklist"
@@ -330,6 +332,7 @@ function ArticleEditor({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
+                data-rec="show"
                 size="sm"
                 variant="outline"
                 aria-label="Publish"
@@ -341,23 +344,40 @@ function ArticleEditor({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => publish("publish")}>
+              <DropdownMenuItem
+                data-rec="show"
+                onSelect={() => publish("publish")}
+              >
                 Publish
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => publish("draft")}>
+              <DropdownMenuItem
+                data-rec="show"
+                onSelect={() => publish("draft")}
+              >
                 Save as draft
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => publish("pending")}>
+              <DropdownMenuItem
+                data-rec="show"
+                onSelect={() => publish("pending")}
+              >
                 Submit for review
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => publish("schedule")}>
+              <DropdownMenuItem
+                data-rec="show"
+                onSelect={() => publish("schedule")}
+              >
                 Schedule for later
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : null}
-        <Button size="sm" onClick={done} disabled={state === "saving"}>
+        <Button
+          data-rec="show"
+          size="sm"
+          onClick={done}
+          disabled={state === "saving"}
+        >
           Done
         </Button>
       </header>
@@ -368,7 +388,12 @@ function ArticleEditor({
             tone="danger"
             title="Your last changes aren't saved yet"
             action={
-              <Button size="sm" variant="outline" onClick={() => saveNow()}>
+              <Button
+                data-rec="show"
+                size="sm"
+                variant="outline"
+                onClick={() => saveNow()}
+              >
                 Retry now
               </Button>
             }
@@ -386,10 +411,15 @@ function ArticleEditor({
             title="Changes from an earlier visit weren't saved"
             action={
               <span className="flex gap-2">
-                <Button size="sm" onClick={restore}>
+                <Button data-rec="show" size="sm" onClick={restore}>
                   Restore them
                 </Button>
-                <Button size="sm" variant="outline" onClick={discard}>
+                <Button
+                  data-rec="show"
+                  size="sm"
+                  variant="outline"
+                  onClick={discard}
+                >
                   Discard them
                 </Button>
               </span>

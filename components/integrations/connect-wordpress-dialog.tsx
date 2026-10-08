@@ -135,7 +135,7 @@ export function ConnectWordPressDialog({
                   Download the plugin (v{WORDPRESS_PLUGIN_VERSION}, .zip)
                 </a>
               </Button>
-              <Button asChild variant="ghost" size="sm">
+              <Button data-rec="show" asChild variant="ghost" size="sm">
                 <a
                   href={WORDPRESS_GUIDE_URL}
                   target="_blank"
@@ -220,10 +220,16 @@ export function ConnectWordPressDialog({
         </form>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => close(false)}>
+          <Button
+            data-rec="show"
+            type="button"
+            variant="outline"
+            onClick={() => close(false)}
+          >
             Cancel
           </Button>
           <Button
+            data-rec="show"
             type="submit"
             form="connect-wordpress"
             disabled={isSubmitting}

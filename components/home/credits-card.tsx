@@ -119,7 +119,12 @@ export function CreditsCard({ workspaceId }: { workspaceId: string }) {
         </p>
       </div>
       {(ownCredits || plan !== "none") && (
-        <Button asChild variant="outline" className="self-start">
+        <Button
+          data-rec="show"
+          asChild
+          variant="outline"
+          className="self-start"
+        >
           <Link href={(choosePlan ? "/pricing" : settingsRoutes.plan) as Route}>
             {choosePlan ? "Choose a plan" : "Plan and billing"}
           </Link>

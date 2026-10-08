@@ -165,7 +165,9 @@ export function TitleStep({
         disabled={isRegenerating}
         className={cn("mb-6", isRegenerating && "opacity-40")}
       >
-        <legend className="sr-only">Titles</legend>
+        <legend data-rec="show" className="sr-only">
+          Titles
+        </legend>
         <ul className="space-y-2">
           {drafts.map((draft, index) => {
             const id = `${group}-${index}`;
@@ -254,6 +256,7 @@ export function TitleStep({
       <div className="w-full max-w-3xl rounded-md border border-border bg-card p-1.5">
         <div className="flex flex-col items-center gap-2 sm:flex-row">
           <Button
+            data-rec="show"
             variant="outline"
             onClick={regenerate}
             disabled={isRegenerating}
@@ -277,6 +280,7 @@ export function TitleStep({
             }}
           />
           <Button
+            data-rec="show"
             variant="outline"
             onClick={regenerate}
             disabled={isRegenerating || !feedback.trim()}
@@ -291,6 +295,7 @@ export function TitleStep({
       <div className="mt-8 flex flex-wrap items-center justify-end gap-3">
         <StageCostTooltip stage="generate_outline">
           <Button
+            data-rec="show"
             onClick={() => chosen && onContinue(chosen)}
             disabled={!chosen || isRegenerating}
             className="min-w-[140px]"
@@ -479,11 +484,16 @@ export function TitleStepFilling({
         <p id={reasonId} className="text-caption text-muted-foreground">
           You can pick one once all are written and checked.
         </p>
-        <Button variant="outline" disabled aria-describedby={reasonId}>
+        <Button
+          data-rec="show"
+          variant="outline"
+          disabled
+          aria-describedby={reasonId}
+        >
           <RefreshCcw />
           Regenerate
         </Button>
-        <Button disabled aria-describedby={reasonId}>
+        <Button data-rec="show" disabled aria-describedby={reasonId}>
           Continue
           <ArrowRight />
         </Button>

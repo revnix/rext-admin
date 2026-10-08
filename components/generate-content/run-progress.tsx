@@ -251,7 +251,12 @@ export function RunProgress({
             {formatDuration(activeExpected ?? 0)}.
           </p>
           {onCancel && (
-            <Button variant="outline" size="sm" onClick={onCancel}>
+            <Button
+              data-rec="show"
+              variant="outline"
+              size="sm"
+              onClick={onCancel}
+            >
               Cancel
             </Button>
           )}

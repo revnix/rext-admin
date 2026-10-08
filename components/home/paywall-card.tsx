@@ -48,7 +48,7 @@ export function PaywallCard({ workspaceId }: { workspaceId: string }) {
       title={paywallTitle(state)}
       action={
         ownCredits ? (
-          <Button asChild variant="outline" size="sm">
+          <Button data-rec="show" asChild variant="outline" size="sm">
             <Link href={settingsRoutes.plan as Route}>Choose a plan</Link>
           </Button>
         ) : undefined

@@ -86,7 +86,12 @@ export function WorkspaceReviewStep({
         tone="danger"
         title="The details from your website couldn't be loaded"
         action={
-          <Button size="sm" variant="outline" onClick={() => void refetch()}>
+          <Button
+            data-rec="show"
+            size="sm"
+            variant="outline"
+            onClick={() => void refetch()}
+          >
             Try again
           </Button>
         }

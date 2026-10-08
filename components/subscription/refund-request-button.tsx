@@ -124,7 +124,12 @@ export function RefundRequestButton({
             Declined previously
           </Badge>
         )}
-        <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
+        <Button
+          data-rec="show"
+          variant="ghost"
+          size="sm"
+          onClick={() => setOpen(true)}
+        >
           Request refund
         </Button>
       </div>
@@ -247,6 +252,7 @@ function RefundRequestDialog({
 
         <DialogFooter>
           <Button
+            data-rec="show"
             type="button"
             variant="outline"
             onClick={() => close(false)}
@@ -254,7 +260,12 @@ function RefundRequestDialog({
           >
             Keep payment
           </Button>
-          <Button type="submit" form="refund-request" disabled={isSubmitting}>
+          <Button
+            data-rec="show"
+            type="submit"
+            form="refund-request"
+            disabled={isSubmitting}
+          >
             {isSubmitting && <Loader2 className="animate-spin" aria-hidden />}
             Request refund
           </Button>

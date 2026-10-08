@@ -139,6 +139,7 @@ function InlineToolCard({ tc }: { tc: ToolCall }) {
               </div>
               {hasOutput && (
                 <button
+                  data-rec="show"
                   type="button"
                   onClick={() => setExpanded((v) => !v)}
                   className="cursor-pointer text-caption text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors"
@@ -862,6 +863,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         {/* Named in words, so no tooltip: one opened on the sheet's first focus and covered Copy. */}
         {canUpdate ? (
           <Button
+            data-rec="show"
             size="sm"
             className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
             onClick={openEditor}
@@ -876,6 +878,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         ) : (
           <LockedFeatureTooltip message="Editing requires Editor role or above">
             <Button
+              data-rec="show"
               size="sm"
               className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
               disabled
@@ -890,6 +893,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
+              data-rec="show"
               disabled={!isFinal}
               variant="secondary"
               size="sm"
@@ -901,13 +905,22 @@ function ContentEditorInner(props: ContentEditorProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-48" align="center">
-            <DropdownMenuItem onClick={() => handleCopy("html")}>
+            <DropdownMenuItem
+              data-rec="show"
+              onClick={() => handleCopy("html")}
+            >
               Copy HTML
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleCopy("markdown")}>
+            <DropdownMenuItem
+              data-rec="show"
+              onClick={() => handleCopy("markdown")}
+            >
               Copy Markdown
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleCopy("formatted")}>
+            <DropdownMenuItem
+              data-rec="show"
+              onClick={() => handleCopy("formatted")}
+            >
               Copy Text
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -918,6 +931,7 @@ function ContentEditorInner(props: ContentEditorProps) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
+                data-rec="show"
                 variant="secondary"
                 size="sm"
                 className="h-10 xl:h-8 px-2! text-xs font-bold w-full!"
@@ -932,6 +946,7 @@ function ContentEditorInner(props: ContentEditorProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
               <DropdownMenuItem
+                data-rec="show"
                 disabled={!isFinal || isPublishing || isOpeningEditor}
                 onClick={() => openPublishConfirmation("publish")}
               >
@@ -939,6 +954,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                 Publish
               </DropdownMenuItem>
               <DropdownMenuItem
+                data-rec="show"
                 disabled={!isFinal || isPublishing || isOpeningEditor}
                 onClick={() => openPublishConfirmation("draft")}
               >
@@ -946,6 +962,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                 Save as Draft
               </DropdownMenuItem>
               <DropdownMenuItem
+                data-rec="show"
                 disabled={!isFinal || isPublishing || isOpeningEditor}
                 onClick={() => openPublishConfirmation("pending")}
               >
@@ -954,6 +971,7 @@ function ContentEditorInner(props: ContentEditorProps) {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
+                data-rec="show"
                 disabled={!isFinal || isPublishing || isOpeningEditor}
                 onClick={() => setScheduleDialogOpen(true)}
               >
@@ -965,6 +983,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         ) : (
           <LockedFeatureTooltip message="Publishing requires a role above Editor">
             <Button
+              data-rec="show"
               variant="secondary"
               size="sm"
               className="h-10 xl:h-8 px-2! text-xs font-bold w-full!"
@@ -1232,6 +1251,7 @@ function ContentEditorInner(props: ContentEditorProps) {
           <div className="xl:hidden pointer-events-auto">
             <Sheet open={isStructureOpen} onOpenChange={setIsStructureOpen}>
               <Button
+                data-rec="show"
                 onClick={() => setIsStructureOpen(true)}
                 className="rounded-md h-11 pr-5 pl-4 flex items-center gap-2 bg-background hover:bg-muted text-foreground border border-border"
               >
@@ -1251,6 +1271,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         <div className="xl:hidden pointer-events-auto">
           <Sheet open={isAnalysisOpen} onOpenChange={setIsAnalysisOpen}>
             <Button
+              data-rec="show"
               onClick={() => setIsAnalysisOpen(true)}
               className="rounded-md h-11 pr-5 pl-4 flex items-center gap-2 bg-background hover:bg-muted text-foreground border border-border"
             >
@@ -1312,6 +1333,7 @@ function ContentEditorInner(props: ContentEditorProps) {
             </div>
             {statusModal.showIntegrationLink && workspaceSlug && (
               <Button
+                data-rec="show"
                 className="mt-2 gap-2"
                 onClick={() => {
                   setStatusModal((prev) => ({ ...prev, isOpen: false }));
@@ -1323,7 +1345,12 @@ function ContentEditorInner(props: ContentEditorProps) {
               </Button>
             )}
             {statusModal.postUrl && (
-              <Button asChild variant="outline" className="mt-2 gap-2">
+              <Button
+                data-rec="show"
+                asChild
+                variant="outline"
+                className="mt-2 gap-2"
+              >
                 <a
                   href={statusModal.postUrl}
                   target="_blank"
@@ -1359,6 +1386,7 @@ function ContentEditorInner(props: ContentEditorProps) {
               className="self-start"
               action={
                 <Button
+                  data-rec="show"
                   size="sm"
                   variant="outline"
                   disabled={scheduleSites.isFetching}
@@ -1378,7 +1406,7 @@ function ContentEditorInner(props: ContentEditorProps) {
               className="self-start"
               action={
                 workspaceSlug ? (
-                  <Button asChild variant="outline" size="sm">
+                  <Button data-rec="show" asChild variant="outline" size="sm">
                     <a
                       href={`/w/${workspaceSlug}/integrations`}
                       target="_blank"
@@ -1405,6 +1433,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                     will use <strong>{accountTimezone}</strong> until this
                     succeeds.
                     <Button
+                      data-rec="show"
                       type="button"
                       variant="link"
                       size="sm"
@@ -1432,7 +1461,11 @@ function ContentEditorInner(props: ContentEditorProps) {
                   disabled={isDateDisabled}
                 />
                 <div className="w-full space-y-1.5">
-                  <Label htmlFor="schedule-time" className="text-xs">
+                  <Label
+                    data-rec="show"
+                    htmlFor="schedule-time"
+                    className="text-xs"
+                  >
                     Time
                   </Label>
                   <Input
@@ -1449,6 +1482,7 @@ function ContentEditorInner(props: ContentEditorProps) {
           )}
           <DialogFooter>
             <Button
+              data-rec="show"
               variant="outline"
               size="sm"
               onClick={() => setScheduleDialogOpen(false)}
@@ -1459,6 +1493,7 @@ function ContentEditorInner(props: ContentEditorProps) {
               !checkingScheduleSites &&
               !scheduleSitesFailed && (
                 <Button
+                  data-rec="show"
                   size="sm"
                   disabled={
                     !scheduleDate ||

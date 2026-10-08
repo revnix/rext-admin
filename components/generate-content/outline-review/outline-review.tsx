@@ -452,13 +452,18 @@ export function OutlineReview({
           <Tabs defaultValue="outline">
             <div className="flex items-center justify-between gap-2">
               <TabsList>
-                <TabsTrigger value="outline">Outline</TabsTrigger>
+                <TabsTrigger data-rec="show" value="outline">
+                  Outline
+                </TabsTrigger>
                 {sourcesTab && (
-                  <TabsTrigger value="sources">Sources</TabsTrigger>
+                  <TabsTrigger data-rec="show" value="sources">
+                    Sources
+                  </TabsTrigger>
                 )}
               </TabsList>
               {editable && edited && (
                 <Button
+                  data-rec="show"
                   variant="ghost"
                   size="sm"
                   onClick={() => {

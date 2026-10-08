@@ -55,6 +55,7 @@ export function ErrorBoundary({
                 title={title}
                 action={
                   <Button
+                    data-rec="show"
                     size="sm"
                     variant="outline"
                     onClick={resetErrorBoundary}

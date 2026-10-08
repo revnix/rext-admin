@@ -139,7 +139,9 @@ function VerifyEmailContent() {
                   </p>
                 </div>
                 <Link href="/login" className="block">
-                  <Button className="w-full">Go to Login</Button>
+                  <Button data-rec="show" className="w-full">
+                    Go to Login
+                  </Button>
                 </Link>
               </div>
             )}
@@ -157,7 +159,9 @@ function VerifyEmailContent() {
                   </h3>
                   <div className="space-y-3">
                     <div>
-                      <Label htmlFor="resend-email">Email address</Label>
+                      <Label data-rec="show" htmlFor="resend-email">
+                        Email address
+                      </Label>
                       <Input
                         id="resend-email"
                         type="email"
@@ -168,6 +172,7 @@ function VerifyEmailContent() {
                       />
                     </div>
                     <Button
+                      data-rec="show"
                       onClick={handleResend}
                       className="w-full"
                       disabled={isResending}
@@ -178,7 +183,7 @@ function VerifyEmailContent() {
                 </div>
 
                 <Link href="/login" className="block">
-                  <Button variant="outline" className="w-full">
+                  <Button data-rec="show" variant="outline" className="w-full">
                     Back to Login
                   </Button>
                 </Link>
@@ -195,7 +200,9 @@ function VerifyEmailContent() {
                   </p>
                 </div>
                 <Link href="/login" className="block">
-                  <Button className="w-full">Go to Login</Button>
+                  <Button data-rec="show" className="w-full">
+                    Go to Login
+                  </Button>
                 </Link>
               </div>
             )}

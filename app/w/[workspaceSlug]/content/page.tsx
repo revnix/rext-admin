@@ -317,6 +317,7 @@ export default function WorkspaceContentPage() {
   const bulkActions = canDeleteContent
     ? (selected: ContentItem[], clearSelection: () => void) => (
         <Button
+          data-rec="show"
           size="sm"
           variant="outline"
           disabled={trashContentMutation.isPending}
@@ -329,7 +330,7 @@ export default function WorkspaceContentPage() {
     : undefined;
 
   const generateLink = canCreateContent ? (
-    <Button asChild>
+    <Button data-rec="show" asChild>
       <Link href={workspaceRoutes.generate_content(workspaceSlug) as Route}>
         <Plus />
         Generate content

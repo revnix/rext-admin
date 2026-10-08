@@ -192,7 +192,7 @@ export default function HomePage() {
           description="What to do next in this workspace."
           actions={
             canGenerate ? (
-              <Button asChild>
+              <Button data-rec="show" asChild>
                 <Link href={generate as Route}>
                   <Plus aria-hidden />
                   Start an article
@@ -242,6 +242,7 @@ export default function HomePage() {
                   title="Your articles didn't load"
                   action={
                     <Button
+                      data-rec="show"
                       variant="outline"
                       size="sm"
                       onClick={() => content.refetch()}

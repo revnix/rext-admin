@@ -115,7 +115,7 @@ export default function Page() {
       description={researched ? `Researched ${researched}` : undefined}
       actions={
         canGenerate ? (
-          <Button asChild>
+          <Button data-rec="show" asChild>
             <Link
               href={
                 `${workspaceRoutes.generate_content(workspaceSlug)}?${libraryStartQuery(key, intent || undefined)}` as Route

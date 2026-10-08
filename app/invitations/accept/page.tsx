@@ -212,6 +212,7 @@ export default function AcceptInvitationPage() {
               administrator.
             </Notice>
             <Button
+              data-rec="show"
               className="w-full"
               variant="outline"
               onClick={() => router.push("/" as Route)}
@@ -258,6 +259,7 @@ export default function AcceptInvitationPage() {
             </Notice>
             {invitation.status === "accepted" && session ? (
               <Button
+                data-rec="show"
                 className="w-full"
                 onClick={() => router.push("/" as Route)}
               >
@@ -265,6 +267,7 @@ export default function AcceptInvitationPage() {
               </Button>
             ) : (
               <Button
+                data-rec="show"
                 className="w-full"
                 variant="outline"
                 onClick={() => router.push("/" as Route)}
@@ -437,11 +440,16 @@ export default function AcceptInvitationPage() {
               </Notice>
 
               <div className="space-y-2">
-                <Button className="w-full" onClick={handleLogin}>
+                <Button
+                  data-rec="show"
+                  className="w-full"
+                  onClick={handleLogin}
+                >
                   Sign In & Accept
                 </Button>
                 {!accountExists && (
                   <Button
+                    data-rec="show"
                     className="w-full"
                     variant="outline"
                     onClick={handleSignup}

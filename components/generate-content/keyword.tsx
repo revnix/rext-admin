@@ -75,6 +75,7 @@ export function KeywordForm({
 
   const analyze = (
     <Button
+      data-rec="show"
       type="submit"
       size="sm"
       disabled={disabled}

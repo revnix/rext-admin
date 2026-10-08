@@ -23,6 +23,7 @@ export function PasswordInput({
         {...props}
       />
       <button
+        data-rec="show"
         type="button"
         onClick={() => setVisible((shown) => !shown)}
         aria-label={visible ? "Hide password" : "Show password"}

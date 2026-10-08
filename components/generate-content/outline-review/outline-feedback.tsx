@@ -47,12 +47,12 @@ export function OutlineRejectSection({
           </p>
         )}
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-          <Button variant="outline" onClick={onBack}>
+          <Button data-rec="show" variant="outline" onClick={onBack}>
             <ArrowLeft />
             Back to the outline
           </Button>
           <RunCostTooltip run="regenerate_outline">
-            <Button onClick={onSubmit}>
+            <Button data-rec="show" onClick={onSubmit}>
               Submit feedback
               <ChevronRight />
             </Button>

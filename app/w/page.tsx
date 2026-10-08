@@ -182,6 +182,7 @@ export default function WorkspacePage() {
   const tableActions = (
     <>
       <Button
+        data-rec="show"
         variant="outline"
         size="icon"
         className="size-9"
@@ -197,13 +198,14 @@ export default function WorkspacePage() {
       </Button>
       {isLimitReached ? (
         <LockedFeatureTooltip message="Upgrade your plan to create more workspaces.">
-          <Button size="sm" className="h-9" disabled>
+          <Button data-rec="show" size="sm" className="h-9" disabled>
             <Plus />
             Limit reached
           </Button>
         </LockedFeatureTooltip>
       ) : (
         <Button
+          data-rec="show"
           size="sm"
           className="h-9"
           onClick={() => router.push("/w/create" as Route)}

@@ -81,7 +81,7 @@ function Intent({
     <span className="flex flex-col gap-1.5">
       {onIntentChange ? (
         <>
-          <label htmlFor={selectId} className="sr-only">
+          <label data-rec="show" htmlFor={selectId} className="sr-only">
             Search intent to write for
           </label>
           <Select

@@ -103,6 +103,7 @@ export function PersonaPicker({
             <CommandEmpty>No persona found.</CommandEmpty>
             <CommandGroup>
               <CommandItem
+                data-rec="show"
                 key="__no_persona__"
                 value="No author persona"
                 onSelect={() => {

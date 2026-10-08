@@ -673,6 +673,7 @@ export function BackgroundGenerationDock() {
         <div className="flex shrink-0 items-center gap-1">
           {runStages && (
             <Button
+              data-rec="show"
               type="button"
               variant="ghost"
               size="sm"

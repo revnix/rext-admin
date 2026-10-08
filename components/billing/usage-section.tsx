@@ -146,7 +146,7 @@ function CreditsCard({
           tone="warning"
           title={`${Math.round((usedShare ?? 0) * 100)}% of ${onTrial ? "the trial's" : "this month's"} credits are used`}
           action={
-            <Button asChild variant="outline" size="sm">
+            <Button data-rec="show" asChild variant="outline" size="sm">
               <Link href={"/pricing" as Route}>See the plans</Link>
             </Button>
           }

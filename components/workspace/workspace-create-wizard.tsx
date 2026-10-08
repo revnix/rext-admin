@@ -195,7 +195,7 @@ export function WorkspaceCreateWizard() {
             tone="warning"
             title="Workspace limit reached"
             action={
-              <Button asChild variant="outline" size="sm">
+              <Button data-rec="show" asChild variant="outline" size="sm">
                 <Link href={"/pricing" as Route}>View plans</Link>
               </Button>
             }
@@ -264,7 +264,11 @@ export function WorkspaceCreateWizard() {
           tone="danger"
           title="The analysis stopped"
           action={
-            <Button size="sm" onClick={() => openBrandVoice(false)}>
+            <Button
+              data-rec="show"
+              size="sm"
+              onClick={() => openBrandVoice(false)}
+            >
               Open the workspace
             </Button>
           }
@@ -279,6 +283,7 @@ export function WorkspaceCreateWizard() {
             title="We lost touch with the analysis"
             action={
               <Button
+                data-rec="show"
                 size="sm"
                 variant="outline"
                 onClick={() => {
@@ -292,6 +297,7 @@ export function WorkspaceCreateWizard() {
           >
             It may still be running. Retry to reconnect, or{" "}
             <button
+              data-rec="show"
               type="button"
               className="font-medium underline underline-offset-4"
               onClick={() => openBrandVoice(false)}
