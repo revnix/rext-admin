@@ -32,6 +32,9 @@ jest.mock("@/providers/sse-provider", () => ({
   useSSE: () => ({ clearCompletedOperation: jest.fn() }),
 }));
 jest.mock("@/lib/analytics", () => ({ analytics: { track: jest.fn() } }));
+const analytics = jest.requireMock("@/lib/analytics").analytics as {
+  track: jest.Mock;
+};
 const createWorkspace = jest.fn();
 // The workspaces the account has when the page opens.
 const account: { workspaces: Array<{ id: string }> } = { workspaces: [] };
@@ -74,6 +77,7 @@ beforeEach(() => {
   limit.isLimitReached = false;
   limit.planKnown = true;
   account.workspaces = [];
+  analytics.track.mockClear();
   createWorkspace.mockReset();
   jest.mocked(toast.error).mockClear();
 });
@@ -197,10 +201,10 @@ describe("A refusal that names no field", () => {
 });
 
 describe("The form's way out", () => {
-  const open = () =>
+  const open = (planCount?: { used: number; max: number }) =>
     render(
       <QueryClientProvider client={new QueryClient()}>
-        <WorkspaceCreateWizard />
+        <WorkspaceCreateWizard planCount={planCount} />
       </QueryClientProvider>,
     );
 
@@ -213,5 +217,24 @@ describe("The form's way out", () => {
     account.workspaces = [{ id: "w0" }];
     open();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+  });
+
+  it("goes by the plan's count when the list hasn't loaded: a direct load of the page", () => {
+    // The store's list is still empty, and the plan says one workspace is in use.
+    open({ used: 1, max: 3 });
+
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+    expect(analytics.track).toHaveBeenCalledWith("workspace_create_viewed", {
+      first_workspace: false,
+    });
+  });
+
+  it("calls it a first workspace when the plan's count is none", () => {
+    open({ used: 0, max: 1 });
+
+    expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
+    expect(analytics.track).toHaveBeenCalledWith("workspace_create_viewed", {
+      first_workspace: true,
+    });
   });
 });
