@@ -7,6 +7,7 @@
 import {
   analyticsMode,
   consentCookie,
+  consentCookieName,
   consentCookies,
   fromThisSite,
   onConsentChange,
@@ -197,6 +198,37 @@ describe("writeConsent", () => {
     expect(consentCookies("granted", true, "app.rext.ai")).toHaveLength(2);
     expect(consentCookies("granted", false, "localhost")).toEqual([
       "rext-consent=granted; Max-Age=15724800; Path=/; SameSite=Lax",
+    ]);
+  });
+
+  it("gives a host under rext.ai that shares nothing a cookie name of its own", () => {
+    for (const host of [
+      "rext.ai",
+      "www.rext.ai",
+      "app.rext.ai",
+      "APP.REXT.AI",
+    ]) {
+      expect(consentCookieName(host)).toBe("rext-consent");
+    }
+    // Sent the live `.rext.ai` cookie too, which it must never read as its own answer.
+    for (const host of [
+      "staging.rext.ai",
+      "staging-site.rext.ai",
+      "STAGING.REXT.AI",
+    ]) {
+      expect(consentCookieName(host)).toBe("rext-consent-own");
+    }
+    // Not under rext.ai: no live cookie reaches them, and the name stays.
+    for (const host of [
+      "localhost",
+      "rext-abc123-it-rx.vercel.app",
+      "notrext.ai",
+      "rext.ai.example.com",
+    ]) {
+      expect(consentCookieName(host)).toBe("rext-consent");
+    }
+    expect(consentCookies("granted", true, "staging.rext.ai")).toEqual([
+      "rext-consent-own=granted; Max-Age=15724800; Path=/; SameSite=Lax; Secure",
     ]);
   });
 });
