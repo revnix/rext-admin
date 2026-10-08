@@ -449,7 +449,9 @@ describe("where analytics is on unless switched off", () => {
     const view = renderProvider();
     await waitFor(() => expect(pageViews()).toHaveLength(1));
 
-    // Another workspace's page, before the app has switched to it.
+    // Another page, while the app's workspace is not that page's.
+    const first = mockRoute.path;
+    mockRoute.path = "/settings/data";
     mockWorkspaceState.currentWorkspace = { id: "ws-9", slug: "another" };
     try {
       view.rerender(
@@ -460,10 +462,20 @@ describe("where analytics is on unless switched off", () => {
           </PostHogProvider>
         </QueryClientProvider>,
       );
-      // A render is a new view here (the mocked route hooks answer with new objects each time):
-      // it goes out at once, though the app's workspace is not this page's.
+      // It goes out at once: only a page load's first view waits for the workspace and the plan.
+      expect(pageViews()).toHaveLength(2);
+      // And the same page drawn again is not a third view.
+      view.rerender(
+        <QueryClientProvider client={queryClient}>
+          <PostHogProvider>
+            <AnalyticsConsentPrompt />
+            <p>Another page</p>
+          </PostHogProvider>
+        </QueryClientProvider>,
+      );
       expect(pageViews()).toHaveLength(2);
     } finally {
+      mockRoute.path = first;
       mockWorkspaceState.currentWorkspace = { id: "ws-1", slug: "acme" };
     }
   });
