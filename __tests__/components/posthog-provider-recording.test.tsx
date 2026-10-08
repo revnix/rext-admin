@@ -240,7 +240,11 @@ it("says so again for a new session on the same page, and no more once it stops"
 
   mockPage.path = "/checkout";
   view.rerender(page());
-  expect(mockSession.listeners).toHaveLength(0);
+  // A session that begins after the recorder stopped starts nothing.
+  mockSession.id = "session-3";
+  act(() => {
+    for (const listener of mockSession.listeners) listener("session-3");
+  });
   await settled();
   expect(mockPosthog.startSessionRecording).toHaveBeenCalledTimes(2);
 });
