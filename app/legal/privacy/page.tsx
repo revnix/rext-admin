@@ -3,6 +3,7 @@ import { DetailPage } from "@/components/layouts";
 import { RelatedPolicies } from "@/components/legal/related-policies";
 import { EXCEPTIONS_ON } from "@/lib/analytics-exceptions";
 import { RECORDING_ON } from "@/lib/analytics-recording";
+import { WEB_VITALS_ON } from "@/lib/analytics-web-vitals";
 
 export const metadata: Metadata = {
   title: "Privacy Policy - Payments & Billing",
@@ -311,6 +312,12 @@ export default function PrivacyPolicyPage() {
               not handle: which kind of error, and where in our own code it
               happened. The error&rsquo;s own message is never sent, because it
               could hold something of yours.
+            </li>
+          )}
+          {WEB_VITALS_ON && (
+            <li>
+              When it is on, it also receives how fast each page loaded and
+              answered you, as numbers.
             </li>
           )}
           <li>
