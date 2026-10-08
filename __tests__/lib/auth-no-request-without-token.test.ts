@@ -566,6 +566,22 @@ describe("a tab that keeps failing to confirm its session", () => {
     expect(told()).toEqual([]);
   });
 
+  it("starts again after an endpoint's own 401, which answers a token the API took", async () => {
+    const wrapper = freshWrapper();
+    stuck();
+
+    await ask(wrapper, 2);
+    send.mockImplementation(async () =>
+      refusal(401, "unauthorized", "You are not a member of this workspace"),
+    );
+    expect(await ask(wrapper, 1)).toBe(401);
+    stuck();
+    await ask(wrapper, 2);
+
+    expect(told()).toEqual([]);
+    expect(signOuts()).toEqual([]);
+  });
+
   it("does not take a server that is away for the token being taken", async () => {
     const wrapper = freshWrapper();
     stuck();

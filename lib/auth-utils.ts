@@ -631,7 +631,8 @@ function ownAnswer(status: number, code: string, message: string): Response {
 // all, and nothing said so to anyone (revnix/rext-control#858). So the failures in a row are
 // counted, and analytics hears of the third and of the tenth, with how long the run has lasted.
 // Requests that fail on one renewal come back together, so answers less than a second apart
-// count once. The run ends when the API takes a request's token, or the session is over.
+// count once. The run ends when the API takes a request's token (any answer under 500 but
+// "expired" or "revoked", an endpoint's own 401 among them), or the session is over.
 const UNCONFIRMED_SAID_AT = [3, 10];
 const UNCONFIRMED_APART_MS = 1000;
 let unconfirmedInARow = 0;
@@ -769,7 +770,8 @@ export async function authenticatedFetch(
     }
 
     if (response.status !== 401 || typeof window === "undefined") {
-      // Any answer under 500 that is not a 401 is the API's answer to a token it took.
+      // Any answer under 500 that is not a 401 is the API's answer to a token it took. (A 401
+      // of the endpoint's own is too, and ends the run below, once it is known for one.)
       if (response.status < 500 && headers.has("Authorization")) {
         unconfirmedRunEnds();
       }
@@ -831,6 +833,9 @@ export async function authenticatedFetch(
   }
 
   if (unauthorizedKind !== "expired") {
+    // The endpoint's own 401 ("you are not a member of this workspace") is an answer to a token
+    // the API took: the session is confirmed, and a run of failures ends here too.
+    if (headers.has("Authorization")) unconfirmedRunEnds();
     return response;
   }
 
