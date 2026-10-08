@@ -11,6 +11,7 @@ import {
   resetPasswordSchema,
   signupFormSchema,
 } from "@/schemas/auth-schemas";
+import { strengthOf } from "@/components/profile/change-password-form";
 import { changePasswordSchema } from "@/schemas/profile-schemas";
 
 const said = (password: string) =>
@@ -121,5 +122,25 @@ describe("the forms that ask for a new password", () => {
         "newPassword",
       ),
     ).toBe(NEEDS);
+  });
+});
+
+// The change-password form rates a password as it is typed. It read the rules its own way and
+// could call "Strong" a password the schema then refused.
+describe("the strength the change-password form shows", () => {
+  it.each([
+    "Blueberry7<pancakes",
+    "Blueberry7 pancakes",
+    "Blueberry7épancakes",
+    `Aa1!${"x".repeat(69)}`,
+  ])("is never Strong for a password the form refuses: %j", (password) => {
+    expect(newPasswordSchema.safeParse(password).success).toBe(false);
+    expect(strengthOf(password).label).not.toBe("Strong");
+  });
+
+  it("is Strong for one the form takes, and less for less", () => {
+    expect(strengthOf("Blueberry-pancakes-7").label).toBe("Strong");
+    expect(strengthOf("Blueberry pancakes").label).toBe("Fair");
+    expect(strengthOf("blue").label).toBe("Weak");
   });
 });

@@ -8,23 +8,30 @@ import { PasswordInput } from "@/components/forms/password-input";
 import { useZodForm } from "@/components/forms/use-zod-form";
 import { apiClient } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
-import { PASSWORD_RULES } from "@/schemas/auth-schemas";
+import { PASSWORD_RULES, passwordHas } from "@/schemas/auth-schemas";
 import {
   type ChangePasswordFormData,
   changePasswordSchema,
 } from "@/schemas/profile-schemas";
 
-/** How strong a new password reads, by how many of the five rules it meets. */
-function strengthOf(password: string) {
+/**
+ * How strong a new password reads, by how many of the five rules it meets, as the schema itself
+ * reads them: "Strong" is said only of a password the form will take.
+ */
+export function strengthOf(password: string) {
+  const has = passwordHas(password);
   const met = [
-    password.length >= 8,
-    /[a-z]/.test(password),
-    /[A-Z]/.test(password),
-    /[0-9]/.test(password),
-    /[^A-Za-z0-9]/.test(password),
+    has.length,
+    has.lowercase,
+    has.uppercase,
+    has.number,
+    has.symbol,
   ].filter(Boolean).length;
   if (met <= 2) return { label: "Weak", className: "text-danger-700" };
-  if (met <= 4) return { label: "Fair", className: "text-warning-700" };
+  // One too long for the backend's hashing is refused, whatever else it holds.
+  if (met <= 4 || !has.fits) {
+    return { label: "Fair", className: "text-warning-700" };
+  }
   return { label: "Strong", className: "text-success-700" };
 }
 

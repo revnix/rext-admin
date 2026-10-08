@@ -50,17 +50,32 @@ function bytesOf(text: string): number {
 }
 
 /**
+ * What a password has of what the rule asks, read one way for the check below and for the
+ * strength a form shows as it is typed: a form must not call "Strong" what it then refuses.
+ */
+export function passwordHas(password: string) {
+  return {
+    length: password.length >= PASSWORD_MIN_LENGTH,
+    uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
+    number: /\d/.test(password),
+    symbol: PASSWORD_SYMBOL.test(password),
+    /** Within the most the backend's hashing takes. */
+    fits: bytesOf(password) <= PASSWORD_MAX_BYTES,
+  };
+}
+
+/**
  * TEMPORARY (rext-control task 938): the kinds of character a password still lacks, of the four
  * the backend asks for, named together. Null when it has them all.
  */
 function kindsMissingFrom(password: string): string | null {
+  const has = passwordHas(password);
   const missing = [
-    /[A-Z]/.test(password) ? null : "an uppercase letter",
-    /[a-z]/.test(password) ? null : "a lowercase letter",
-    /\d/.test(password) ? null : "a number",
-    PASSWORD_SYMBOL.test(password)
-      ? null
-      : "a special character such as ! or #",
+    has.uppercase ? null : "an uppercase letter",
+    has.lowercase ? null : "a lowercase letter",
+    has.number ? null : "a number",
+    has.symbol ? null : "a special character such as ! or #",
   ].filter((kind): kind is string => kind !== null);
   const last = missing.pop();
   if (!last) return null;
@@ -72,14 +87,15 @@ function kindsMissingFrom(password: string): string | null {
  * beside the field, where the backend would say it one rule per refusal.
  */
 export const newPasswordSchema = z.string().superRefine((password, context) => {
-  if (bytesOf(password) > PASSWORD_MAX_BYTES) {
+  const has = passwordHas(password);
+  if (!has.fits) {
     context.addIssue({
       code: "custom",
       message: `Password must be ${PASSWORD_MAX_BYTES} characters or less (accented letters and emoji count as more than one)`,
     });
     return;
   }
-  const short = password.length < PASSWORD_MIN_LENGTH;
+  const short = !has.length;
   const missing = kindsMissingFrom(password);
   if (!short && !missing) return;
   context.addIssue({
