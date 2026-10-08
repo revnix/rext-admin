@@ -17,6 +17,7 @@ import {
 import { analyticsMode, onConsentChange } from "@/lib/analytics-consent";
 import {
   type EventContext,
+  environmentOf,
   eventContext,
   workspaceSlugOf,
 } from "@/lib/analytics-context";
@@ -477,9 +478,15 @@ function beforeSend(event: CaptureResult | null): CaptureResult | null {
   if (!sent) return null;
   // A recording's batch leaves with no field's value readable (lib/analytics-recording.ts).
   const shown = hideTypedValues(sent);
-  // Where the event is from, on every one: the website sends "website" to the same project, so
-  // the two sets of numbers can be told apart.
-  shown.properties = { ...shown.properties, surface: "app" };
+  // Where the event is from, on every one: the website sends "website" to the same project and
+  // the backend "server", so the sets of numbers can be told apart; and which deploy, so a
+  // chart can be read for real customers only.
+  shown.properties = {
+    ...shown.properties,
+    surface: "app",
+    source: "client",
+    environment: environmentOf(window.location.hostname),
+  };
   return shown;
 }
 

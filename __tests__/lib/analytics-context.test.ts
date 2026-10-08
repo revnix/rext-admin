@@ -3,7 +3,11 @@
  * and the plan, and never a workspace other than the one the page's address names.
  */
 
-import { eventContext, workspaceSlugOf } from "@/lib/analytics-context";
+import {
+  environmentOf,
+  eventContext,
+  workspaceSlugOf,
+} from "@/lib/analytics-context";
 
 const subscription = {
   plan_name: "growth",
@@ -81,5 +85,17 @@ describe("workspaceSlugOf", () => {
     expect(workspaceSlugOf("/settings/data")).toBeNull();
     expect(workspaceSlugOf("/w/create")).toBeNull();
     expect(workspaceSlugOf("/")).toBeNull();
+  });
+});
+
+describe("environmentOf", () => {
+  it("names the deploy a page is served by", () => {
+    expect(environmentOf("app.rext.ai")).toBe("production");
+    expect(environmentOf("APP.REXT.AI")).toBe("production");
+    expect(environmentOf("staging.rext.ai")).toBe("staging");
+    expect(environmentOf("rext-abc123-it-rx.vercel.app")).toBe("preview");
+    for (const host of ["localhost", "127.0.0.1", "rext.ai", ""]) {
+      expect(environmentOf(host)).toBe("development");
+    }
   });
 });
