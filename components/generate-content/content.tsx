@@ -189,6 +189,8 @@ type ContentEditorProps = {
   toolCalls?: ToolCall[];
   /** The run component while the article is written, at the top of the side panel. */
   runProgress?: React.ReactNode;
+  /** The same run on one line, for the bar below 1280 px, where the side panel is a sheet. */
+  runStrip?: React.ReactNode;
   /** The Generate flow's steps, atop the article's column: inside it, since each column scrolls on its own. */
   steps?: React.ReactNode;
   /** The article is live on a connected site (its status is "published"): a draft or review save
@@ -213,6 +215,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     outline,
     toolCalls = [],
     runProgress,
+    runStrip,
     steps,
     isLive = false,
   } = props;
@@ -1009,16 +1012,28 @@ function ContentEditorInner(props: ContentEditorProps) {
           the page scrolls as one. */}
       <div className="sticky top-[var(--header-height,0px)] z-10 flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-b border-border bg-card px-3 py-2 xl:static">
         {writing ? (
-          <p className="text-table text-muted-foreground" aria-live="polite">
-            {/* Always in these words: the stage's name alone ("Draft") read as the article's status. */}
-            <span className="font-medium text-foreground">
-              Writing the article
-            </span>
-            {enhancingMsg ? ` · ${enhancingMsg}` : null}
-            {position.sections > 0 && position.section > 0
-              ? ` · section ${position.section} of ${position.sections}`
-              : null}
-          </p>
+          <>
+            <p className="text-table text-muted-foreground" aria-live="polite">
+              {/* Always in these words: the stage's name alone ("Draft") read as the article's status. */}
+              <span className="font-medium text-foreground">
+                Writing the article
+              </span>
+              {/* Where the strip below shows, it names the stage. */}
+              {enhancingMsg ? (
+                <span className={runStrip ? "hidden xl:inline" : undefined}>
+                  {` · ${enhancingMsg}`}
+                </span>
+              ) : null}
+              {position.sections > 0 && position.section > 0
+                ? ` · section ${position.section} of ${position.sections}`
+                : null}
+            </p>
+            {/* The run's stages are in the side panel, a sheet below 1280 px: there the bar holds
+                the running stage on one line, with its time and how far the run is (task 703). */}
+            {runStrip ? (
+              <div className="w-full xl:hidden">{runStrip}</div>
+            ) : null}
+          </>
         ) : (
           <div className="min-w-0 flex-1">{actionButtons}</div>
         )}

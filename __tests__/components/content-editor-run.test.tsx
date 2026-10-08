@@ -122,6 +122,22 @@ describe("ContentEditor while the article is written, as the page shows it (task
     }
   });
 
+  it("holds the run on one line in the bar, which then names the stage itself", () => {
+    render(
+      editor({
+        ...writingProps,
+        runStrip: <p>Draft 22 s</p>,
+      }),
+    );
+    const bar = screen.getByText("Writing the article").parentElement;
+    // The strip is the bar's next line; the stage's name in the first line gives way to it
+    // (both are shown or hidden by width, which jsdom doesn't lay out).
+    expect(bar?.nextElementSibling).toContainElement(
+      screen.getByText("Draft 22 s"),
+    );
+    expect(screen.getByText("· Draft")).toHaveClass("hidden", "xl:inline");
+  });
+
   it("lists the structure by level, with what is written, being written and to come", () => {
     render(editor(writingProps));
     const rows = within(
