@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import type { Session } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import { getToken } from "next-auth/jwt";
+import { mayUseToolbar, TOOLBAR_COOKIE } from "@/lib/analytics-toolbar";
 import { getCSPHeader } from "@/lib/csp";
 import { devPagesOn } from "@/lib/dev-pages";
 import { ROLES } from "@/lib/permissions";
@@ -305,8 +306,16 @@ export default async function proxy(request: NextRequest) {
   // Generate cryptographic nonce for CSP
   const nonce = generateNonce();
 
+  // PostHog's toolbar is outside code, so its policy is for one case only: a browser marked by
+  // the app itself (lib/analytics-toolbar.ts) whose signed-in person is one of our admins. The
+  // role is checked here on every request: a mark set by hand changes nothing for anyone else.
+  const posthogToolbar =
+    isLoggedIn &&
+    mayUseToolbar(session?.user?.role) &&
+    request.cookies.get(TOOLBAR_COOKIE)?.value === "1";
+
   // Content Security Policy (nonce-based, environment-aware)
-  const csp = getCSPHeader(nonce);
+  const csp = getCSPHeader(nonce, { posthogToolbar });
 
   // CRITICAL: Set nonce in request headers so Next.js can apply it during SSR
   const requestHeaders = new Headers(request.headers);

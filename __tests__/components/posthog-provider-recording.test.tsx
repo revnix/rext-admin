@@ -24,6 +24,7 @@ const mockPosthog = {
   stopSessionRecording: jest.fn(() => {
     mockStarted = false;
   }),
+  set_config: jest.fn((_config: unknown) => {}),
 };
 jest.mock("posthog-js", () => ({
   __esModule: true,
@@ -53,8 +54,11 @@ jest.mock("posthog-js", () => ({
     register: jest.fn(),
     unregister: jest.fn(),
     setPersonProperties: jest.fn(),
+    set_config: (config: unknown) => mockPosthog.set_config(config),
   },
 }));
+// The heatmap's piece of the library: only that it is asked for matters here.
+jest.mock("posthog-js/dist/dead-clicks-autocapture", () => ({}));
 // The recorder's own code: only that it is asked for matters here.
 jest.mock("posthog-js/dist/lazy-recorder", () => ({}));
 jest.mock("posthog-js/react", () => ({
@@ -149,6 +153,50 @@ const started = () =>
 /** Long enough for the recorder's code and the list to have arrived, had they been asked for. */
 const settled = () =>
   act(() => new Promise<void>((resolve) => setTimeout(resolve, 50)));
+
+it("starts the heatmap for a person who allows analytics, once its piece has arrived with the app", async () => {
+  render(page());
+  await waitFor(() => expect(mockPosthog.init).toHaveBeenCalled());
+
+  // Started off, and with nothing else the library could fetch switched on by PostHog's side.
+  expect(mockPosthog.init.mock.calls[0][1]).toMatchObject({
+    capture_heatmaps: false,
+    rageclick: false,
+    capture_dead_clicks: false,
+    capture_exceptions: false,
+    disable_surveys: true,
+    disable_external_dependency_loading: true,
+  });
+  await waitFor(() =>
+    expect(mockPosthog.set_config).toHaveBeenCalledWith({
+      capture_heatmaps: true,
+    }),
+  );
+});
+
+it("keeps no heatmap for a person who said no", async () => {
+  mode.mockResolvedValue("anonymous");
+  render(page());
+  await waitFor(() => expect(mockPosthog.init).toHaveBeenCalled());
+  await settled();
+
+  expect(mockPosthog.set_config).not.toHaveBeenCalled();
+});
+
+it("stops the heatmap the moment the person says no", async () => {
+  render(page());
+  await waitFor(() =>
+    expect(mockPosthog.set_config).toHaveBeenCalledWith({
+      capture_heatmaps: true,
+    }),
+  );
+
+  act(() => writeConsent("denied"));
+
+  expect(mockPosthog.set_config).toHaveBeenLastCalledWith({
+    capture_heatmaps: false,
+  });
+});
 
 it("records nothing where the deploy hasn't switched it on, and fetches nothing for it", async () => {
   mockSwitch.on = false;

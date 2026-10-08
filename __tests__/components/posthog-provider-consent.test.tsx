@@ -47,8 +47,11 @@ jest.mock("posthog-js", () => ({
     unregister: (...args: unknown[]) => mockPosthog.unregister(...args),
     setPersonProperties: (...args: unknown[]) =>
       mockPosthog.setPersonProperties(...args),
+    set_config: jest.fn(),
   },
 }));
+// The heatmap's piece of the library: only that it is asked for matters here.
+jest.mock("posthog-js/dist/dead-clicks-autocapture", () => ({}));
 const mockSubscriptionState = {
   subscription: {
     subscription: {

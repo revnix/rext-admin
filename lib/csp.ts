@@ -4,9 +4,15 @@ import { resolveApiBaseUrl } from "./api-base-url";
  * Builds a Content Security Policy header string
  *
  * @param _nonce - Nonce parameter (unused but kept for backwards compatibility)
+ * @param options.posthogToolbar - true only for a signed-in admin of ours whose browser opened
+ *   PostHog's toolbar (lib/analytics-toolbar.ts, decided in proxy.ts): PostHog's script and its
+ *   API are then allowed too. Everyone else gets the policy without them.
  * @returns CSP header string
  */
-export function getCSPHeader(_nonce: string): string {
+export function getCSPHeader(
+  _nonce: string,
+  options: { posthogToolbar?: boolean } = {},
+): string {
   // Always use unsafe-inline for styles in development to support React inline styles
   // Next.js dev server always sets NODE_ENV=development
   const isDev = process.env.NODE_ENV !== "production";
@@ -38,6 +44,18 @@ export function getCSPHeader(_nonce: string): string {
     /^https:\/\/([a-z0-9-]+)\.i\.posthog\.com$/,
     "https://$1-assets.i.posthog.com",
   );
+
+  // The toolbar is PostHog's own code: its script, styles and fonts come from the assets host,
+  // and it talks to PostHog's app (eu.i. becomes eu.). Only on PostHog's own cloud, and only
+  // when asked for: an empty string otherwise.
+  const posthogApp = posthogHost.replace(
+    /^https:\/\/([a-z0-9-]+)\.i\.posthog\.com$/,
+    "https://$1.posthog.com",
+  );
+  const toolbar =
+    options.posthogToolbar && posthogAssets !== posthogHost
+      ? ` ${posthogAssets} ${posthogApp}`
+      : "";
 
   const thirdPartyDomains = {
     lemonsqueezy: {
@@ -73,25 +91,25 @@ export function getCSPHeader(_nonce: string): string {
     // 'unsafe-eval': Required for Turbopack dev hot reload
     // 'unsafe-inline': Required for Webpack production inline scripts
     // Third-party: LemonSqueezy checkout script
-    `script-src 'self' 'unsafe-eval' 'unsafe-inline' ${thirdPartyDomains.lemonsqueezy.app} ${thirdPartyDomains.lemonsqueezy.assets} ${thirdPartyDomains.crisp.https}`,
+    `script-src 'self' 'unsafe-eval' 'unsafe-inline' ${thirdPartyDomains.lemonsqueezy.app} ${thirdPartyDomains.lemonsqueezy.assets} ${thirdPartyDomains.crisp.https}${toolbar}`,
 
     // Styles: ALWAYS allow unsafe-inline (React components use inline styles extensively)
     // In production, you may want to generate style hashes or use a CSS-in-JS solution
-    `style-src 'self' 'unsafe-inline' ${thirdPartyDomains.crisp.https}`,
+    `style-src 'self' 'unsafe-inline' ${thirdPartyDomains.crisp.https}${toolbar}`,
 
     // Images: Allow self, data URIs, and blobs
     // In dev: also allow http: for local MinIO (localhost:9000 presigned URLs)
     `img-src 'self' blob: data: https: ${isDev ? "http:" : ""}`.trim(),
 
     // Fonts: Allow self and data URIs
-    `font-src 'self' data: ${thirdPartyDomains.crisp.https}`,
+    `font-src 'self' data: ${thirdPartyDomains.crisp.https}${toolbar}`,
 
     // Media and workers: the support chat's sounds and its worker
-    `media-src 'self' ${thirdPartyDomains.crisp.https}`,
+    `media-src 'self' ${thirdPartyDomains.crisp.https}${toolbar}`,
     `worker-src 'self' blob: ${thirdPartyDomains.crisp.https}`,
 
     // Connect: Allow self, backend API, and third-party services
-    `connect-src 'self' ${backendOrigins} ${thirdPartyDomains.lemonsqueezy.app} ${thirdPartyDomains.posthog} ${thirdPartyDomains.pwnedPasswords} ${thirdPartyDomains.crisp.https} ${thirdPartyDomains.crisp.sockets}`,
+    `connect-src 'self' ${backendOrigins} ${thirdPartyDomains.lemonsqueezy.app} ${thirdPartyDomains.posthog} ${thirdPartyDomains.pwnedPasswords} ${thirdPartyDomains.crisp.https} ${thirdPartyDomains.crisp.sockets}${toolbar}`,
 
     // Frames: Allow LemonSqueezy checkout overlays
     `frame-src 'self' ${thirdPartyDomains.lemonsqueezy.checkout} ${thirdPartyDomains.crisp.https}`,
@@ -132,6 +150,9 @@ export function getCSPHeader(_nonce: string): string {
  *     (checkout URLs are served from the store subdomain, not app.)
  *   - connect-src: Enables API connections to app.lemonsqueezy.com
  * - Have I Been Pwned: the password breach check (connect-src api.pwnedpasswords.com)
+ * - PostHog: analytics sends to, and reads its settings from, PostHog's two hosts (connect-src).
+ *   No code is loaded from PostHog, with one exception: its toolbar, for a signed-in admin of
+ *   ours who opened it from PostHog (options.posthogToolbar; lib/analytics-toolbar.ts)
  * - Crisp: the support chat, on its first opening only (Crisp's published list: scripts,
  *   styles, fonts, media, workers, frames and connections, with its websocket relays)
  * - To add new services: Update thirdPartyDomains object and relevant directives
