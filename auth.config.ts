@@ -10,6 +10,7 @@ import {
   isGatewayAway,
   SIGN_IN_ANSWER_WITHIN_MS,
 } from "@/lib/auth/backend-away";
+import { dashboardServerKeyHeader } from "@/lib/auth/dashboard-server-key";
 import type { components } from "@/lib/api-client/schema";
 import { log } from "@/lib/logger";
 import { loginSchema } from "@/schemas/auth-schemas";
@@ -631,7 +632,11 @@ export default {
               `${authApiBaseUrl}/api/v1/user/oauth/login`,
               {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                  "Content-Type": "application/json",
+                  // Says the call is this server's (lib/auth/dashboard-server-key.ts).
+                  ...dashboardServerKeyHeader(),
+                },
                 body: JSON.stringify(oauthPayload),
               },
             );
