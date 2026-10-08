@@ -334,8 +334,16 @@ export function WorkspaceCreateWizard({
         : window.location.pathname,
     );
     funnel.wayChosen(from);
+    // The caret goes to the way's first question still to answer. Set up later from a
+    // description, that is the business's name, which stands above the description.
     window.requestAnimationFrame(() =>
-      form.setFocus(from === "website" ? "url" : "description"),
+      form.setFocus(
+        from === "website"
+          ? "url"
+          : existing && !form.getValues("business")
+            ? "business"
+            : "description",
+      ),
     );
   };
   const voiceStage = stages.find(

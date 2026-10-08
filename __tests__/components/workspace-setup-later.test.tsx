@@ -85,11 +85,18 @@ const open = (name = EXISTING.name) =>
     </QueryClientProvider>,
   );
 const called = () =>
-  screen.getByRole("textbox", { name: /What is your business called/ });
-const noSite = () =>
-  userEvent.click(
+  screen.getByRole<HTMLInputElement>("textbox", {
+    name: /What is your business called/,
+  });
+const said = () =>
+  screen.getByRole("textbox", { name: /What does your business do/ });
+/** The other way in, once the caret has settled on its first question still to answer. */
+const noSite = async () => {
+  await userEvent.click(
     screen.getByRole("button", { name: "I don't have a website yet" }),
   );
+  await waitFor(() => expect(called().value ? said() : called()).toHaveFocus());
+};
 const SAID = "We bake sourdough for cafes in Leeds.";
 
 beforeEach(() => {
@@ -142,10 +149,7 @@ describe("Setting up a workspace that is there already", () => {
     open();
     await noSite();
     await userEvent.type(called(), "Luna Bakery");
-    await userEvent.type(
-      screen.getByRole("textbox", { name: /What does your business do/ }),
-      SAID,
-    );
+    await userEvent.type(said(), SAID);
 
     await userEvent.click(
       screen.getByRole("button", { name: "Draft my brand voice" }),
@@ -163,12 +167,11 @@ describe("Setting up a workspace that is there already", () => {
   it("asks what the business is called with a description, and sends nothing without an answer", async () => {
     open();
     await noSite();
-    // A name the skip gave the workspace is no business's: the question starts empty.
+    // A name the skip gave the workspace is no business's: the question starts empty, and the
+    // caret waits in it, above the description.
     expect(called()).toHaveValue("");
-    await userEvent.type(
-      screen.getByRole("textbox", { name: /What does your business do/ }),
-      SAID,
-    );
+    expect(called()).toHaveFocus();
+    await userEvent.type(said(), SAID);
 
     await userEvent.click(
       screen.getByRole("button", { name: "Draft my brand voice" }),
@@ -218,10 +221,7 @@ describe("Setting up a workspace that is there already", () => {
     );
     open("Luna Bakery");
     await noSite();
-    await userEvent.type(
-      screen.getByRole("textbox", { name: /What does your business do/ }),
-      SAID,
-    );
+    await userEvent.type(said(), SAID);
 
     await userEvent.click(
       screen.getByRole("button", { name: "Draft my brand voice" }),
