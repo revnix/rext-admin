@@ -394,6 +394,8 @@ function PlanChangeForm(props: FormProps) {
             {(field) => (
               <ChoiceList
                 id={field.id}
+                ref={field.ref}
+                onBlur={field.onBlur}
                 label="New plan"
                 value={field.value}
                 onChange={pickPlan}
@@ -414,6 +416,8 @@ function PlanChangeForm(props: FormProps) {
               {(field) => (
                 <ChoiceList
                   id={field.id}
+                  ref={field.ref}
+                  onBlur={field.onBlur}
                   label="Billing period"
                   value={field.value}
                   onChange={(value) => pickPeriod(value)}
@@ -435,6 +439,8 @@ function PlanChangeForm(props: FormProps) {
               {(field) => (
                 <ChoiceList
                   id={field.id}
+                  ref={field.ref}
+                  onBlur={field.onBlur}
                   label="Billing"
                   value={field.value}
                   onChange={(value) => set("billing", value)}

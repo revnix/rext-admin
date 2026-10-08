@@ -422,6 +422,10 @@ describe("sending a plan change", () => {
       screen.getByText("Give a reason of at least 3 characters"),
     ).toBeInTheDocument();
     expect(group("New plan")).toHaveAttribute("aria-invalid", "true");
+    // Focus goes to the first thing that is missing: the plan's choices.
+    expect(group("New plan")).toContainElement(
+      document.activeElement as HTMLElement,
+    );
     expect(api.change).not.toHaveBeenCalled();
   });
 

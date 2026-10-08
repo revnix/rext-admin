@@ -87,4 +87,68 @@ describe("the choice list", () => {
     expect(group).toHaveAttribute("aria-invalid", "true");
     expect(group).toHaveAccessibleDescription("Choose a plan");
   });
+
+  it("tells the field when focus leaves the group, not when it moves inside it", async () => {
+    const onBlur = jest.fn();
+    render(
+      <>
+        <ChoiceList
+          label="New plan"
+          value="starter"
+          onChange={() => {}}
+          onBlur={onBlur}
+          choices={CHOICES}
+        />
+        <button type="button">Next</button>
+      </>,
+    );
+    await userEvent.tab();
+    expect(screen.getByRole("radio", { name: /Starter/ })).toHaveFocus();
+    // The arrow keys move between the group's radios: still in the field.
+    await userEvent.keyboard("{ArrowDown}");
+    expect(onBlur).not.toHaveBeenCalled();
+    await userEvent.tab();
+    expect(screen.getByRole("button", { name: "Next" })).toHaveFocus();
+    expect(onBlur).toHaveBeenCalledTimes(1);
+  });
+
+  it("hands the field's ref the radio that takes focus: the checked one, else the first that can be picked", () => {
+    let target: HTMLButtonElement | null = null;
+    const ref = (node: HTMLButtonElement | null) => {
+      target = node;
+    };
+    const { rerender } = render(
+      <ChoiceList
+        label="New plan"
+        value=""
+        onChange={() => {}}
+        ref={ref}
+        choices={CHOICES}
+      />,
+    );
+    expect(target).toBe(screen.getByRole("radio", { name: /Starter/ }));
+
+    rerender(
+      <ChoiceList
+        label="New plan"
+        value="scale"
+        onChange={() => {}}
+        ref={ref}
+        choices={CHOICES}
+      />,
+    );
+    expect(target).toBe(screen.getByRole("radio", { name: /Scale/ }));
+
+    // A checked choice that can't be picked (the current plan) is not where focus goes.
+    rerender(
+      <ChoiceList
+        label="New plan"
+        value="growth"
+        onChange={() => {}}
+        ref={ref}
+        choices={CHOICES}
+      />,
+    );
+    expect(target).toBe(screen.getByRole("radio", { name: /Starter/ }));
+  });
 });
