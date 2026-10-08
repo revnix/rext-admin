@@ -66,49 +66,49 @@ describe("recordableRoute", () => {
 });
 
 describe("maskText", () => {
-  it("shows the app's own words on a button, a menu item, a label and a table header", () => {
-    expect(maskText("Save", element("<button>Save</button>"))).toBe("Save");
+  it("shows the app's own words in an element the source marked as fixed text", () => {
     expect(
-      maskText("Delete", element('<div role="menuitem">Delete</div>')),
-    ).toBe("Delete");
-    expect(
-      maskText("Workspace name", element("<label>Workspace name</label>")),
-    ).toBe("Workspace name");
+      maskText("Save", element('<button data-rec="show">Save</button>')),
+    ).toBe("Save");
     expect(
       maskText(
         "Status",
-        element('<table><tr><th id="it">Status</th></tr></table>'),
+        element(
+          '<table><tr><th id="it" data-rec="show">Status</th></tr></table>',
+        ),
       ),
     ).toBe("Status");
+    expect(
+      maskText(
+        "Delete",
+        element('<div role="menuitem" data-rec="own">Delete</div>'),
+      ),
+    ).toBe("Delete");
   });
 
-  it("shows them on a link of the sidebar's menu that sits outside the navigation", () => {
-    const link = element(
-      '<a data-slot="sidebar-menu-button" href="/w/acme/generate-content"><span id="it">Save</span></a>',
+  it("reads the words as the page shows them, through an element inside the marked one", () => {
+    const inner = element(
+      '<button data-rec="show"><span id="it"> Save </span></button>',
     );
-    expect(maskText("Save", link)).toBe("Save");
-    expect(maskText("Acme Ltd", link)).toBe("**** ***");
-    expect(maskText("Save", element('<a href="/x">Save</a>'))).toBe("****");
-  });
-
-  it("reads the words as the page shows them, through an element inside the button", () => {
-    const inner = element('<button><span id="it"> Save </span></button>');
     expect(maskText(" Save ", inner)).toBe(" Save ");
   });
 
-  it("hides a person's text wherever it sits, a button included", () => {
+  it("hides the text of a button nobody marked, even when it reads like the app's own", () => {
+    // A workspace named "Save", on the switcher's button.
+    expect(maskText("Save", element("<button>Save</button>"))).toBe("****");
+    expect(
+      maskText("Status", element('<div role="menuitem">Status</div>')),
+    ).toBe("******");
+    expect(maskText("Save", element("<label>Save</label>"))).toBe("****");
+  });
+
+  it("hides a person's text in a marked element too: it is not on the list", () => {
     expect(
       maskText(
         "Mary’s workspace",
-        element("<button>Mary’s workspace</button>"),
+        element('<button data-rec="show">Mary’s workspace</button>'),
       ),
     ).toBe("****** *********");
-    expect(
-      maskText(
-        "10 best garden planners",
-        element('<div role="menuitem">10 best garden planners</div>'),
-      ),
-    ).toBe("** **** ****** ********");
   });
 
   it("hides every other text, the app's own included", () => {
@@ -117,27 +117,29 @@ describe("maskText", () => {
     expect(maskText("Save", null)).toBe("****");
   });
 
-  it("hides everything inside an element marked to be hidden", () => {
+  it("hides everything inside an element marked to be hidden, a marked one too", () => {
     const inside = element(
-      '<div data-rec="mask"><button id="it">Save</button></div>',
+      '<div data-rec="mask"><button id="it" data-rec="show">Save</button></div>',
     );
     expect(maskText("Save", inside)).toBe("****");
-  });
-
-  it("adds a marked element to the shown ones, for the app's own words only", () => {
-    const marked = element('<div data-rec="show" id="it"></div>');
-    expect(maskText("Status", marked)).toBe("Status");
-    expect(maskText("Acme Ltd", marked)).toBe("**** ***");
+    const nearest = element(
+      '<div data-rec="show"><span id="it" data-rec="mask">Save</span></div>',
+    );
+    expect(maskText("Save", nearest)).toBe("****");
   });
 
   it("shows no text at all without the list", () => {
     setWords(null);
-    expect(maskText("Save", element("<button>Save</button>"))).toBe("****");
+    expect(
+      maskText("Save", element('<button data-rec="show">Save</button>')),
+    ).toBe("****");
   });
 
   it("shows no text on a page that isn't recorded, in the moment before recording stops", () => {
     window.history.pushState({}, "", "/login");
-    expect(maskText("Save", element("<button>Save</button>"))).toBe("****");
+    expect(
+      maskText("Save", element('<button data-rec="show">Save</button>')),
+    ).toBe("****");
   });
 });
 
@@ -167,8 +169,11 @@ describe("maskAttribute", () => {
     expect(maskAttribute("data-anything", "acme", item)).toBe("");
   });
 
-  it("keeps a readable attribute only when it is the app's own words", () => {
-    const input = element("<input />");
+  it("keeps a readable attribute only in a marked element, and only the app's own words", () => {
+    const unmarked = element("<input />");
+    expect(maskAttribute("placeholder", "Search articles…", unmarked)).toBe("");
+    expect(maskAttribute("aria-label", "Delete", unmarked)).toBe("");
+    const input = element('<label data-rec="show"><input id="it" /></label>');
     expect(maskAttribute("placeholder", "Search articles…", input)).toBe(
       "Search articles…",
     );
@@ -223,7 +228,7 @@ describe("maskAttribute", () => {
 
   it("keeps no readable attribute and no address inside an element marked to be hidden", () => {
     const inside = element(
-      '<div data-rec="mask"><a id="it" aria-label="Delete"></a></div>',
+      '<div data-rec="mask"><a id="it" data-rec="show" aria-label="Delete"></a></div>',
     );
     expect(maskAttribute("aria-label", "Delete", inside)).toBe("");
     expect(maskAttribute("href", "/w/acme/content", inside)).toBe("");
@@ -277,7 +282,9 @@ describe("loadWords", () => {
     }) as unknown as typeof fetch;
 
     await expect(loadWords()).resolves.toBe(true);
-    expect(maskText("Save", element("<button>Save</button>"))).toBe("Save");
+    expect(
+      maskText("Save", element('<button data-rec="show">Save</button>')),
+    ).toBe("Save");
   });
 
   it("says there is none when the list is empty or can't be fetched", async () => {
