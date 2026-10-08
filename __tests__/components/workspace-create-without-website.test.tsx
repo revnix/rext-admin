@@ -121,7 +121,8 @@ const tree = () => (
 );
 const part = (name: string) => screen.getByRole("region", { name });
 const pane = (name: string) => screen.getByRole("complementary", { name });
-const website = () => screen.queryByRole("textbox", { name: /Website/ });
+const website = () =>
+  screen.queryByRole("textbox", { name: /What is its website/ });
 const business = () =>
   screen.queryByRole("textbox", { name: /What does the business do/ });
 const noSite = () =>
@@ -133,13 +134,13 @@ const noSite = () =>
 async function createFromDescription() {
   const view = render(tree());
   await userEvent.type(
-    screen.getByRole("textbox", { name: /Workspace name/ }),
+    screen.getByRole("textbox", { name: /What is your business called/ }),
     "Acme Forge",
   );
   await noSite();
   await userEvent.type(business() as HTMLElement, SAID);
   await userEvent.click(
-    screen.getByRole("button", { name: "Create workspace" }),
+    screen.getByRole("button", { name: "Draft my brand voice" }),
   );
   await screen.findByText(/Drafting your brand voice from your description/);
   const send = (...events: SSEEvent[]) => {
@@ -203,13 +204,13 @@ describe("Creating a workspace: the first step's second way in", () => {
   it("asks for a sentence or two before it creates anything", async () => {
     render(tree());
     await userEvent.type(
-      screen.getByRole("textbox", { name: /Workspace name/ }),
+      screen.getByRole("textbox", { name: /What is your business called/ }),
       "Acme Forge",
     );
     await noSite();
     await userEvent.type(business() as HTMLElement, "Knives.");
     await userEvent.click(
-      screen.getByRole("button", { name: "Create workspace" }),
+      screen.getByRole("button", { name: "Draft my brand voice" }),
     );
     expect(
       await screen.findByText(
@@ -260,13 +261,13 @@ describe("Creating a workspace without a website: what the backend refuses", () 
     );
     render(tree());
     await userEvent.type(
-      screen.getByRole("textbox", { name: /Workspace name/ }),
+      screen.getByRole("textbox", { name: /What is your business called/ }),
       "Acme Forge",
     );
     await noSite();
     await userEvent.type(business() as HTMLElement, SAID);
     await userEvent.click(
-      screen.getByRole("button", { name: "Create workspace" }),
+      screen.getByRole("button", { name: "Draft my brand voice" }),
     );
     expect(
       await screen.findByText(

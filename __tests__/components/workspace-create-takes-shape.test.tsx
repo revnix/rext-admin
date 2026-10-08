@@ -106,15 +106,15 @@ const tree = (planCount?: { used: number; max: number }) => (
 async function create(planCount?: { used: number; max: number }) {
   const view = render(tree(planCount));
   await userEvent.type(
-    screen.getByRole("textbox", { name: /Workspace name/ }),
+    screen.getByRole("textbox", { name: /What is your business called/ }),
     "Acme",
   );
   await userEvent.type(
-    screen.getByRole("textbox", { name: /Website/ }),
+    screen.getByRole("textbox", { name: /What is its website/ }),
     "https://www.acme.example",
   );
   await userEvent.click(
-    screen.getByRole("button", { name: "Create workspace" }),
+    screen.getByRole("button", { name: "Read my website" }),
   );
   await screen.findByText(/Reading https:\/\/www.acme.example/);
   /** The operation's stream sends more events. */
@@ -191,7 +191,7 @@ describe("Creating a workspace: the first step", () => {
   it("names the site in the plan as its address is typed", async () => {
     render(tree());
     await userEvent.type(
-      screen.getByRole("textbox", { name: /Website/ }),
+      screen.getByRole("textbox", { name: /What is its website/ }),
       "https://www.acme.example",
     );
     expect(

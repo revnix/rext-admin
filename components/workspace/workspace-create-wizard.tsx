@@ -433,17 +433,35 @@ export function WorkspaceCreateWizard({
         <FormShell
           form={form}
           onSubmit={handleSubmit}
-          submitLabel="Create workspace"
+          // The next step, in its own words: what pressing it starts.
+          submitLabel={withoutSite ? "Draft my brand voice" : "Read my website"}
           cancel={{ onCancel: () => router.push("/") }}
         >
           <FieldController
             control={form.control}
             name="name"
-            label="Workspace name"
+            // The fields ask, and hold no example text: grey words inside an empty field read as
+            // an answer already given, and the form looked finished (rext-control task 854).
+            // The example is in the line under each.
+            label="What is your business called?"
+            description="For example: Luna Bakery. It names the workspace, and you can change it later."
             required
           >
             {(field) => (
-              <Input {...field} maxLength={200} placeholder="e.g. My company" />
+              // The caret waits here on arrival: plainly empty, and the place to start. Losing the
+              // focus before anything was typed (the first-login questions open over the form
+              // and take it) is not leaving the field: no "required" beside a field nobody has
+              // had the chance to fill.
+              <Input
+                {...field}
+                autoFocus
+                maxLength={200}
+                onBlur={() => {
+                  if (field.value || form.formState.submitCount > 0) {
+                    field.onBlur();
+                  }
+                }}
+              />
             )}
           </FieldController>
           {withoutSite ? (
@@ -451,30 +469,25 @@ export function WorkspaceCreateWizard({
               control={form.control}
               name="description"
               label="What does the business do?"
-              description="What it sells and who buys it, in a sentence or two. We draft the brand voice from this, and you can change every word of it in the review."
+              description="What it sells and who buys it, in a sentence or two. For example: We sell hand-forged kitchen knives to home cooks. We draft the brand voice from this, and you can change every word of it in the review."
               maxLength={DESCRIPTION_LIMITS.max}
               required
             >
               {(field) => (
-                <Textarea
-                  {...field}
-                  value={field.value ?? ""}
-                  rows={4}
-                  placeholder="e.g. We sell hand-forged kitchen knives to home cooks who want one knife that lasts."
-                />
+                <Textarea {...field} value={field.value ?? ""} rows={4} />
               )}
             </FieldController>
           ) : (
             <FieldController
               control={form.control}
               name="url"
-              label="Website"
+              label="What is its website?"
               // The address that will be read, once what is typed makes one: "mysite.com" is
               // enough, and the form says where it goes.
               description={
                 reads
                   ? `We'll read ${reads} to draft the workspace's brand voice, personas and competitors.`
-                  : "We read it to draft the workspace's brand voice, personas and competitors."
+                  : "yoursite.com is enough. We read it to draft the workspace's brand voice, personas and competitors."
               }
               required
             >
@@ -489,7 +502,6 @@ export function WorkspaceCreateWizard({
                   autoCorrect="off"
                   autoComplete="url"
                   spellCheck={false}
-                  placeholder="yoursite.com"
                 />
               )}
             </FieldController>

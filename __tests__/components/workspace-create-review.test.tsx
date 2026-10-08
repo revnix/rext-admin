@@ -93,15 +93,15 @@ async function createAndFinishTheAnalysis(client = newClient()) {
     </QueryClientProvider>,
   );
   await userEvent.type(
-    screen.getByRole("textbox", { name: /Workspace name/ }),
+    screen.getByRole("textbox", { name: /What is your business called/ }),
     "Acme",
   );
   await userEvent.type(
-    screen.getByRole("textbox", { name: /Website/ }),
+    screen.getByRole("textbox", { name: /What is its website/ }),
     "https://acme.example",
   );
   await userEvent.click(
-    screen.getByRole("button", { name: "Create workspace" }),
+    screen.getByRole("button", { name: "Read my website" }),
   );
   expect(
     await screen.findByText(/Reading https:\/\/acme.example/),

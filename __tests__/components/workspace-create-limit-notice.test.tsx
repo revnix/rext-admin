@@ -53,13 +53,15 @@ async function submit(client = new QueryClient()) {
   );
   // Pasted, not typed key by key: typing the whole form took over 5 s on a busy CI runner.
   await userEvent.click(
-    screen.getByRole("textbox", { name: /Workspace name/ }),
+    screen.getByRole("textbox", { name: /What is your business called/ }),
   );
   await userEvent.paste("Second");
-  await userEvent.click(screen.getByRole("textbox", { name: /Website/ }));
+  await userEvent.click(
+    screen.getByRole("textbox", { name: /What is its website/ }),
+  );
   await userEvent.paste("https://second.example");
   await userEvent.click(
-    screen.getByRole("button", { name: "Create workspace" }),
+    screen.getByRole("button", { name: "Read my website" }),
   );
 }
 

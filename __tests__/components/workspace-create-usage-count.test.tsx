@@ -55,13 +55,15 @@ describe("The plan's workspace count during setup (D22)", () => {
 
     // Pasted, not typed key by key: typing the whole form took over 5 s on a busy CI runner.
     await userEvent.click(
-      screen.getByRole("textbox", { name: /Workspace name/ }),
+      screen.getByRole("textbox", { name: /What is your business called/ }),
     );
     await userEvent.paste("Acme");
-    await userEvent.click(screen.getByRole("textbox", { name: /Website/ }));
+    await userEvent.click(
+      screen.getByRole("textbox", { name: /What is its website/ }),
+    );
     await userEvent.paste("https://acme.example");
     await userEvent.click(
-      screen.getByRole("button", { name: "Create workspace" }),
+      screen.getByRole("button", { name: "Read my website" }),
     );
 
     // Typing, validation and the submit can take more than waitFor's default second on a busy CI
