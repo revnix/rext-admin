@@ -210,9 +210,9 @@ export function createWorkspacesNamespace(client: ApiClient) {
           : description
             ? {
                 description,
-                ...(brandName
-                  ? { brand_name: InputSanitizer.sanitizeText(brandName) }
-                  : {}),
+                // As typed: the form holds it to the name's characters, and a cleaner that
+                // rewrote it here would send another name than the one accepted.
+                ...(brandName ? { brand_name: brandName } : {}),
               }
             : {}),
       };
@@ -388,7 +388,8 @@ export function createWorkspacesNamespace(client: ApiClient) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           description: description.trim(),
-          ...(named ? { brand_name: InputSanitizer.sanitizeText(named) } : {}),
+          // As typed, trimmed: the form has checked it, and the backend checks it again.
+          ...(named ? { brand_name: named } : {}),
         }),
       });
 
