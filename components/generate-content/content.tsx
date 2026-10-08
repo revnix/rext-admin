@@ -50,6 +50,7 @@ import {
 } from "@/stores/workspace/use-workspace-context-store";
 import { useSaveGeneratedContent } from "@/hooks/use-content";
 import { useWorkspacePermission } from "@/hooks/use-permission";
+import { useShowAfter } from "@/hooks/use-show-after";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
 import {
@@ -427,6 +428,9 @@ function ContentEditorInner(props: ContentEditorProps) {
   // The whole first draft is on the page while the run goes on (task 773): every section is there,
   // so none is "being written" or "still to come".
   const showsDraft = writing && draft && !!body?.trim();
+  // The placeholder lines wait a moment, as every skeleton does (design/app-language.md §8): a
+  // restored run whose text is there at once, or a first word that comes promptly, shows none.
+  const showPlaceholderLines = useShowAfter(writing);
   // Its structure as layers, with what is written, being written and still to come (task 703).
   const structure = useMemo(
     () =>
@@ -1157,11 +1161,13 @@ function ContentEditorInner(props: ContentEditorProps) {
                       </header>
                     )}
                     {/* The introduction's place, shaped like the paragraph it will be. */}
-                    <div className="not-prose space-y-2.5" aria-hidden="true">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-11/12" />
-                      <Skeleton className="h-4 w-3/5" />
-                    </div>
+                    {showPlaceholderLines && (
+                      <div className="not-prose space-y-2.5" aria-hidden="true">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-11/12" />
+                        <Skeleton className="h-4 w-3/5" />
+                      </div>
+                    )}
                   </>
                 ) : (
                   <div className="not-prose space-y-4">
@@ -1252,13 +1258,15 @@ function ContentEditorInner(props: ContentEditorProps) {
                         <p className="sr-only">Still to come</p>
                         {/* Its text's place, shaped like the paragraph it will be (the
                             founder's feedback v3, task 838): a subsection's is shorter. */}
-                        <div className="space-y-2.5" aria-hidden="true">
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-11/12" />
-                          {entry.level === 2 && (
-                            <Skeleton className="h-4 w-4/5" />
-                          )}
-                        </div>
+                        {showPlaceholderLines && (
+                          <div className="space-y-2.5" aria-hidden="true">
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-11/12" />
+                            {entry.level === 2 && (
+                              <Skeleton className="h-4 w-4/5" />
+                            )}
+                          </div>
+                        )}
                       </li>
                     ))}
                 </ol>
