@@ -7,12 +7,18 @@ import { useSession } from "next-auth/react";
 import { useEffect, Suspense, useRef, useState } from "react";
 import {
   analytics,
+  forgetPostHog,
   isImpersonating,
   registerPostHog,
   takeOAuthLinking,
   unregisterPostHog,
 } from "@/lib/analytics";
 import { analyticsMode, onConsentChange } from "@/lib/analytics-consent";
+import {
+  type EventContext,
+  eventContext,
+  workspaceSlugOf,
+} from "@/lib/analytics-context";
 import {
   anonymousEvent,
   anonymousRoute,
@@ -23,6 +29,7 @@ import {
 } from "@/lib/analytics-redact";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { useWorkspaceStore } from "@/stores/workspace";
+import { useWorkspaceContextStore } from "@/stores/workspace/use-workspace-context-store";
 
 // ── Page-view tracker ─────────────────────────────────────────────────────────
 // Wrapped in Suspense because useSearchParams() requires it in App Router.
@@ -99,10 +106,24 @@ const PERSON_SETTLE_MS = 1500;
 /** Where the person's properties as last sent are remembered, to send them only when they change. */
 const PERSON_SENT_KEY = "rext-analytics-person";
 
+/**
+ * Puts the context on every event from here on. The workspace is taken off again on a page
+ * that has none; the plan and the role stay as they were while they are still loading, so an
+ * event sent meanwhile carries what the last page load knew.
+ */
+function applyContext(context: EventContext): void {
+  const known = Object.fromEntries(
+    Object.entries(context).filter(([, value]) => value !== null),
+  );
+  if (Object.keys(known).length > 0) posthog.register(known);
+  if (context.workspace_id === null) posthog.unregister("workspace_id");
+}
+
 function AnalyticsContextSync() {
   const { data: session } = useSession();
   const { workspaceSlug } = useParams<{ workspaceSlug?: string }>() ?? {};
   const workspaceId = useWorkspaceStore((state) => state.currentWorkspace?.id);
+  const storedSlug = useWorkspaceStore((state) => state.currentWorkspace?.slug);
   const workspaceCount = useWorkspaceStore(
     (state) => state.workspaceList.length,
   );
@@ -114,29 +135,29 @@ function AnalyticsContextSync() {
   const planStatus = plan?.status;
   const billingPeriod = plan?.billing_period;
   const trialEnds = plan?.trial_end_date;
-  const onWorkspacePage = Boolean(workspaceSlug);
 
   useEffect(() => {
-    if (onWorkspacePage && workspaceId) {
-      posthog.register({ workspace_id: workspaceId });
-    } else {
-      posthog.unregister("workspace_id");
-    }
-  }, [onWorkspacePage, workspaceId]);
-
-  useEffect(() => {
-    if (role) posthog.register({ role });
-  }, [role]);
-
-  useEffect(() => {
-    // Not known until the subscription has loaded: nothing is sent as "no plan" meanwhile.
-    if (!planName || !planStatus) return;
-    posthog.register({
-      plan: planName,
-      plan_status: planStatus,
-      billing_period: billingPeriod,
-    });
-  }, [planName, planStatus, billingPeriod]);
+    applyContext(
+      eventContext({
+        routeSlug: workspaceSlug,
+        workspace: { id: workspaceId, slug: storedSlug },
+        role,
+        subscription: {
+          plan_name: planName,
+          status: planStatus,
+          billing_period: billingPeriod,
+        },
+      }),
+    );
+  }, [
+    workspaceSlug,
+    workspaceId,
+    storedSlug,
+    role,
+    planName,
+    planStatus,
+    billingPeriod,
+  ]);
 
   // The person's own properties, sent together once they have settled: the plan and the
   // workspaces load one after the other, and two updates would each look new to posthog-js,
@@ -244,6 +265,10 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
   // set: the sync before the record, so that the record goes out under the person rather than an
   // anonymous id (siblings' effects run in order).
   const [mode, setMode] = useState<RunningMode | null>(null);
+  // The role, for the code below that runs outside a render.
+  const { data: session } = useSession();
+  const roleRef = useRef<string | undefined>(undefined);
+  roleRef.current = session?.user?.role;
 
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
@@ -291,6 +316,17 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         posthog.opt_in_capturing(
           explicit ? undefined : { captureEventName: false },
         );
+        // What every event carries, before the events held while the answer was awaited go
+        // out below: they belong to this person and this page like any other.
+        applyContext(
+          eventContext({
+            routeSlug: workspaceSlugOf(window.location.pathname),
+            workspace: useWorkspaceContextStore.getState().currentWorkspace,
+            role: roleRef.current,
+            subscription:
+              useSubscriptionStore.getState().subscription?.subscription,
+          }),
+        );
         // Wire posthog into the analytics singleton so analytics.track() etc. work
         registerPostHog({
           capture: (event, properties) => posthog.capture(event, properties),
@@ -316,6 +352,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
       stopListening();
+      forgetPostHog();
     };
   }, []);
 
