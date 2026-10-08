@@ -47,6 +47,16 @@ describe("errorProperties", () => {
     expect(JSON.stringify(sent)).not.toContain("ana@example.com");
   });
 
+  it("takes a status only from the API client's own error", () => {
+    const lookalike = Object.assign(new Error("x"), { statusCode: 500 });
+    expect(errorProperties(lookalike)).toEqual({ error_kind: "Error" });
+    const odd = Object.assign(new Error("x"), {
+      name: "ApiError",
+      statusCode: "500 for ana@example.com",
+    });
+    expect(errorProperties(odd)).toEqual({ error_kind: "ApiError" });
+  });
+
   it("drops a digest that is not a plain id", () => {
     const odd = Object.assign(new Error("x"), {
       digest: "see ana@example.com",

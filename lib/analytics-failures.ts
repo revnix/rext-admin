@@ -5,7 +5,6 @@
  * and never a part of an address that isn't one of the app's own words.
  */
 import { analytics } from "@/lib/analytics";
-import { ApiError } from "@/lib/api-client/core";
 
 /** A class from the code (`TypeError`, `ApiError`, `ChunkLoadError`): letters and digits only. */
 const CLASS = /^[A-Za-z][A-Za-z0-9]{0,39}$/;
@@ -19,6 +18,16 @@ export function errorKind(error: unknown): string {
 }
 
 /**
+ * The backend's status on the API client's own error (lib/api-client/core.ts), told by its shape:
+ * an error screen must not pull the API client in to say what it was shown.
+ */
+function statusOf(error: unknown): number | undefined {
+  if (!(error instanceof Error) || error.name !== "ApiError") return undefined;
+  const status = (error as { statusCode?: unknown }).statusCode;
+  return typeof status === "number" ? status : undefined;
+}
+
+/**
  * What an event says about an error: its class, the backend's status where it answered, and the
  * digest of a server error. Nothing else of it.
  */
@@ -28,9 +37,10 @@ export function errorProperties(error: unknown): {
   digest?: string;
 } {
   const digest = (error as { digest?: unknown } | null | undefined)?.digest;
+  const status = statusOf(error);
   return {
     error_kind: errorKind(error),
-    ...(ApiError.is(error) ? { status: error.statusCode } : {}),
+    ...(status !== undefined ? { status } : {}),
     ...(typeof digest === "string" && DIGEST.test(digest) ? { digest } : {}),
   };
 }
