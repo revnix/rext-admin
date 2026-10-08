@@ -2895,6 +2895,102 @@
         }
       }
     },
+    "/api/v1/user/analytics-consent": {
+      "get": {
+        "tags": [
+          "Authentication",
+          "user"
+        ],
+        "summary": "Get Analytics Consent",
+        "description": "The caller's stored answer on usage analytics.",
+        "operationId": "get_analytics_consent_api_v1_user_analytics_consent_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_AnalyticsConsentResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Authentication",
+          "user"
+        ],
+        "summary": "Update Analytics Consent",
+        "description": "Store what the caller's browser holds: their answer and their region.\n\nAn answer replaces the stored one. No answer (null) stores the region only and leaves a\nstored answer as it is: a browser that has forgotten a refusal must not undo it. The\nresponse is what is stored afterwards, so that browser can take the answer back.\n\nRefused while impersonating: the browser is then the admin's, and its answer and\nits region are not the customer's to have written on their account.",
+        "operationId": "update_analytics_consent_api_v1_user_analytics_consent_put",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAnalyticsConsentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_AnalyticsConsentResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/user/invitations/pending": {
       "get": {
         "tags": [
@@ -3165,6 +3261,29 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/status/banner": {
+      "get": {
+        "tags": [
+          "Status",
+          "Status"
+        ],
+        "summary": "Read Incident Banner",
+        "description": "The banner showing now, or ``active: false``.\n\n**Public on purpose** (no session, no permission): see this module's note. No database.",
+        "operationId": "read_incident_banner_api_v1_status_banner_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_IncidentBannerResponse_"
                 }
               }
             }
@@ -3646,6 +3765,76 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SuccessResponse_WorkspaceDeleteResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/pipeline/retry": {
+      "post": {
+        "tags": [
+          "Workspaces",
+          "workspaces"
+        ],
+        "summary": "Retry Workspace Pipeline",
+        "description": "Read the website again after the last run failed or was interrupted (the pipeline runs\ninside the API process, so a restart or a deploy ends it), or set up a workspace that was\nmade from a name alone: with a `description` in the body, the voice is drafted from it.\nReturns the new run's operation id for the SSE stream; GET /workspaces/{id} shows its\nstatus as `pipeline`.",
+        "operationId": "retry_workspace_pipeline_api_v1_workspaces__workspace_id__pipeline_retry_post",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/WorkspacePipelineRetryRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_WorkspacePipelineRetryResponse_"
                 }
               }
             }
@@ -6513,6 +6702,241 @@
         }
       }
     },
+    "/api/v1/content/{content_id}/versions": {
+      "get": {
+        "tags": [
+          "Content",
+          "content"
+        ],
+        "summary": "List Content Versions",
+        "description": "The article's versions, newest first, without their bodies.",
+        "operationId": "list_content_versions_api_v1_content__content_id__versions_get",
+        "parameters": [
+          {
+            "name": "content_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Content Id"
+            }
+          },
+          {
+            "name": "workspace_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_ContentVersionListResponse_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/content/{content_id}/versions/{version_id}": {
+      "get": {
+        "tags": [
+          "Content",
+          "content"
+        ],
+        "summary": "Get Content Version",
+        "description": "One version with its text, as the history shows it before a restore.",
+        "operationId": "get_content_version_api_v1_content__content_id__versions__version_id__get",
+        "parameters": [
+          {
+            "name": "content_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Content Id"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Version Id"
+            }
+          },
+          {
+            "name": "workspace_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_ContentVersionDetailResponse_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/content/{content_id}/versions/{version_id}/restore": {
+      "post": {
+        "tags": [
+          "Content",
+          "content"
+        ],
+        "summary": "Restore Content Version",
+        "description": "Put a version's text back on the article. The text as it stood is kept as a version\nfirst; the answer is the article, as a save of it answers. The body is optional: the text\nthe editor holds unsaved, kept as a version too before the restore, in one transaction.",
+        "operationId": "restore_content_version_api_v1_content__content_id__versions__version_id__restore_post",
+        "parameters": [
+          {
+            "name": "content_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Content Id"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Version Id"
+            }
+          },
+          {
+            "name": "workspace_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ContentVersionRestore"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Data"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_ContentResponse_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/roles/": {
       "get": {
         "tags": [
@@ -7729,6 +8153,50 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SuccessResponse_CreditBalanceResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/subscriptions/credits/history": {
+      "get": {
+        "tags": [
+          "Subscriptions",
+          "subscriptions"
+        ],
+        "summary": "Get Credit History",
+        "description": "The caller's credits added, deducted or reset by Rext support, newest first.\n\nEach change comes with its reason; who made it is always \"Rext support\", never\nan admin's name or email.",
+        "operationId": "get_credit_history_api_v1_subscriptions_credits_history_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_CreditHistoryResponse_"
                 }
               }
             }
@@ -10836,6 +11304,186 @@
         }
       }
     },
+    "/api/v1/admin/users/{user_id}/plan": {
+      "get": {
+        "tags": [
+          "Admin - User Plan",
+          "Admin - User Plan"
+        ],
+        "summary": "Get User Plan",
+        "description": "A user's plan and what a super admin may change it to (super admin only).\n\nReturns:\n- subscription: the plan now, its period, renewal and credits; null without one\n- change: whether the plan may be changed, and how a change is billed by default\n- trial_extension: whether the trial's end may be moved, and between which dates\n- plans: each plan with its list prices and, for each period, whether it can be\n  chosen, whether it is an upgrade or a downgrade, and each way it can be billed\n  with the month's credits it would leave\n- limits: the reason's shortest and longest length",
+        "operationId": "get_user_plan_api_v1_admin_users__user_id__plan_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_AdminUserPlanResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin - User Plan",
+          "Admin - User Plan"
+        ],
+        "summary": "Change User Plan",
+        "description": "Change a user's plan (super admin only).\n\nRequest Body:\n- plan_id: the plan to move to\n- billing_period: monthly or yearly\n- billing: next_renewal (nothing charged now, the new price from the next\n  renewal), charge_now (Lemon Squeezy invoices the prorated difference now; an\n  upgrade only) or not_billed (a user without a Lemon Squeezy subscription)\n- reason: why, kept with the audit entry\n\nThe plan changes at once, through Lemon Squeezy first for a subscription it\nbills, and the month's credits become the new plan's minus what was used this\nperiod. A trial, a failed renewal, a cancelled or lifetime subscription and a\nSuper Admin's account are refused. Every change is in the audit log.",
+        "operationId": "change_user_plan_api_v1_admin_users__user_id__plan_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminPlanChange"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_AdminPlanChangeResult_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{user_id}/trial": {
+      "post": {
+        "tags": [
+          "Admin - User Plan",
+          "Admin - User Plan"
+        ],
+        "summary": "Extend User Trial",
+        "description": "Move a user's trial to a later end (super admin only).\n\nRequest Body:\n- ends_at: the new end, later than the trial's own and within the limit the\n  plan options give\n- reason: why, kept with the audit entry\n\nOnly a trial this app runs: one Lemon Squeezy runs is ended or converted by it.",
+        "operationId": "extend_user_trial_api_v1_admin_users__user_id__trial_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminTrialExtension"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_AdminTrialExtensionResult_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/monitoring/system-health": {
       "get": {
         "tags": [
@@ -11171,6 +11819,218 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SuccessResponse_UsageTrendsResponseSchema_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/status/banner": {
+      "put": {
+        "tags": [
+          "Admin - Status",
+          "Admin - Status"
+        ],
+        "summary": "Set Incident Banner",
+        "description": "Switch the banner on, or replace the one showing.\n\n**Requires security.manage.**\n\n- 422 for an empty or over-long message, an unknown area, or a duration outside 15 minutes\n  to 24 hours.\n- 503 if the store that holds the banner can't be reached; no banner is showing then.",
+        "operationId": "set_incident_banner_api_v1_admin_status_banner_put",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IncidentBannerSetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_IncidentBannerResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin - Status",
+          "Admin - Status"
+        ],
+        "summary": "Clear Incident Banner",
+        "description": "Switch the banner off. Answers ``active: false`` whether or not one was showing.\n\n**Requires security.manage.** 503 if the store can't be reached: a banner may still show.",
+        "operationId": "clear_incident_banner_api_v1_admin_status_banner_delete",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_IncidentBannerResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{user_id}/credits": {
+      "get": {
+        "tags": [
+          "Admin - User Credits",
+          "Admin - User Credits"
+        ],
+        "summary": "Get User Credits",
+        "description": "A user's credits and the history of admin changes to them (super admin only).\n\nReturns:\n- credits: what the user can spend now: the month's credits, a promotion's\n  bonus and the credits admins added\n- limits: the most credits a change may add or deduct, and the reason's\n  shortest and longest length, for the form that sends one\n- grants: the credits admins added, with what is left, what a deduction\n  took back, the reason, who added them and the expiry\n- adjustments: every add, deduct and reset from the audit log, with the\n  balance before and after; newest first, at most 100 of each",
+        "operationId": "get_user_credits_api_v1_admin_users__user_id__credits_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_AdminUserCreditsResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin - User Credits",
+          "Admin - User Credits"
+        ],
+        "summary": "Adjust User Credits",
+        "description": "Add, deduct or reset a user's credits (super admin only).\n\nRequest Body:\n- action: add, deduct or reset\n- amount: credits to add or deduct, 1 to 100,000; left out for a reset\n- reason: why, 3 to 500 characters, shown to the customer\n- expires_at: only for an add: when the credits expire. Left out, they\n  last and are spent after the month's credits; with it, before them.\n\nA deduction takes what admins added first, then the month's credits, never\nbelow 0; when less is there than asked for, it takes what there is and\nsays so in ``amount``. A reset sets the month's credits to the plan's\namount (not on a trial). Every change is in the audit log.",
+        "operationId": "adjust_user_credits_api_v1_admin_users__user_id__credits_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminCreditAdjustment"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_AdminCreditAdjustmentResult_"
                 }
               }
             }
@@ -16086,53 +16946,6 @@
   },
   "components": {
     "schemas": {
-      "APIUsageMetric": {
-        "properties": {
-          "used": {
-            "type": "integer",
-            "title": "Used"
-          },
-          "limit": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Limit"
-          },
-          "percentage": {
-            "type": "number",
-            "title": "Percentage"
-          },
-          "unlimited": {
-            "type": "boolean",
-            "title": "Unlimited"
-          },
-          "reset_date": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Reset Date"
-          }
-        },
-        "type": "object",
-        "required": [
-          "used",
-          "percentage",
-          "unlimited"
-        ],
-        "title": "APIUsageMetric",
-        "description": "Schema for API usage metrics including reset date."
-      },
       "ActionCount": {
         "properties": {
           "action": {
@@ -16200,6 +17013,426 @@
         "example": {
           "email": "teammate@example.com"
         }
+      },
+      "AddedCredits": {
+        "properties": {
+          "credits": {
+            "type": "integer",
+            "title": "Credits",
+            "description": "Credits left of what was added"
+          },
+          "granted": {
+            "type": "integer",
+            "title": "Granted"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At",
+            "description": "ISO 8601, the soonest expiry; null when none expires"
+          }
+        },
+        "type": "object",
+        "required": [
+          "credits",
+          "granted"
+        ],
+        "title": "AddedCredits",
+        "description": "Credits Rext support added, live (`admin_credit_summary`, src/services/credit_grants.py)."
+      },
+      "AdminCreditAdjustment": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "add",
+              "deduct",
+              "reset"
+            ],
+            "title": "Action"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100000.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount",
+            "description": "Credits to add or deduct; left out for a reset"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason",
+            "description": "Why, shown to the customer"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At",
+            "description": "When added credits expire (in the future); only for an add. Left out, they last and are spent after the month's credits."
+          }
+        },
+        "type": "object",
+        "required": [
+          "action",
+          "reason"
+        ],
+        "title": "AdminCreditAdjustment",
+        "description": "Body for a super admin adding, deducting or resetting a user's credits.\n\nadd: a grant of ``amount`` credits, lasting unless ``expires_at`` is given.\ndeduct: ``amount`` credits, from what admins added first, then from the\nmonth's credits. reset: the month's credits back to the plan's amount (no\n``amount``).",
+        "example": {
+          "action": "add",
+          "amount": 150,
+          "reason": "Compensation for the outage on 6 October"
+        }
+      },
+      "AdminCreditAdjustmentEntry": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "action": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "balance_before": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Balance Before"
+          },
+          "balance_after": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Balance After"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At",
+            "description": "ISO 8601, an add's expiry"
+          },
+          "grant_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grant Id",
+            "description": "The grant an add made, by its id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "requested_amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested Amount"
+          },
+          "adjusted_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adjusted By"
+          },
+          "adjusted_by_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adjusted By Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "created_at"
+        ],
+        "title": "AdminCreditAdjustmentEntry"
+      },
+      "AdminCreditAdjustmentResult": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "requested_amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested Amount",
+            "description": "Null for a reset"
+          },
+          "amount": {
+            "type": "integer",
+            "title": "Amount",
+            "description": "Credits added or deducted (less than asked when less was there); for a reset, the change to the month's credits"
+          },
+          "balance_before": {
+            "type": "integer",
+            "title": "Balance Before"
+          },
+          "balance_after": {
+            "type": "integer",
+            "title": "Balance After"
+          },
+          "monthly_credits": {
+            "type": "integer",
+            "title": "Monthly Credits",
+            "description": "The month's credits after the change"
+          },
+          "admin_credits": {
+            "type": "integer",
+            "title": "Admin Credits",
+            "description": "Credits left of what admins added, after it"
+          },
+          "subscription_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subscription Id"
+          },
+          "grant_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grant Id",
+            "description": "The grant an add made"
+          },
+          "audit_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Audit Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action",
+          "amount",
+          "balance_before",
+          "balance_after",
+          "monthly_credits",
+          "admin_credits",
+          "subscription_id",
+          "audit_id"
+        ],
+        "title": "AdminCreditAdjustmentResult",
+        "description": "POST /admin/users/{user_id}/credits: what the change did."
+      },
+      "AdminCreditGrantEntry": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "amount": {
+            "type": "integer",
+            "title": "Amount"
+          },
+          "remaining": {
+            "type": "integer",
+            "title": "Remaining"
+          },
+          "forfeited": {
+            "type": "integer",
+            "title": "Forfeited",
+            "description": "Taken back by a deduction"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At",
+            "description": "Null: they last"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "subscription_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subscription Id"
+          },
+          "granted_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Granted By",
+            "description": "Null once that admin is deleted"
+          },
+          "granted_by_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Granted By Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "amount",
+          "remaining",
+          "forfeited",
+          "created_at",
+          "subscription_id"
+        ],
+        "title": "AdminCreditGrantEntry"
+      },
+      "AdminCreditLimits": {
+        "properties": {
+          "amount_max": {
+            "type": "integer",
+            "title": "Amount Max",
+            "description": "The most credits to add or deduct at once"
+          },
+          "reason_min": {
+            "type": "integer",
+            "title": "Reason Min",
+            "description": "The reason's shortest length, once trimmed"
+          },
+          "reason_max": {
+            "type": "integer",
+            "title": "Reason Max",
+            "description": "The reason's longest length"
+          }
+        },
+        "type": "object",
+        "required": [
+          "amount_max",
+          "reason_min",
+          "reason_max"
+        ],
+        "title": "AdminCreditLimits",
+        "description": "What a change may ask for. The dashboard's form reads them from here, so the\nlimits are written in one place (the model's constants)."
       },
       "AdminInvitationListResponse": {
         "properties": {
@@ -16529,6 +17762,456 @@
           "status": "pending"
         }
       },
+      "AdminPlanChange": {
+        "properties": {
+          "plan_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Plan Id"
+          },
+          "billing_period": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "yearly"
+            ],
+            "title": "Billing Period"
+          },
+          "billing": {
+            "type": "string",
+            "enum": [
+              "next_renewal",
+              "charge_now",
+              "not_billed"
+            ],
+            "title": "Billing"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Why, kept with the audit entry"
+          }
+        },
+        "type": "object",
+        "required": [
+          "plan_id",
+          "billing_period",
+          "billing",
+          "reason"
+        ],
+        "title": "AdminPlanChange",
+        "description": "Body for a super admin changing a user's plan (src/services/admin_plan_changes.py).\n\nThe plan changes at once. ``billing`` says what happens to the money:\n``next_renewal`` charges nothing now and the new price applies from the next\nrenewal; ``charge_now`` has Lemon Squeezy invoice the prorated difference now\n(an upgrade only); ``not_billed`` is for a user without a Lemon Squeezy\nsubscription. The reason's length is checked by the service, which sends its\nlimits with the options.",
+        "example": {
+          "billing": "next_renewal",
+          "billing_period": "monthly",
+          "plan_id": "0b9d2c1e-6d43-4f6f-9a0b-0d5b8e4c2a11",
+          "reason": "Moved to Growth as agreed on the call of 8 October"
+        }
+      },
+      "AdminPlanChangeResult": {
+        "properties": {
+          "subscription_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subscription Id"
+          },
+          "old_plan": {
+            "$ref": "#/components/schemas/AdminPlanRef"
+          },
+          "new_plan": {
+            "$ref": "#/components/schemas/AdminPlanRef"
+          },
+          "old_billing_period": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Old Billing Period"
+          },
+          "new_billing_period": {
+            "type": "string",
+            "title": "New Billing Period"
+          },
+          "billing": {
+            "type": "string",
+            "title": "Billing"
+          },
+          "monthly_credits_before": {
+            "type": "integer",
+            "title": "Monthly Credits Before"
+          },
+          "monthly_credits_after": {
+            "type": "integer",
+            "title": "Monthly Credits After"
+          },
+          "renews_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Renews At"
+          },
+          "audit_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Audit Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subscription_id",
+          "old_plan",
+          "new_plan",
+          "new_billing_period",
+          "billing",
+          "monthly_credits_before",
+          "monthly_credits_after",
+          "audit_id"
+        ],
+        "title": "AdminPlanChangeResult",
+        "description": "POST /admin/users/{user_id}/plan."
+      },
+      "AdminPlanChangeStanding": {
+        "properties": {
+          "allowed": {
+            "type": "boolean",
+            "title": "Allowed"
+          },
+          "refused_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refused Reason",
+            "description": "Why not, ready to show"
+          },
+          "default_billing": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Billing",
+            "description": "next_renewal, or not_billed without a Lemon Squeezy subscription"
+          }
+        },
+        "type": "object",
+        "required": [
+          "allowed"
+        ],
+        "title": "AdminPlanChangeStanding"
+      },
+      "AdminPlanChoice": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "price_monthly": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Monthly",
+            "description": "The list price, as \"89.00\""
+          },
+          "price_yearly": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Yearly"
+          },
+          "credits_per_month": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credits Per Month"
+          },
+          "periods": {
+            "items": {
+              "$ref": "#/components/schemas/AdminPlanPeriod"
+            },
+            "type": "array",
+            "title": "Periods"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "display_name",
+          "periods"
+        ],
+        "title": "AdminPlanChoice"
+      },
+      "AdminPlanLimits": {
+        "properties": {
+          "reason_min": {
+            "type": "integer",
+            "title": "Reason Min"
+          },
+          "reason_max": {
+            "type": "integer",
+            "title": "Reason Max"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason_min",
+          "reason_max"
+        ],
+        "title": "AdminPlanLimits"
+      },
+      "AdminPlanMode": {
+        "properties": {
+          "billing": {
+            "type": "string",
+            "title": "Billing",
+            "description": "next_renewal, charge_now or not_billed"
+          },
+          "plan_changes": {
+            "type": "string",
+            "title": "Plan Changes",
+            "description": "When the plan changes: always \"now\""
+          },
+          "monthly_credits_after": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Credits After",
+            "description": "The month's credits the change would leave"
+          }
+        },
+        "type": "object",
+        "required": [
+          "billing",
+          "plan_changes"
+        ],
+        "title": "AdminPlanMode",
+        "description": "One way a change to this plan and period can be billed."
+      },
+      "AdminPlanPeriod": {
+        "properties": {
+          "billing_period": {
+            "type": "string",
+            "title": "Billing Period"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "upgrade, downgrade or period_change"
+          },
+          "allowed": {
+            "type": "boolean",
+            "title": "Allowed"
+          },
+          "refused_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refused Reason"
+          },
+          "modes": {
+            "items": {
+              "$ref": "#/components/schemas/AdminPlanMode"
+            },
+            "type": "array",
+            "title": "Modes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "billing_period",
+          "kind",
+          "allowed",
+          "modes"
+        ],
+        "title": "AdminPlanPeriod"
+      },
+      "AdminPlanRef": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "display_name"
+        ],
+        "title": "AdminPlanRef"
+      },
+      "AdminPlanSubscription": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "plan_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Plan Id"
+          },
+          "plan_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Name"
+          },
+          "plan_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Display Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "is_trial": {
+            "type": "boolean",
+            "title": "Is Trial"
+          },
+          "billing_period": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Period"
+          },
+          "billed_by_provider": {
+            "type": "boolean",
+            "title": "Billed By Provider",
+            "description": "It has a Lemon Squeezy subscription"
+          },
+          "renews_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Renews At"
+          },
+          "trial_ends_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trial Ends At"
+          },
+          "monthly_credits": {
+            "type": "integer",
+            "title": "Monthly Credits",
+            "description": "The month's credits left now"
+          },
+          "credits_per_month": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credits Per Month"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "plan_id",
+          "status",
+          "is_trial",
+          "billed_by_provider",
+          "monthly_credits"
+        ],
+        "title": "AdminPlanSubscription",
+        "description": "The subscription whose plan would change."
+      },
       "AdminRefundRequestCreate": {
         "properties": {
           "lemonsqueezy_order_id": {
@@ -16564,6 +18247,207 @@
         ],
         "title": "AdminRefundRequestCreate",
         "description": "Body for an admin logging a refund a customer asked for by email.\n\nThe customer is taken from the order, not from this body: an admin cannot\nraise a request against someone who did not place the order."
+      },
+      "AdminTrialExtension": {
+        "properties": {
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ends At",
+            "description": "The trial's new end, later than its own"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Why, kept with the audit entry"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ends_at",
+          "reason"
+        ],
+        "title": "AdminTrialExtension",
+        "description": "Body for a super admin moving a trial's end to a later date."
+      },
+      "AdminTrialExtensionResult": {
+        "properties": {
+          "subscription_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subscription Id"
+          },
+          "trial_ended_at_before": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trial Ended At Before"
+          },
+          "trial_ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Trial Ends At"
+          },
+          "audit_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Audit Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subscription_id",
+          "trial_ends_at",
+          "audit_id"
+        ],
+        "title": "AdminTrialExtensionResult",
+        "description": "POST /admin/users/{user_id}/trial."
+      },
+      "AdminTrialExtensionStanding": {
+        "properties": {
+          "allowed": {
+            "type": "boolean",
+            "title": "Allowed"
+          },
+          "refused_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refused Reason"
+          },
+          "earliest_ends_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Earliest Ends At",
+            "description": "The new end is after this"
+          },
+          "latest_ends_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Ends At",
+            "description": "And no later than this"
+          }
+        },
+        "type": "object",
+        "required": [
+          "allowed"
+        ],
+        "title": "AdminTrialExtensionStanding"
+      },
+      "AdminUserCreditsResponse": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "credits": {
+            "$ref": "#/components/schemas/CreditBreakdown"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/AdminCreditLimits"
+          },
+          "grants": {
+            "items": {
+              "$ref": "#/components/schemas/AdminCreditGrantEntry"
+            },
+            "type": "array",
+            "title": "Grants"
+          },
+          "adjustments": {
+            "items": {
+              "$ref": "#/components/schemas/AdminCreditAdjustmentEntry"
+            },
+            "type": "array",
+            "title": "Adjustments"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "credits",
+          "limits",
+          "grants",
+          "adjustments"
+        ],
+        "title": "AdminUserCreditsResponse",
+        "description": "GET /admin/users/{user_id}/credits: the breakdown and the history, newest first."
+      },
+      "AdminUserPlanResponse": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "description": "The currency of the prices"
+          },
+          "subscription": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AdminPlanSubscription"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "change": {
+            "$ref": "#/components/schemas/AdminPlanChangeStanding"
+          },
+          "trial_extension": {
+            "$ref": "#/components/schemas/AdminTrialExtensionStanding"
+          },
+          "plans": {
+            "items": {
+              "$ref": "#/components/schemas/AdminPlanChoice"
+            },
+            "type": "array",
+            "title": "Plans"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/AdminPlanLimits"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "currency",
+          "change",
+          "trial_extension",
+          "plans",
+          "limits"
+        ],
+        "title": "AdminUserPlanResponse",
+        "description": "GET /admin/users/{user_id}/plan."
       },
       "AllowlistEntryCreateRequest": {
         "properties": {
@@ -16726,6 +18610,54 @@
           "total_count"
         ],
         "title": "AllowlistListResponse"
+      },
+      "AnalyticsConsentResponse": {
+        "properties": {
+          "answer": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "granted",
+                  "denied"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "eea",
+                  "other"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region"
+          },
+          "answered_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answered At"
+          }
+        },
+        "type": "object",
+        "title": "AnalyticsConsentResponse",
+        "description": "The stored answer."
       },
       "AnalyticsOverviewResponse": {
         "properties": {
@@ -20392,6 +22324,276 @@
         "title": "ContentUpdate",
         "description": "Schema for updating content with nested data"
       },
+      "ContentVersionDetailResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At",
+            "description": "When a later save of the same sitting last wrote into it"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContentVersionMaker"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null when the account is gone"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "generation, edit, restore or publish"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "word_count": {
+            "type": "integer",
+            "title": "Word Count",
+            "description": "Words of the introduction and the body"
+          },
+          "introduction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Introduction"
+          },
+          "body_markdown": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Markdown"
+          },
+          "body_html": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Html"
+          },
+          "images_data": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Images Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "source",
+          "title",
+          "word_count"
+        ],
+        "title": "ContentVersionDetailResponse",
+        "description": "Response for GET /content/{content_id}/versions/{version_id}."
+      },
+      "ContentVersionListResponse": {
+        "properties": {
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/ContentVersionSummary"
+            },
+            "type": "array",
+            "title": "Versions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "versions"
+        ],
+        "title": "ContentVersionListResponse",
+        "description": "Response for GET /content/{content_id}/versions: newest first, without bodies."
+      },
+      "ContentVersionMaker": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "ContentVersionMaker",
+        "description": "Who made a version."
+      },
+      "ContentVersionRestore": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "introduction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Introduction"
+          },
+          "body_markdown": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Markdown"
+          },
+          "body_html": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Html"
+          },
+          "images_data": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Images Data"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ContentVersionRestore",
+        "description": "The editor's unsaved text, sent with a restore so that it is kept in the history before\nthe version is put back. Every field is optional: send those the editor holds unsaved,\neach whole."
+      },
+      "ContentVersionSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At",
+            "description": "When a later save of the same sitting last wrote into it"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContentVersionMaker"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null when the account is gone"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "generation, edit, restore or publish"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "word_count": {
+            "type": "integer",
+            "title": "Word Count",
+            "description": "Words of the introduction and the body"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "source",
+          "title",
+          "word_count"
+        ],
+        "title": "ContentVersionSummary",
+        "description": "A version in the editor's history: the article's text as a save left it."
+      },
       "CreateAdminInvitationRequest": {
         "properties": {
           "email": {
@@ -20466,7 +22668,7 @@
           "current_credits": {
             "type": "integer",
             "title": "Current Credits",
-            "description": "This month's credits plus the live bonus"
+            "description": "This month's credits plus the live bonus and added credits"
           },
           "monthly_credits": {
             "type": "integer",
@@ -20476,6 +22678,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/CreditBonus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "added_credits": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AddedCredits"
               },
               {
                 "type": "null"
@@ -20604,6 +22816,294 @@
         ],
         "title": "CreditBonus",
         "description": "An offer's live credit grants, spent first (`bonus_summary`, src/services/credit_grants.py)."
+      },
+      "CreditBreakdown": {
+        "properties": {
+          "subscription_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subscription Id"
+          },
+          "plan_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Name"
+          },
+          "current_credits": {
+            "type": "integer",
+            "title": "Current Credits",
+            "description": "Everything spendable now"
+          },
+          "monthly_credits": {
+            "type": "integer",
+            "title": "Monthly Credits"
+          },
+          "credits_per_month": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credits Per Month"
+          },
+          "credits_reset_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credits Reset Date",
+            "description": "ISO 8601"
+          },
+          "bonus": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CreditBonus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "added_credits": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AddedCredits"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "period_adjustment": {
+            "type": "integer",
+            "title": "Period Adjustment",
+            "description": "What admins changed this period's monthly credits by (deductions negative)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "current_credits",
+          "monthly_credits",
+          "period_adjustment"
+        ],
+        "title": "CreditBreakdown",
+        "description": "What a user can spend now, by where it comes from."
+      },
+      "CreditHistoryResponse": {
+        "properties": {
+          "grants": {
+            "items": {
+              "$ref": "#/components/schemas/CustomerCreditGrantEntry"
+            },
+            "type": "array",
+            "title": "Grants"
+          },
+          "adjustments": {
+            "items": {
+              "$ref": "#/components/schemas/CustomerCreditAdjustmentEntry"
+            },
+            "type": "array",
+            "title": "Adjustments"
+          }
+        },
+        "type": "object",
+        "required": [
+          "grants",
+          "adjustments"
+        ],
+        "title": "CreditHistoryResponse",
+        "description": "GET /subscriptions/credits/history: the caller's credits changed by Rext support."
+      },
+      "CustomerCreditAdjustmentEntry": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "action": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "balance_before": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Balance Before"
+          },
+          "balance_after": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Balance After"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At",
+            "description": "ISO 8601, an add's expiry"
+          },
+          "grant_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grant Id",
+            "description": "The grant an add made, by its id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "adjusted_by": {
+            "type": "string",
+            "title": "Adjusted By",
+            "description": "Always \"Rext support\""
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "adjusted_by"
+        ],
+        "title": "CustomerCreditAdjustmentEntry"
+      },
+      "CustomerCreditGrantEntry": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "amount": {
+            "type": "integer",
+            "title": "Amount"
+          },
+          "remaining": {
+            "type": "integer",
+            "title": "Remaining"
+          },
+          "forfeited": {
+            "type": "integer",
+            "title": "Forfeited",
+            "description": "Taken back by a deduction"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At",
+            "description": "Null: they last"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "granted_by": {
+            "type": "string",
+            "title": "Granted By",
+            "description": "Always \"Rext support\""
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "amount",
+          "remaining",
+          "forfeited",
+          "created_at",
+          "granted_by"
+        ],
+        "title": "CustomerCreditGrantEntry"
       },
       "DataExportRequest": {
         "properties": {
@@ -20972,6 +23472,17 @@
             ],
             "title": "Favicon Url",
             "description": "The site's favicon, fetched once and kept in the media store"
+          },
+          "pipeline": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkspacePipelineState"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The latest pipeline run; null when none is recorded"
           },
           "created_at": {
             "type": "string",
@@ -22360,6 +24871,110 @@
         ],
         "title": "ImpersonationStopResponse"
       },
+      "IncidentBannerResponse": {
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "areas": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "generation",
+                "keyword_research",
+                "publishing",
+                "billing",
+                "sign_in"
+              ]
+            },
+            "type": "array",
+            "title": "Areas"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active"
+        ],
+        "title": "IncidentBannerResponse",
+        "description": "The banner as every signed-in user reads it. `active` false means there is none."
+      },
+      "IncidentBannerSetRequest": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 280,
+            "minLength": 1,
+            "title": "Message",
+            "description": "What is happening, in plain text. Shown as text, never as markup."
+          },
+          "areas": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "generation",
+                "keyword_research",
+                "publishing",
+                "billing",
+                "sign_in"
+              ]
+            },
+            "type": "array",
+            "maxItems": 5,
+            "title": "Areas",
+            "description": "What is affected; may be empty."
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "maximum": 1440.0,
+            "minimum": 15.0,
+            "title": "Duration Minutes",
+            "description": "How long the banner shows unless it is switched off first (15 minutes to 24 hours).",
+            "default": 60
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "IncidentBannerSetRequest",
+        "description": "Body for PUT /api/v1/admin/status/banner."
+      },
       "InvitationAcceptResponse": {
         "properties": {
           "membership_id": {
@@ -23175,82 +25790,6 @@
         ],
         "title": "LibraryItemDeleted",
         "description": "A keyword removed from the caller's library: its store key."
-      },
-      "LicenseItem": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "license_key": {
-            "type": "string",
-            "title": "License Key"
-          },
-          "product_name": {
-            "type": "string",
-            "title": "Product Name"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "activation_limit": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Activation Limit"
-          },
-          "activation_count": {
-            "type": "integer",
-            "title": "Activation Count"
-          },
-          "activated_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Activated At"
-          },
-          "expires_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Expires At"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "license_key",
-          "product_name",
-          "status",
-          "activation_count",
-          "created_at"
-        ],
-        "title": "LicenseItem",
-        "description": "Schema for a license item."
       },
       "LoginDetail": {
         "properties": {
@@ -26135,6 +28674,52 @@
         "title": "PlanCatalogResponse",
         "description": "The public plan catalogue: plans, the trial, the credit costs and the active offer."
       },
+      "PlanChangeChargeRow": {
+        "properties": {
+          "invoice_id": {
+            "type": "string",
+            "title": "Invoice Id"
+          },
+          "amount": {
+            "type": "integer",
+            "title": "Amount"
+          },
+          "refunded_amount": {
+            "type": "integer",
+            "title": "Refunded Amount",
+            "default": 0
+          },
+          "outstanding_amount": {
+            "type": "integer",
+            "title": "Outstanding Amount"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "paid_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invoice_id",
+          "amount",
+          "outstanding_amount",
+          "currency"
+        ],
+        "title": "PlanChangeChargeRow",
+        "description": "A plan change the customer paid for, which a refund of their order doesn't give back.\n\nLemon Squeezy charges it as a subscription invoice, not as an order. Amounts in cents."
+      },
       "PlanDeleteResponse": {
         "properties": {
           "deleted_plan_id": {
@@ -26201,10 +28786,6 @@
           "max_members_per_workspace": {
             "type": "integer",
             "title": "Max Members Per Workspace"
-          },
-          "max_api_calls_per_month": {
-            "type": "integer",
-            "title": "Max Api Calls Per Month"
           },
           "is_active": {
             "type": "boolean",
@@ -26289,7 +28870,6 @@
           "price_yearly",
           "max_workspaces",
           "max_members_per_workspace",
-          "max_api_calls_per_month",
           "is_active",
           "is_public",
           "created_at",
@@ -27494,6 +30074,14 @@
             "type": "boolean",
             "title": "Awaiting Processing",
             "default": false
+          },
+          "plan_change_charges": {
+            "items": {
+              "$ref": "#/components/schemas/PlanChangeChargeRow"
+            },
+            "type": "array",
+            "title": "Plan Change Charges",
+            "default": []
           }
         },
         "type": "object",
@@ -27696,6 +30284,14 @@
             "type": "integer",
             "title": "Refundable Amount",
             "default": 0
+          },
+          "plan_change_charges": {
+            "items": {
+              "$ref": "#/components/schemas/PlanChangeChargeRow"
+            },
+            "type": "array",
+            "title": "Plan Change Charges",
+            "default": []
           }
         },
         "type": "object",
@@ -29976,10 +32572,6 @@
             ],
             "title": "Ends At"
           },
-          "current_api_calls": {
-            "type": "integer",
-            "title": "Current Api Calls"
-          },
           "usage_reset_date": {
             "anyOf": [
               {
@@ -30077,20 +32669,6 @@
             "type": "array",
             "title": "Plans",
             "description": "Available plans list"
-          },
-          "licenses": {
-            "items": {
-              "$ref": "#/components/schemas/LicenseItem"
-            },
-            "type": "array",
-            "title": "Licenses",
-            "description": "User licenses"
-          },
-          "activations_count": {
-            "type": "integer",
-            "title": "Activations Count",
-            "description": "Total active license activations",
-            "default": 0
           }
         },
         "type": "object",
@@ -30100,8 +32678,7 @@
           "plan_id",
           "status",
           "billing_period",
-          "start_date",
-          "current_api_calls"
+          "start_date"
         ],
         "title": "SubscriptionDetails",
         "description": "Standardized schema for subscription details."
@@ -30217,13 +32794,6 @@
             "description": "Maximum members per workspace (-1 = unlimited)",
             "default": 5
           },
-          "max_api_calls_per_month": {
-            "type": "integer",
-            "minimum": -1.0,
-            "title": "Max Api Calls Per Month",
-            "description": "Maximum API calls per month (-1 = unlimited)",
-            "default": 10000
-          },
           "is_active": {
             "type": "boolean",
             "title": "Is Active",
@@ -30293,7 +32863,6 @@
           },
           "is_active": true,
           "is_public": true,
-          "max_api_calls_per_month": 30000,
           "max_members_per_workspace": 8,
           "max_workspaces": 3,
           "name": "startup",
@@ -30403,19 +32972,6 @@
             ],
             "title": "Max Members Per Workspace",
             "description": "Maximum members per workspace (-1 = unlimited)"
-          },
-          "max_api_calls_per_month": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "minimum": -1.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Max Api Calls Per Month",
-            "description": "Maximum API calls per month (-1 = unlimited)"
           },
           "is_active": {
             "anyOf": [
@@ -30810,6 +33366,58 @@
           "success": true
         }
       },
+      "SuccessResponse_AdminCreditAdjustmentResult_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Always true for success responses",
+            "default": true
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Human-readable message describing the result"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta",
+            "description": "Response metadata"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AdminCreditAdjustmentResult",
+            "description": "The response payload data"
+          },
+          "error": {
+            "type": "null",
+            "title": "Error",
+            "description": "Always null for success responses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "meta",
+          "data"
+        ],
+        "title": "SuccessResponse[AdminCreditAdjustmentResult]",
+        "example": {
+          "data": {},
+          "message": "Operation completed successfully",
+          "meta": {
+            "processing_time_ms": 250,
+            "request_id": "req_1234567890_abc123",
+            "timestamp": "2024-01-15T10:30:00.123456Z",
+            "version": "1.0"
+          },
+          "success": true
+        }
+      },
       "SuccessResponse_AdminInvitationListResponse_": {
         "properties": {
           "success": {
@@ -30902,6 +33510,214 @@
           "data"
         ],
         "title": "SuccessResponse[AdminInvitationResponse]",
+        "example": {
+          "data": {},
+          "message": "Operation completed successfully",
+          "meta": {
+            "processing_time_ms": 250,
+            "request_id": "req_1234567890_abc123",
+            "timestamp": "2024-01-15T10:30:00.123456Z",
+            "version": "1.0"
+          },
+          "success": true
+        }
+      },
+      "SuccessResponse_AdminPlanChangeResult_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Always true for success responses",
+            "default": true
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Human-readable message describing the result"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta",
+            "description": "Response metadata"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AdminPlanChangeResult",
+            "description": "The response payload data"
+          },
+          "error": {
+            "type": "null",
+            "title": "Error",
+            "description": "Always null for success responses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "meta",
+          "data"
+        ],
+        "title": "SuccessResponse[AdminPlanChangeResult]",
+        "example": {
+          "data": {},
+          "message": "Operation completed successfully",
+          "meta": {
+            "processing_time_ms": 250,
+            "request_id": "req_1234567890_abc123",
+            "timestamp": "2024-01-15T10:30:00.123456Z",
+            "version": "1.0"
+          },
+          "success": true
+        }
+      },
+      "SuccessResponse_AdminTrialExtensionResult_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Always true for success responses",
+            "default": true
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Human-readable message describing the result"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta",
+            "description": "Response metadata"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AdminTrialExtensionResult",
+            "description": "The response payload data"
+          },
+          "error": {
+            "type": "null",
+            "title": "Error",
+            "description": "Always null for success responses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "meta",
+          "data"
+        ],
+        "title": "SuccessResponse[AdminTrialExtensionResult]",
+        "example": {
+          "data": {},
+          "message": "Operation completed successfully",
+          "meta": {
+            "processing_time_ms": 250,
+            "request_id": "req_1234567890_abc123",
+            "timestamp": "2024-01-15T10:30:00.123456Z",
+            "version": "1.0"
+          },
+          "success": true
+        }
+      },
+      "SuccessResponse_AdminUserCreditsResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Always true for success responses",
+            "default": true
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Human-readable message describing the result"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta",
+            "description": "Response metadata"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AdminUserCreditsResponse",
+            "description": "The response payload data"
+          },
+          "error": {
+            "type": "null",
+            "title": "Error",
+            "description": "Always null for success responses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "meta",
+          "data"
+        ],
+        "title": "SuccessResponse[AdminUserCreditsResponse]",
+        "example": {
+          "data": {},
+          "message": "Operation completed successfully",
+          "meta": {
+            "processing_time_ms": 250,
+            "request_id": "req_1234567890_abc123",
+            "timestamp": "2024-01-15T10:30:00.123456Z",
+            "version": "1.0"
+          },
+          "success": true
+        }
+      },
+      "SuccessResponse_AdminUserPlanResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Always true for success responses",
+            "default": true
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Human-readable message describing the result"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta",
+            "description": "Response metadata"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AdminUserPlanResponse",
+            "description": "The response payload data"
+          },
+          "error": {
+            "type": "null",
+            "title": "Error",
+            "description": "Always null for success responses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "meta",
+          "data"
+        ],
+        "title": "SuccessResponse[AdminUserPlanResponse]",
         "example": {
           "data": {},
           "message": "Operation completed successfully",
@@ -31058,6 +33874,58 @@
           "data"
         ],
         "title": "SuccessResponse[AllowlistListResponse]",
+        "example": {
+          "data": {},
+          "message": "Operation completed successfully",
+          "meta": {
+            "processing_time_ms": 250,
+            "request_id": "req_1234567890_abc123",
+            "timestamp": "2024-01-15T10:30:00.123456Z",
+            "version": "1.0"
+          },
+          "success": true
+        }
+      },
+      "SuccessResponse_AnalyticsConsentResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Always true for success responses",
+            "default": true
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Human-readable message describing the result"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta",
+            "description": "Response metadata"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AnalyticsConsentResponse",
+            "description": "The response payload data"
+          },
+          "error": {
+            "type": "null",
+            "title": "Error",
+            "description": "Always null for success responses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "meta",
+          "data"
+        ],
+        "title": "SuccessResponse[AnalyticsConsentResponse]",
         "example": {
           "data": {},
           "message": "Operation completed successfully",
@@ -32422,6 +35290,110 @@
           "success": true
         }
       },
+      "SuccessResponse_ContentVersionDetailResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Always true for success responses",
+            "default": true
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Human-readable message describing the result"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta",
+            "description": "Response metadata"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ContentVersionDetailResponse",
+            "description": "The response payload data"
+          },
+          "error": {
+            "type": "null",
+            "title": "Error",
+            "description": "Always null for success responses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "meta",
+          "data"
+        ],
+        "title": "SuccessResponse[ContentVersionDetailResponse]",
+        "example": {
+          "data": {},
+          "message": "Operation completed successfully",
+          "meta": {
+            "processing_time_ms": 250,
+            "request_id": "req_1234567890_abc123",
+            "timestamp": "2024-01-15T10:30:00.123456Z",
+            "version": "1.0"
+          },
+          "success": true
+        }
+      },
+      "SuccessResponse_ContentVersionListResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Always true for success responses",
+            "default": true
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Human-readable message describing the result"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta",
+            "description": "Response metadata"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ContentVersionListResponse",
+            "description": "The response payload data"
+          },
+          "error": {
+            "type": "null",
+            "title": "Error",
+            "description": "Always null for success responses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "meta",
+          "data"
+        ],
+        "title": "SuccessResponse[ContentVersionListResponse]",
+        "example": {
+          "data": {},
+          "message": "Operation completed successfully",
+          "meta": {
+            "processing_time_ms": 250,
+            "request_id": "req_1234567890_abc123",
+            "timestamp": "2024-01-15T10:30:00.123456Z",
+            "version": "1.0"
+          },
+          "success": true
+        }
+      },
       "SuccessResponse_CreditBalanceResponse_": {
         "properties": {
           "success": {
@@ -32462,6 +35434,58 @@
           "data"
         ],
         "title": "SuccessResponse[CreditBalanceResponse]",
+        "example": {
+          "data": {},
+          "message": "Operation completed successfully",
+          "meta": {
+            "processing_time_ms": 250,
+            "request_id": "req_1234567890_abc123",
+            "timestamp": "2024-01-15T10:30:00.123456Z",
+            "version": "1.0"
+          },
+          "success": true
+        }
+      },
+      "SuccessResponse_CreditHistoryResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Always true for success responses",
+            "default": true
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Human-readable message describing the result"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta",
+            "description": "Response metadata"
+          },
+          "data": {
+            "$ref": "#/components/schemas/CreditHistoryResponse",
+            "description": "The response payload data"
+          },
+          "error": {
+            "type": "null",
+            "title": "Error",
+            "description": "Always null for success responses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "meta",
+          "data"
+        ],
+        "title": "SuccessResponse[CreditHistoryResponse]",
         "example": {
           "data": {},
           "message": "Operation completed successfully",
@@ -33712,6 +36736,58 @@
           "data"
         ],
         "title": "SuccessResponse[ImpersonationStopResponse]",
+        "example": {
+          "data": {},
+          "message": "Operation completed successfully",
+          "meta": {
+            "processing_time_ms": 250,
+            "request_id": "req_1234567890_abc123",
+            "timestamp": "2024-01-15T10:30:00.123456Z",
+            "version": "1.0"
+          },
+          "success": true
+        }
+      },
+      "SuccessResponse_IncidentBannerResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Always true for success responses",
+            "default": true
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Human-readable message describing the result"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta",
+            "description": "Response metadata"
+          },
+          "data": {
+            "$ref": "#/components/schemas/IncidentBannerResponse",
+            "description": "The response payload data"
+          },
+          "error": {
+            "type": "null",
+            "title": "Error",
+            "description": "Always null for success responses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "meta",
+          "data"
+        ],
+        "title": "SuccessResponse[IncidentBannerResponse]",
         "example": {
           "data": {},
           "message": "Operation completed successfully",
@@ -39756,6 +42832,58 @@
           "success": true
         }
       },
+      "SuccessResponse_WorkspacePipelineRetryResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Always true for success responses",
+            "default": true
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Human-readable message describing the result"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta",
+            "description": "Response metadata"
+          },
+          "data": {
+            "$ref": "#/components/schemas/WorkspacePipelineRetryResponse",
+            "description": "The response payload data"
+          },
+          "error": {
+            "type": "null",
+            "title": "Error",
+            "description": "Always null for success responses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "meta",
+          "data"
+        ],
+        "title": "SuccessResponse[WorkspacePipelineRetryResponse]",
+        "example": {
+          "data": {},
+          "message": "Operation completed successfully",
+          "meta": {
+            "processing_time_ms": 250,
+            "request_id": "req_1234567890_abc123",
+            "timestamp": "2024-01-15T10:30:00.123456Z",
+            "version": "1.0"
+          },
+          "success": true
+        }
+      },
       "SuccessResponse_WorkspaceResponseSchema_": {
         "properties": {
           "success": {
@@ -40365,6 +43493,42 @@
           "unsubscribed_from"
         ],
         "title": "UnsubscribeResponse"
+      },
+      "UpdateAnalyticsConsentRequest": {
+        "properties": {
+          "answer": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "granted",
+                  "denied"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer",
+            "description": "The person's answer on usage analytics, or null for none yet"
+          },
+          "region": {
+            "type": "string",
+            "enum": [
+              "eea",
+              "other"
+            ],
+            "title": "Region",
+            "description": "Where the person was asked from: the EEA asks first, elsewhere doesn't"
+          }
+        },
+        "type": "object",
+        "required": [
+          "answer",
+          "region"
+        ],
+        "title": "UpdateAnalyticsConsentRequest",
+        "description": "What the person's browser holds: their answer, and where they were asked from."
       },
       "UpdateNotificationPreferencesRequest": {
         "properties": {
@@ -41094,9 +44258,6 @@
           "members": {
             "$ref": "#/components/schemas/UsageMetric"
           },
-          "api_calls": {
-            "$ref": "#/components/schemas/APIUsageMetric"
-          },
           "meta": {
             "additionalProperties": true,
             "type": "object",
@@ -41107,7 +44268,6 @@
         "required": [
           "workspaces",
           "members",
-          "api_calls",
           "meta"
         ],
         "title": "UsageMetricsResponse",
@@ -41360,7 +44520,7 @@
         "properties": {
           "users": {
             "items": {
-              "$ref": "#/components/schemas/UserResponse"
+              "$ref": "#/components/schemas/UserListRow"
             },
             "type": "array",
             "title": "Users"
@@ -41391,6 +44551,180 @@
           "pagination"
         ],
         "title": "UserListResponse"
+      },
+      "UserListRow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "User UUID"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email",
+            "description": "User email"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name",
+            "description": "Full name"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name",
+            "description": "Display name"
+          },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url",
+            "description": "Profile avatar URL"
+          },
+          "language": {
+            "type": "string",
+            "title": "Language",
+            "description": "Language preference",
+            "default": "en"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone",
+            "description": "Timezone preference",
+            "default": "UTC"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Account status"
+          },
+          "email_verified": {
+            "type": "boolean",
+            "title": "Email Verified",
+            "description": "Whether email is verified"
+          },
+          "last_login_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Login At",
+            "description": "Last login timestamp"
+          },
+          "login_count": {
+            "type": "integer",
+            "title": "Login Count",
+            "description": "Total login count",
+            "default": 0
+          },
+          "initials": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Initials",
+            "description": "User initials (e.g., 'JD')"
+          },
+          "display_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Role",
+            "description": "Primary or highest role for display",
+            "default": "User"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At",
+            "description": "Last update timestamp"
+          },
+          "plan_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Display Name"
+          },
+          "is_trial": {
+            "type": "boolean",
+            "title": "Is Trial",
+            "default": false
+          },
+          "billing_period": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Period"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "status",
+          "email_verified",
+          "created_at"
+        ],
+        "title": "UserListRow",
+        "description": "A user in the admin's list, with the plan the row shows (FB2.29): from the newest\nsubscription that grants access, and empty without one."
       },
       "UserLoginHistoryResponse": {
         "properties": {
@@ -44041,6 +47375,85 @@
         ],
         "title": "WorkspacePermanentDeleteResponse"
       },
+      "WorkspacePipelineRetryRequest": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "For a workspace with no website: what the business sells and to whom, 20 to 1,000 characters once trimmed. It is kept as the brand voice's `about` and the voice is drafted from it. This is how a workspace made from a name alone is set up"
+          }
+        },
+        "type": "object",
+        "title": "WorkspacePipelineRetryRequest",
+        "description": "The optional body of POST /workspaces/{id}/pipeline/retry."
+      },
+      "WorkspacePipelineRetryResponse": {
+        "properties": {
+          "operation_id": {
+            "type": "string",
+            "title": "Operation Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "operation_id"
+        ],
+        "title": "WorkspacePipelineRetryResponse"
+      },
+      "WorkspacePipelineState": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "not_started",
+              "running",
+              "completed",
+              "failed",
+              "interrupted"
+            ],
+            "title": "Status",
+            "description": "not_started: the workspace was made from a name alone and nothing has been read or drafted yet. interrupted: a restart or a deploy ended the run; POST .../pipeline/retry runs it again"
+          },
+          "operation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation Id",
+            "description": "The run's SSE operation id"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At",
+            "description": "When the run started"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "WorkspacePipelineState",
+        "description": "The latest run of the workspace pipeline that reads the website (creation, retry, refresh)"
+      },
       "WorkspaceResponseSchema": {
         "properties": {
           "id": {
@@ -44100,6 +47513,17 @@
             ],
             "title": "Favicon Url",
             "description": "The site's favicon, fetched once and kept in the media store"
+          },
+          "pipeline": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkspacePipelineState"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The latest pipeline run; null when none is recorded"
           },
           "created_at": {
             "type": "string",
@@ -44250,18 +47674,36 @@
             "description": "IANA timezone identifier (e.g., 'America/New_York', 'UTC')"
           },
           "url": {
-            "type": "string",
-            "maxLength": 2083,
-            "minLength": 1,
-            "format": "uri",
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2083,
+                "minLength": 1,
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Url",
-            "description": "Workspace URL"
+            "description": "The website to read. With neither a website nor a `description` the workspace is made from its name alone and set up later (its pipeline reads `not_started`)"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "For a business with no website yet: what it sells and to whom, in the owner's words, 20 to 1,000 characters once trimmed. The brand voice is drafted from it, and it is kept as the brand voice's `about`. Ignored when `url` is sent"
           }
         },
         "type": "object",
         "required": [
-          "name",
-          "url"
+          "name"
         ],
         "title": "WorkspaceSchema",
         "example": {
