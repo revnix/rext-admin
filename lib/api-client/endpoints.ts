@@ -372,6 +372,15 @@ export const ENDPOINTS = {
   },
 
   /**
+   * The incident banner (rext-control#728): every signed-in user reads `read`; a super admin
+   * switches it on (PUT) and off (DELETE) at `admin`.
+   */
+  INCIDENT_BANNER: {
+    read: "/api/v1/status/banner",
+    admin: "/api/v1/admin/status/banner",
+  },
+
+  /**
    * Admin Analytics Endpoints
    * @note Platform-level analytics for subscriptions and invitations
    * @note Requires super admin role

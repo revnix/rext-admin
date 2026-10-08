@@ -39,6 +39,7 @@ import { createAdminInvitationsNamespace } from "./admin-invitations";
 import { createAdminRefundsNamespace } from "./admin-refunds";
 import { createAdminWebhooksNamespace } from "./admin-webhooks";
 import { createAccountRecoveryNamespace } from "./account-recovery";
+import { createIncidentBannerNamespace } from "./incident-banner";
 import { createOnboardingNamespace } from "./onboarding";
 
 import { createContentNamespace } from "./content";
@@ -100,6 +101,7 @@ function createApiClient() {
     adminInvitations: createAdminInvitationsNamespace(client),
     accountAllowlist: createAdminAccountAllowlistNamespace(client),
     accountRecovery: createAccountRecoveryNamespace(client),
+    incidentBanner: createIncidentBannerNamespace(client),
 
     // Settings namespaces
     notifications: createNotificationsNamespace(client),

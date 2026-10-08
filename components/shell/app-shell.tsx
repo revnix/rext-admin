@@ -20,6 +20,7 @@ import { useNotificationStore } from "@/stores/notification-store";
 import { useWorkspaceStore } from "@/stores/workspace";
 import { AppHeader } from "./app-header";
 import { AppSidebar } from "./app-sidebar";
+import { IncidentBanner } from "./incident-banner";
 import { MobileBottomBar } from "./mobile-bottom-bar";
 import { useGenerateShortcut } from "./use-generate-shortcut";
 import { useShellNavigation } from "./use-shell-navigation";
@@ -81,6 +82,8 @@ export function AppShell({
       <SidebarInset className="pb-(--bottom-bar-height) lg:pb-0">
         <AppHeader />
         <ImpersonationBanner />
+        {/* While something is failing for everyone (a super admin's switch); nothing otherwise. */}
+        <IncidentBanner />
         <ShellBillingBanner />
         {/* Asked once, where the law asks for it; a band like the one above, so it covers nothing. */}
         <AnalyticsConsentPrompt />
