@@ -104,7 +104,7 @@ describe("Setting up a workspace that is there already", () => {
       screen.queryByRole("textbox", { name: /What is your business called/ }),
     ).toBeNull();
     expect(
-      screen.getByRole("textbox", { name: /What is its website/ }),
+      screen.getByRole("textbox", { name: /What is your website/ }),
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Skip for now" })).toBeNull();
     // It has somewhere to go back to.
@@ -114,7 +114,7 @@ describe("Setting up a workspace that is there already", () => {
   it("saves the website, then reads it, and follows that run", async () => {
     open();
     await userEvent.type(
-      screen.getByRole("textbox", { name: /What is its website/ }),
+      screen.getByRole("textbox", { name: /What is your website/ }),
       "lunabakery.com",
     );
 
@@ -137,7 +137,7 @@ describe("Setting up a workspace that is there already", () => {
       screen.getByRole("button", { name: "I don't have a website yet" }),
     );
     await userEvent.type(
-      screen.getByRole("textbox", { name: /What does the business do/ }),
+      screen.getByRole("textbox", { name: /What does your business do/ }),
       "We bake sourdough for cafes in Leeds.",
     );
 
@@ -169,7 +169,7 @@ describe("Setting up a workspace that is there already", () => {
     // The wait, following the run that is under way: no form to fill in again.
     await waitFor(() => expect(connected).toContain("op-under-way"));
     expect(
-      screen.queryByRole("textbox", { name: /What does the business do/ }),
+      screen.queryByRole("textbox", { name: /What does your business do/ }),
     ).toBeNull();
     expect(
       screen.queryByRole("button", { name: "Draft my brand voice" }),
@@ -181,7 +181,7 @@ describe("Setting up a workspace that is there already", () => {
   it("sends none of the create form's events, and keeps no draft for the tab", async () => {
     open();
     await userEvent.type(
-      screen.getByRole("textbox", { name: /What is its website/ }),
+      screen.getByRole("textbox", { name: /What is your website/ }),
       "lunabakery.com",
     );
     await userEvent.click(

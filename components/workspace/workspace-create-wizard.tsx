@@ -679,7 +679,8 @@ export function WorkspaceCreateWizard({
   let main: ReactNode;
   if (step === 0) {
     main = (
-      <div className="space-y-6">
+      // A column, so that the way past the form can come first on a phone (below).
+      <div className="flex flex-col gap-6">
         {planCount && (
           <div className="space-y-2">
             <p className="num text-table text-muted-foreground">
@@ -788,7 +789,11 @@ export function WorkspaceCreateWizard({
             <FieldController
               control={form.control}
               name="description"
-              label="What does the business do?"
+              label={
+                existing
+                  ? "What does your business do?"
+                  : "What does the business do?"
+              }
               description="What it sells and who buys it, in a sentence or two. For example: We sell hand-forged kitchen knives to home cooks. We draft the brand voice from this, and you can change every word of it in the review."
               maxLength={DESCRIPTION_LIMITS.max}
               required
@@ -811,7 +816,9 @@ export function WorkspaceCreateWizard({
             <FieldController
               control={form.control}
               name="url"
-              label="What is its website?"
+              label={
+                existing ? "What is your website?" : "What is its website?"
+              }
               // The address that will be read, once what is typed makes one: "mysite.com" is
               // enough, and the form says where it goes.
               description={
@@ -855,9 +862,13 @@ export function WorkspaceCreateWizard({
             </button>
           </p>
         </FormShell>
-        {/* A first workspace needs none of this to begin with: one plain way past the form. */}
+        {/* A first workspace needs none of this to begin with: one plain way past the form.
+            Under the button where there is room for it; on a phone the button and anything
+            under it sit below the first screen and behind the tab bar, so there it comes first,
+            where someone looking for a way on will see it (rext-control task 905: the newcomer
+            who opened this form eight times and touched nothing was on a phone 360 wide). */}
         {noneYet && (
-          <p className="text-table text-muted-foreground">
+          <p className="order-first text-table text-muted-foreground lg:order-none">
             Not now?{" "}
             <button
               data-rec="show"
