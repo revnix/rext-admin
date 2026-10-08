@@ -218,9 +218,9 @@ describe("a step refused before its stream opens", () => {
       }),
     );
 
-    const failure = await firstEvent("/api/generate/t1/resume").catch(
-      (error) => error,
-    );
+    const failure = (await firstEvent("/api/generate/t1/resume").catch(
+      (error: unknown) => error,
+    )) as RunStreamError;
     expect(failure).toBeInstanceOf(RunStreamError);
     expect(failure.message).toBe(
       "This article's run is no longer here. Start a new one.",
