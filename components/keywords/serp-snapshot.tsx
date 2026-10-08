@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 export function SerpSnapshot({
   results,
   heading = "Top search results",
+  label,
   intro,
   kinds = false,
   keyphrase,
@@ -32,6 +33,8 @@ export function SerpSnapshot({
   results: readonly SerpResult[];
   /** Null when the pane around it already names it. */
   heading?: string | null;
+  /** The list's name for assistive technology when it shows no heading: the words above it. */
+  label?: string;
   /** Under the heading: what the list is and why it matters, in a sentence or two. */
   intro?: ReactNode;
   /** The kinds of pages among the results, counted in a line above them, and each result's kind
@@ -48,7 +51,7 @@ export function SerpSnapshot({
   return (
     <section
       data-slot="serp-snapshot"
-      aria-label={heading ?? "Top search results"}
+      aria-label={heading ?? label ?? "Top search results"}
       className={cn("flex flex-col gap-3", className)}
     >
       {heading && (

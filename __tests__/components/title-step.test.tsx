@@ -26,7 +26,7 @@ jest.mock("@/components/keywords/serp-snapshot", () => ({
   },
 }));
 
-const PANE = "How the top ten title it";
+const PANE = "Top search results";
 
 const TITLES = [
   "How to Choose an SEO Agency: A Guide for Owners 2026", // 52
@@ -206,14 +206,29 @@ const pane = () => screen.getByRole("complementary", { name: PANE });
 // Under 1024 px its lower part follows Continue.
 const below = () => screen.getByRole("region", { name: PANE });
 
-it("says what the panel is for, and what the top ten's titles have in common", () => {
+it("says in plain words what the panel is, what its facts are and what its list is (FB3.3)", () => {
   renderStep();
 
   expect(
     within(pane()).getByRole("heading", { level: 2, name: PANE }),
   ).toBeInTheDocument();
+  // What the list is, for someone who has never seen it: whose pages, for which keyword, and why.
   expect(
-    within(pane()).getByText(/^Your title will sit among these/),
+    within(pane()).getByText(
+      "The pages on the first page of search results for “seo agency” right now, with the titles they use. Your article will sit among them: see what their titles have in common, then match it or stand out.",
+    ),
+  ).toBeInTheDocument();
+  expect(
+    within(pane()).getByRole("heading", {
+      level: 3,
+      name: "What their titles have in common",
+    }),
+  ).toBeInTheDocument();
+  expect(
+    within(pane()).getByRole("heading", {
+      level: 3,
+      name: "The pages, in the order they rank",
+    }),
   ).toBeInTheDocument();
   const fact = (term: string) =>
     within(pane()).getByText(term, { selector: "dt" }).nextElementSibling;
@@ -228,7 +243,7 @@ it("says what the panel is for, and what the top ten's titles have in common", (
     "“small” in 3 of 4; also “business”",
   );
   expect(pane()).toHaveTextContent(
-    "From the search this run analysed. The keyword is in bold.",
+    "From the search this run analysed. A title opens its page. The keyword is in bold.",
   );
 });
 
@@ -237,6 +252,9 @@ it("leaves out the keyword fact and the comparison without a keyphrase", () => {
 
   expect(within(pane()).queryByText("Keyword")).not.toBeInTheDocument();
   expect(within(pane()).getByText("Length")).toBeInTheDocument();
+  expect(pane()).toHaveTextContent(
+    "The pages on the first page of search results for this keyword right now",
+  );
   expect(pane()).not.toHaveTextContent("The keyword is in bold.");
   expect(pane()).not.toHaveTextContent("the keyword,");
 });
@@ -278,6 +296,8 @@ it("lists the top ten with the keyword, the lengths and the letter marks", () =>
   const props = mockShown[0];
   expect(props.results).toEqual(GATE.serp_titles);
   expect(props.heading).toBeNull();
+  // Named by the words above it, not by the panel's own name a second time.
+  expect(props.label).toBe("The pages, in the order they rank");
   expect(props.keyphrase).toBe("seo agency");
   expect(props.marks).toBe(true);
   const measure = props.measure as (title: string) => unknown;
@@ -303,9 +323,13 @@ it("has no panel when the run has no search results", () => {
 it("puts the facts above the titles under 1024 px, and the rest after Continue, with no sheet", () => {
   renderStep();
 
-  // Above the titles, on narrow screens only: a link down to the panel, and the facts.
+  // Above the titles, on narrow screens only: a link down to the panel that says what the facts
+  // under it are, and the facts.
   const link = screen.getByRole("link", { name: PANE });
   expect(link).toHaveAttribute("href", "#top-ten-titles");
+  expect(link.parentElement).toHaveTextContent(
+    "Top search results: what their titles have in common",
+  );
   const first = link.parentElement?.parentElement as HTMLElement;
   expect(first).toHaveClass("lg:hidden");
   expect(

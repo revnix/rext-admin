@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Meter } from "@/components/ui/meter";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   comparePick,
   measureTitle,
@@ -57,9 +58,15 @@ interface TitleStepProps {
   isRegenerating?: boolean;
 }
 
-/** The panel's name, and the heading the link above the titles jumps to under 1024 px. */
-const PANE_TITLE = "How the top ten title it";
+/**
+ * The panel's name, in the words the Select keyword step uses for the same results, and the heading
+ * the link above the titles jumps to under 1024 px.
+ */
+const PANE_TITLE = "Top search results";
 const PANE_HEADING_ID = "top-ten-titles";
+/** What the facts are, and what the list under them is, for a reader who doesn't know the panel yet. */
+const FACTS_TITLE = "What their titles have in common";
+const RESULTS_TITLE = "The pages, in the order they rank";
 
 /**
  * Step 4, Title (plans/app/E-workflow.md §4): the five candidates as a list, each with a small score
@@ -116,6 +123,7 @@ export function TitleStep({
       <SerpSnapshot
         results={serpTitles}
         heading={null}
+        label={RESULTS_TITLE}
         keyphrase={focusKeyphrase}
         measure={(title) => measureTitle(title, focusKeyphrase)}
         marks
@@ -152,11 +160,7 @@ export function TitleStep({
 
       {facts && (
         <div className="mb-6 space-y-2 lg:hidden">
-          <p className="text-table">
-            <a href={`#${PANE_HEADING_ID}`} className="link">
-              {PANE_TITLE}
-            </a>
-          </p>
+          <FactsLink />
           <TopTenFacts facts={facts} keyphrase={focusKeyphrase} />
         </div>
       )}
@@ -351,8 +355,10 @@ export function TitleStep({
 /**
  * Step 4 while its titles are written (rext-control#694, the second pass): the step's own layout,
  * filling in. Each title takes its row when the model has written it, with its score; the one being
- * written and the ones to come hold their places. The side pane holds the run's stages over the top
- * ten, which the run already has. Nothing here acts: the step takes over with the checked set.
+ * written shows its words so far, and the ones to come are skeletons shaped like the card
+ * (rext-control#835: never an empty row). The side pane holds the run's stages over the top search
+ * results, which the run already has, or their shape until it does. Nothing here acts: the step
+ * takes over with the checked set.
  */
 export function TitleStepFilling({
   instruction = "Select a title",
@@ -387,6 +393,7 @@ export function TitleStepFilling({
     <SerpSnapshot
       results={results}
       heading={null}
+      label={RESULTS_TITLE}
       keyphrase={keyphrase}
       measure={(title) => measureTitle(title, keyphrase)}
       marks
@@ -412,11 +419,7 @@ export function TitleStepFilling({
 
       {facts && (
         <div className="mb-6 space-y-2 lg:hidden">
-          <p className="text-table">
-            <a href={`#${PANE_HEADING_ID}`} className="link">
-              {PANE_TITLE}
-            </a>
-          </p>
+          <FactsLink />
           <TopTenFacts facts={facts} keyphrase={keyphrase} />
         </div>
       )}
@@ -430,40 +433,60 @@ export function TitleStepFilling({
             className="flex items-start gap-3 rounded-md border border-border bg-card p-4"
           >
             {/* Where the step's radio will be. */}
-            <span
-              aria-hidden="true"
-              className={cn(
-                "mt-1 size-4 shrink-0 rounded-full border border-border",
-                row.state !== "written" && "border-dashed",
-              )}
-            />
+            {row.state === "written" ? (
+              <span
+                aria-hidden="true"
+                className="mt-1 size-4 shrink-0 rounded-full border border-border"
+              />
+            ) : (
+              <Skeleton
+                aria-hidden="true"
+                className="mt-1 size-4 rounded-full"
+              />
+            )}
             <div className="min-w-0 flex-1 space-y-2">
-              <p
-                className={cn(
-                  "text-base",
-                  row.state === "next"
-                    ? "text-muted-foreground"
-                    : "text-foreground",
-                )}
-              >
-                {row.state === "written" ? (
+              {row.state === "written" ? (
+                <p className="text-base text-foreground">
                   <KeyphraseText text={row.title} keyphrase={keyphrase} />
-                ) : (
-                  // A title just begun has no words yet: its place stands in.
-                  row.title.trim() || titlePlace(index)
-                )}
-                {row.state === "writing" && row.title.trim() && (
+                </p>
+              ) : row.state === "writing" && row.title.trim() ? (
+                // The words so far, as the model writes them.
+                <p className="text-base text-foreground">
+                  {row.title}
                   <span className="text-muted-foreground" aria-hidden="true">
                     …
                   </span>
-                )}
-              </p>
+                </p>
+              ) : (
+                // No words yet (a row to come carries its place as its title): a bar where the title
+                // will be, and its place said for a screen reader.
+                <>
+                  <span className="sr-only">
+                    {row.state === "next" ? row.title : titlePlace(index)}
+                  </span>
+                  <Skeleton
+                    aria-hidden="true"
+                    className={cn("h-5", TITLE_BARS[index % TITLE_BARS.length])}
+                  />
+                </>
+              )}
               {row.state === "written" ? (
                 <ScoreLine score={scoreTitle(row.title, keyphrase)} />
               ) : (
-                <p className="text-caption text-muted-foreground">
-                  {row.state === "writing" ? "Being written" : "Next"}
-                </p>
+                // Where the score and its three checks will be.
+                <>
+                  <span className="sr-only">
+                    {row.state === "writing" ? "Being written" : "Next"}
+                  </span>
+                  <div
+                    aria-hidden="true"
+                    className="flex flex-wrap gap-x-3 gap-y-1"
+                  >
+                    <Skeleton className="h-3.5 w-24" />
+                    <Skeleton className="h-3.5 w-32" />
+                    <Skeleton className="h-3.5 w-24 max-sm:hidden" />
+                  </div>
+                </>
               )}
               {row.recommended && (
                 <div className="flex flex-wrap items-center gap-2">
@@ -525,10 +548,12 @@ export function TitleStepFilling({
         // The same space above as the heading beside it.
         <div className="space-y-6 pt-3">
           {progress}
-          {facts && (
+          {facts ? (
             <TopTenPanel facts={facts} showFacts keyphrase={keyphrase} pick="">
               {topTen}
             </TopTenPanel>
+          ) : (
+            <TopTenSkeleton />
           )}
         </div>
       }
@@ -566,18 +591,75 @@ function TopTenPanel({
           {PANE_TITLE}
         </h2>
         <p className="text-table text-muted-foreground">
-          Your title will sit among these on the first page of results. Their
-          wording, length and keyword placement show what searchers already
-          click, so you can match it or stand out.
+          The pages on the first page of search results for{" "}
+          {keyphrase ? `“${keyphrase}”` : "this keyword"} right now, with the
+          titles they use. Your article will sit among them: see what their
+          titles have in common, then match it or stand out.
         </p>
       </div>
-      {showFacts && <TopTenFacts facts={facts} keyphrase={keyphrase} />}
+      {showFacts && (
+        <div className="space-y-2">
+          <h3 className="text-label text-foreground">{FACTS_TITLE}</h3>
+          <TopTenFacts facts={facts} keyphrase={keyphrase} />
+        </div>
+      )}
       {pick && <YourPick title={pick} facts={facts} keyphrase={keyphrase} />}
-      {children}
+      <div className="space-y-2">
+        <h3 className="text-label text-foreground">{RESULTS_TITLE}</h3>
+        {children}
+      </div>
       <p className="text-caption text-muted-foreground">
-        From the search this run analysed.
+        From the search this run analysed. A title opens its page.
         {keyphrase && " The keyword is in bold."}
       </p>
+    </div>
+  );
+}
+
+/** Under 1024 px, above the titles: what the facts under it are, and the way to the pages themselves. */
+function FactsLink() {
+  return (
+    <p className="text-table text-muted-foreground">
+      <a href={`#${PANE_HEADING_ID}`} className="link">
+        {PANE_TITLE}
+      </a>
+      : {FACTS_TITLE.toLowerCase()}
+    </p>
+  );
+}
+
+/** How wide each waiting title's bar is: uneven, as five titles are. */
+const TITLE_BARS = ["w-11/12", "w-4/5", "w-10/12", "w-3/4", "w-5/6"];
+
+/**
+ * The panel's shape, while the search results it is made from aren't here yet: its heading and
+ * line, the facts and the first results.
+ */
+function TopTenSkeleton() {
+  return (
+    <div className="flex flex-col gap-3">
+      <span className="sr-only">The top search results are being read.</span>
+      <div aria-hidden="true" className="flex flex-col gap-3">
+        <Skeleton className="h-5 w-40" />
+        <div className="space-y-1.5">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+        </div>
+        <div className="space-y-2.5 rounded-md border border-border bg-card p-3">
+          <Skeleton className="h-4 w-11/12" />
+          <Skeleton className="h-4 w-4/5" />
+          <Skeleton className="h-4 w-3/4" />
+        </div>
+        {TITLE_BARS.map((width) => (
+          <div key={width} className="flex gap-3 py-1">
+            <Skeleton className="size-4" />
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <Skeleton className={cn("h-4", width)} />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

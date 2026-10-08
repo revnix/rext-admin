@@ -149,17 +149,19 @@ describe("the Title step while its titles are written", () => {
   const run = { phase: "titles" as const, stages: startStages("titles", 1) };
   const rowsFor = (findings: RunFindings) =>
     fillTitleRows(describeRun(run, findings, { keyword: KEYWORD }));
-  const renderStep = (findings: RunFindings) =>
+  const renderStep = (findings: RunFindings, shown = results) =>
     render(
       <TitleStepFilling
         context={[KEYWORD, "informational", "How-to guide"]}
         rows={rowsFor(findings)}
         keyphrase={KEYWORD}
-        results={results}
+        results={shown}
         progress={stagesNode}
         strip={stripNode}
       />,
     );
+  const skeletons = (within_: HTMLElement) =>
+    within_.querySelectorAll('[data-slot="skeleton"]');
   const titles = () =>
     within(screen.getByRole("list", { name: "Titles, being written" }))
       .getAllByRole("listitem")
@@ -223,6 +225,44 @@ describe("the Title step while its titles are written", () => {
     expect(rows[2]).toHaveTextContent("Third titleNext");
   });
 
+  it("shows a title to come as a skeleton shaped like its card, never as an empty row (FB3.3)", () => {
+    renderStep({
+      drafts: [
+        {
+          title: "Vegetable Garden Planner: Map Your Beds in One Afternoon",
+          complete: true,
+          recommended: false,
+          reason: null,
+        },
+        {
+          title: "How to Use a Vegetable Garden",
+          complete: false,
+          recommended: false,
+          reason: null,
+        },
+      ],
+    });
+    const rows = within(
+      screen.getByRole("list", { name: "Titles, being written" }),
+    ).getAllByRole("listitem");
+    // A written title is all there: nothing stands in for it.
+    expect(skeletons(rows[0])).toHaveLength(0);
+    // The one being written shows its words so far, over bars where its score will be.
+    expect(
+      within(rows[1]).getByText(/How to Use a Vegetable Garden/),
+    ).toBeVisible();
+    expect(skeletons(rows[1]).length).toBeGreaterThan(1);
+    // One to come: a bar for the title, the radio and the score, and its place and state said
+    // for a screen reader only, not shown as words on an otherwise empty card.
+    expect(skeletons(rows[2]).length).toBeGreaterThan(3);
+    expect(within(rows[2]).getByText("Third title")).toHaveClass("sr-only");
+    expect(within(rows[2]).getByText("Next")).toHaveClass("sr-only");
+    expect(within(rows[1]).getByText("Being written")).toHaveClass("sr-only");
+    for (const bar of skeletons(rows[2])) {
+      expect(bar.closest("[aria-hidden='true']")).not.toBeNull();
+    }
+  });
+
   it("names the place of a title just begun, which has no words yet", () => {
     renderStep({
       drafts: [
@@ -241,12 +281,28 @@ describe("the Title step while its titles are written", () => {
   it("has the top ten beside the titles from the start, under the run's stages", () => {
     renderStep({});
     const pane = screen.getByRole("complementary", {
-      name: "How the top ten title it",
+      name: "Top search results",
     });
     expect(within(pane).getByText("The run's stages")).toBeVisible();
     expect(
       within(pane).getByText(/Garden Planner: Plan Your Vegetable Garden/),
     ).toBeVisible();
+    expect(skeletons(pane)).toHaveLength(0);
+  });
+
+  it("holds the panel's shape under the stages until the search results are there (FB3.3)", () => {
+    renderStep({}, []);
+    const pane = screen.getByRole("complementary", {
+      name: "Top search results",
+    });
+    expect(within(pane).getByText("The run's stages")).toBeVisible();
+    expect(skeletons(pane).length).toBeGreaterThan(8);
+    expect(
+      within(pane).getByText("The top search results are being read."),
+    ).toHaveClass("sr-only");
+    expect(
+      within(pane).queryByRole("heading", { name: "Top search results" }),
+    ).toBeNull();
   });
 });
 
