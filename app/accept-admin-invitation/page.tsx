@@ -154,6 +154,40 @@ export default function AcceptAdminInvitationPage() {
     );
   }
 
+  // Acceptance complete. It comes before the invalid card: once accepted, the link is used, and a
+  // second reading of it (the window focused again) must not say "invalid" to the person it just
+  // let in.
+  if (acceptanceComplete) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface">
+        <Card className="w-full max-w-md border-success-200">
+          <CardHeader>
+            <div className="flex items-center justify-center mb-4">
+              <div className="rounded-full bg-success-50 p-3">
+                <CheckCircle2 className="h-8 w-8 text-success-600" />
+              </div>
+            </div>
+            <CardTitle className="text-center">Invitation Accepted!</CardTitle>
+            <CardDescription className="text-center">
+              You now have{" "}
+              {adminRoleLabel(
+                acceptMutation.data?.admin_role ||
+                  validationData?.admin_role ||
+                  "admin",
+              )}{" "}
+              access to the platform
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center text-sm text-muted-foreground">
+              Redirecting to admin dashboard...
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // Invalid token
   if (validationError || !validationData?.valid) {
     return (
@@ -182,33 +216,6 @@ export default function AcceptAdminInvitationPage() {
               Return Home
             </Button>
           </CardFooter>
-        </Card>
-      </div>
-    );
-  }
-
-  // Acceptance complete
-  if (acceptanceComplete) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-surface">
-        <Card className="w-full max-w-md border-success-200">
-          <CardHeader>
-            <div className="flex items-center justify-center mb-4">
-              <div className="rounded-full bg-success-50 p-3">
-                <CheckCircle2 className="h-8 w-8 text-success-600" />
-              </div>
-            </div>
-            <CardTitle className="text-center">Invitation Accepted!</CardTitle>
-            <CardDescription className="text-center">
-              You now have {adminRoleLabel(validationData.admin_role)} access to
-              the platform
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center text-sm text-muted-foreground">
-              Redirecting to admin dashboard...
-            </div>
-          </CardContent>
         </Card>
       </div>
     );
