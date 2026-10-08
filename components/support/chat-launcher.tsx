@@ -16,12 +16,17 @@ const NOT_HERE = [
  * The Chat button on every signed-in page (task 711): at desktop widths, bottom right, above the
  * generation dock when it shows. It opens the support chat, which loads on that first click only.
  * On a phone the bottom edge is the bar's and the dock's, so the chat stays in Help and the
- * account menu. A dot says a reply hasn't been read.
+ * account menu. A dot says a reply hasn't been read. While the chat's box is open the button
+ * steps aside: Crisp's own round button to close it takes that corner.
  */
 export function ChatLauncher() {
   const chat = useSupportChat();
   const pathname = usePathname() ?? "";
-  if (!chat.available || NOT_HERE.some((route) => route.test(pathname))) {
+  if (
+    !chat.available ||
+    chat.isOpen ||
+    NOT_HERE.some((route) => route.test(pathname))
+  ) {
     return null;
   }
 

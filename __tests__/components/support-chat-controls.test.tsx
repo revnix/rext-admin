@@ -6,7 +6,7 @@ import userEvent from "@testing-library/user-event";
 
 const open = jest.fn();
 const openVisitor = jest.fn(async () => true);
-let chat = { available: true, open, unread: 0 };
+let chat = { available: true, open, unread: 0, isOpen: false };
 let pathname = "/w/acme/content";
 
 jest.mock("@/hooks/use-support-chat", () => ({
@@ -24,7 +24,7 @@ import { VisitorChatLink } from "@/components/support/visitor-chat-link";
 beforeEach(() => {
   open.mockReset();
   openVisitor.mockClear();
-  chat = { available: true, open, unread: 0 };
+  chat = { available: true, open, unread: 0, isOpen: false };
   pathname = "/w/acme/content";
   process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID =
     "00000000-0000-4000-8000-000000000000";
@@ -52,7 +52,7 @@ describe("the Chat button", () => {
   });
 
   it("says a reply is unread", () => {
-    chat = { available: true, open, unread: 2 };
+    chat = { available: true, open, unread: 2, isOpen: false };
     render(<ChatLauncher />);
 
     expect(
@@ -71,8 +71,16 @@ describe("the Chat button", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it("steps aside while the chat's box is open", () => {
+    // Crisp's own round button to close the box takes that corner.
+    chat = { available: true, open, unread: 0, isOpen: true };
+    const { container } = render(<ChatLauncher />);
+
+    expect(container).toBeEmptyDOMElement();
+  });
+
   it("is not shown where the chat isn't offered", () => {
-    chat = { available: false, open, unread: 0 };
+    chat = { available: false, open, unread: 0, isOpen: false };
     const { container } = render(<ChatLauncher />);
 
     expect(container).toBeEmptyDOMElement();

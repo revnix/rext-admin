@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { impersonationQueries } from "@/lib/query-keys";
 import {
+  onSupportChatOpenChange,
   onSupportChatUnread,
   openSupportChat,
   resumeSupportChat,
@@ -48,5 +49,9 @@ export function useSupportChat() {
     return stop;
   }, [available]);
 
-  return { available, open, unread: available ? unread : 0 };
+  // While the chat's box is open, Crisp's own button to close it sits in the Chat button's corner.
+  const [isOpen, setIsOpen] = useState(false);
+  useEffect(() => onSupportChatOpenChange(setIsOpen), []);
+
+  return { available, open, unread: available ? unread : 0, isOpen };
 }
