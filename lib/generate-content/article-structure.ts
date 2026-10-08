@@ -41,6 +41,13 @@ const same = (a: string, b: string) => {
   return x !== "" && x === y;
 };
 
+/**
+ * Whether two headings read the same (numbering, marks and case aside). For finding a listed
+ * heading on the page: one with no words at all (an emoji) compares by its text.
+ */
+export const sameHeading = (a: string, b: string) =>
+  same(a, b) || a.trim() === b.trim();
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 

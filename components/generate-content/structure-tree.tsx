@@ -1,11 +1,16 @@
 import { Check, Circle } from "lucide-react";
-import type { StructureEntry } from "@/lib/generate-content/article-structure";
+import {
+  type StructureEntry,
+  sameHeading,
+} from "@/lib/generate-content/article-structure";
 import { cn } from "@/lib/utils";
 
 /**
  * The article's structure as layers (task 703): each main section with its "H2" mark, its
  * subsections indented under a guide line with "H3". While the article is being written, each row
- * also says where it stands: written, being written, or still to come. A row jumps to its heading.
+ * also says where it stands: written, being written, or still to come. A row jumps to its heading:
+ * `onPick` gets the heading and which of the headings reading the same it is (0 for the first),
+ * since two sections may share one.
  */
 export function StructureTree({
   entries,
@@ -15,7 +20,7 @@ export function StructureTree({
   entries: StructureEntry[];
   /** The article is still being written: show each row's state. */
   showState?: boolean;
-  onPick?: (heading: string) => void;
+  onPick?: (heading: string, occurrence: number) => void;
 }) {
   if (entries.length === 0) return null;
   return (
@@ -37,7 +42,16 @@ export function StructureTree({
                 type="button"
                 disabled={waiting}
                 aria-current={writing ? "step" : undefined}
-                onClick={() => onPick?.(entry.heading)}
+                onClick={() =>
+                  onPick?.(
+                    entry.heading,
+                    entries
+                      .slice(0, index)
+                      .filter((earlier) =>
+                        sameHeading(earlier.heading, entry.heading),
+                      ).length,
+                  )
+                }
                 className={cn(
                   "flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left",
                   waiting

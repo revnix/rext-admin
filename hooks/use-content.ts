@@ -177,6 +177,31 @@ export function useAutosaveContent() {
 }
 
 /**
+ * Saves an article the Generate flow has just written, before the full-screen editor opens on it
+ * (task 706). The backend keeps one row for a run, so the save lands on the run's own article. No
+ * toast and no retry: the page says in its own words when the editor couldn't be opened.
+ */
+export function useSaveGeneratedContent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      workspaceId,
+      data,
+    }: {
+      workspaceId: string;
+      data: Record<string, unknown>;
+    }) => apiClient.content.save(workspaceId, data),
+    retry: false,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["content", variables.workspaceId],
+      });
+    },
+  });
+}
+
+/**
  * Hook to schedule content for future publication
  */
 export function useScheduleContent() {
