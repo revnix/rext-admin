@@ -21,6 +21,8 @@ import {
   redactUrl,
   STORED_ADDRESS_OPTIONS,
 } from "@/lib/analytics-redact";
+import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useWorkspaceStore } from "@/stores/workspace";
 
 // ── Page-view tracker ─────────────────────────────────────────────────────────
 // Wrapped in Suspense because useSearchParams() requires it in App Router.
@@ -80,6 +82,68 @@ function PostHogAuthSync() {
       resetIdentity();
     }
   }, [status, session]);
+
+  return null;
+}
+
+// ── What every event carries ─────────────────────────────────────────────────
+/**
+ * The workspace, the plan and the role on every event, and the plan on the person, so a funnel
+ * can be split by plan or followed inside one workspace without each caller sending them (and
+ * forgetting to). Set once here whenever one of them changes; posthog-js adds them to every event
+ * from then on, page views included. The workspace is the one on screen, so an account page (no
+ * workspace in its address) carries none.
+ */
+function AnalyticsContextSync() {
+  const { data: session } = useSession();
+  const { workspaceSlug } = useParams<{ workspaceSlug?: string }>() ?? {};
+  const workspaceId = useWorkspaceStore((state) => state.currentWorkspace?.id);
+  const workspaceCount = useWorkspaceStore(
+    (state) => state.workspaceList.length,
+  );
+  const plan = useSubscriptionStore(
+    (state) => state.subscription?.subscription,
+  );
+  const role = session?.user?.role;
+  const planName = plan?.plan_name;
+  const planStatus = plan?.status;
+  const billingPeriod = plan?.billing_period;
+  const trialEnds = plan?.trial_end_date;
+  const onWorkspacePage = Boolean(workspaceSlug);
+
+  useEffect(() => {
+    if (onWorkspacePage && workspaceId) {
+      posthog.register({ workspace_id: workspaceId });
+    } else {
+      posthog.unregister("workspace_id");
+    }
+  }, [onWorkspacePage, workspaceId]);
+
+  useEffect(() => {
+    if (role) posthog.register({ role });
+  }, [role]);
+
+  useEffect(() => {
+    // Not known until the subscription has loaded: nothing is sent as "no plan" meanwhile.
+    if (!planName || !planStatus) return;
+    posthog.register({
+      plan: planName,
+      plan_status: planStatus,
+      billing_period: billingPeriod,
+    });
+    posthog.setPersonProperties({
+      plan: planName,
+      plan_status: planStatus,
+      billing_period: billingPeriod,
+      trial_ends_at: trialEnds ?? null,
+    });
+  }, [planName, planStatus, billingPeriod, trialEnds]);
+
+  useEffect(() => {
+    if (workspaceCount > 0) {
+      posthog.setPersonProperties({ workspaces: workspaceCount });
+    }
+  }, [workspaceCount]);
 
   return null;
 }
@@ -209,8 +273,6 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         );
         // Wire posthog into the analytics singleton so analytics.track() etc. work
         registerPostHog({
-          identify: (distinctId, properties) =>
-            posthog.identify(distinctId, properties),
           capture: (event, properties) => posthog.capture(event, properties),
           reset: resetIdentity,
         });
@@ -245,6 +307,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         {mode === "full" && (
           <>
             <PostHogAuthSync />
+            <AnalyticsContextSync />
             <OAuthLoginRecord />
           </>
         )}

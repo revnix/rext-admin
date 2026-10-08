@@ -82,7 +82,8 @@ export function CheckoutButton({
       const errorMessage =
         error instanceof Error ? error.message : "Failed to initiate checkout";
 
-      analytics.track("payment_failed", {
+      // The checkout couldn't be opened; no payment was attempted.
+      analytics.track("checkout_failed", {
         plan_id: plan.id,
         plan_name: plan.display_name,
         billing_period: billingPeriod,
