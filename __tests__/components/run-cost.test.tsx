@@ -230,6 +230,19 @@ describe("useCreditGate", () => {
     expect(track).toHaveBeenCalledWith("paywall_shown", {
       action: "run_under_way",
     });
+
+    // An article under way that the balance, now empty, can't carry on.
+    track.mockClear();
+    useBalance(balance(0));
+    const empty = renderHook(() => useCreditGate(), {
+      wrapper: withQueries(),
+    });
+    act(() => {
+      empty.result.current.ensureCreditsToContinue();
+    });
+    expect(track).toHaveBeenCalledWith("paywall_shown", {
+      action: "run_under_way",
+    });
     track.mockRestore();
   });
 

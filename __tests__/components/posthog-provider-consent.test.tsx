@@ -298,6 +298,34 @@ describe("where analytics is on unless switched off", () => {
     }
   }, 8000);
 
+  it("still sends a waiting first view when the person leaves before the workspace arrives", async () => {
+    mockWorkspaceState.currentWorkspace = { id: "ws-9", slug: "another" };
+    try {
+      renderProvider();
+      await waitFor(() => expect(mockPosthog.init).toHaveBeenCalled());
+      await act(() => new Promise<void>((resolve) => setTimeout(resolve, 200)));
+      expect(pageViews()).toHaveLength(0);
+
+      act(() => {
+        window.dispatchEvent(new Event("pagehide"));
+      });
+
+      expect(pageViews()).toEqual([
+        [
+          "$pageview",
+          { $current_url: "http://localhost/w/acme/content?q=mary" },
+        ],
+      ]);
+      // Once only: the wait running out afterwards doesn't send it again.
+      await act(
+        () => new Promise<void>((resolve) => setTimeout(resolve, 3300)),
+      );
+      expect(pageViews()).toHaveLength(1);
+    } finally {
+      mockWorkspaceState.currentWorkspace = { id: "ws-1", slug: "acme" };
+    }
+  }, 8000);
+
   it("doesn't wait for the views after the first", async () => {
     const view = renderProvider();
     await waitFor(() => expect(pageViews()).toHaveLength(1));

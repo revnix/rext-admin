@@ -120,6 +120,8 @@ export function useCreditGate() {
 
   const ensureCreditsToContinue = useCallback(() => {
     if (trialEnded || isExhausted) {
+      // An article under way that can't go on: the same paywall, counted like the others.
+      analytics.track("paywall_shown", { action: "run_under_way" });
       setModalDetail(trialEnded ? TRIAL_ENDED_MESSAGE : OUT_OF_CREDITS_MESSAGE);
       setShowModal(true);
       return false;

@@ -74,19 +74,50 @@ function PostHogPageView({ anonymous }: { anonymous: boolean }) {
     return () => window.clearTimeout(timer);
   }, [settled]);
 
+  // The first view while it waits: it is still sent, as it was, when the person moves to another
+  // page or leaves before the workspace and the plan arrive.
+  const waiting = useRef<string | null>(null);
+  // A view sent as the person left: the wait ending a moment later is not a second view of it.
+  const sentOnLeaving = useRef<string | null>(null);
+
   useEffect(() => {
-    if (!pathname || !ready) return;
-    firstViewSent = true;
+    if (!pathname) return;
     routeOnScreen = anonymousRoute(pathname, params ?? {});
     let url = window.origin + pathname;
     const qs = searchParams.toString();
     if (qs) url = `${url}?${qs}`;
-    posthog.capture("$pageview", {
-      // For someone who said no, the page's route and nothing of whose it is. Otherwise the
-      // address without an emailed link's token or a sign-in page's email.
-      $current_url: anonymous ? window.origin + routeOnScreen : redactUrl(url),
-    });
+    // For someone who said no, the page's route and nothing of whose it is. Otherwise the
+    // address without an emailed link's token or a sign-in page's email.
+    const address = anonymous ? window.origin + routeOnScreen : redactUrl(url);
+    if (waiting.current && waiting.current !== address) {
+      posthog.capture("$pageview", { $current_url: waiting.current });
+      firstViewSent = true;
+    }
+    waiting.current = null;
+    if (sentOnLeaving.current === address) {
+      sentOnLeaving.current = null;
+      return;
+    }
+    sentOnLeaving.current = null;
+    if (!ready && !firstViewSent) {
+      waiting.current = address;
+      return;
+    }
+    firstViewSent = true;
+    posthog.capture("$pageview", { $current_url: address });
   }, [pathname, searchParams, params, anonymous, ready]);
+
+  useEffect(() => {
+    const leave = () => {
+      if (!waiting.current) return;
+      posthog.capture("$pageview", { $current_url: waiting.current });
+      sentOnLeaving.current = waiting.current;
+      waiting.current = null;
+      firstViewSent = true;
+    };
+    window.addEventListener("pagehide", leave);
+    return () => window.removeEventListener("pagehide", leave);
+  }, []);
 
   return null;
 }
