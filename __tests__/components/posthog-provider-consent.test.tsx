@@ -76,8 +76,10 @@ jest.mock("posthog-js/react", () => ({
     <>{children}</>
   ),
 }));
+// The page on screen; a test may move to another.
+const mockRoute = { path: "/w/acme/content" };
 jest.mock("next/navigation", () => ({
-  usePathname: () => "/w/acme/content",
+  usePathname: () => mockRoute.path,
   useSearchParams: () => new URLSearchParams("q=mary"),
   useParams: () => ({ workspaceSlug: "acme" }),
 }));
@@ -110,6 +112,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   window.localStorage.clear();
   mockUser.id = "u1";
+  mockRoute.path = "/w/acme/content";
   // The choice is also sent to the app's own server.
   global.fetch = jest
     .fn()
@@ -325,6 +328,42 @@ describe("where analytics is on unless switched off", () => {
       mockWorkspaceState.currentWorkspace = { id: "ws-1", slug: "acme" };
     }
   }, 8000);
+
+  it("sends a waiting first view without a workspace when the person moves on, not with the next page's", async () => {
+    mockWorkspaceState.currentWorkspace = { id: "ws-9", slug: "another" };
+    try {
+      const view = renderProvider();
+      await waitFor(() => expect(mockPosthog.init).toHaveBeenCalled());
+      await act(() => new Promise<void>((resolve) => setTimeout(resolve, 200)));
+      expect(pageViews()).toHaveLength(0);
+
+      // On to an account page, which has no workspace to wait for.
+      mockRoute.path = "/settings/data";
+      view.rerender(
+        <PostHogProvider>
+          <AnalyticsConsentPrompt />
+          <p>Settings</p>
+        </PostHogProvider>,
+      );
+
+      await waitFor(() => expect(pageViews()).toHaveLength(2));
+      expect(pageViews()).toEqual([
+        [
+          "$pageview",
+          {
+            $current_url: "http://localhost/w/acme/content?q=mary",
+            workspace_id: null,
+          },
+        ],
+        [
+          "$pageview",
+          { $current_url: "http://localhost/settings/data?q=mary" },
+        ],
+      ]);
+    } finally {
+      mockWorkspaceState.currentWorkspace = { id: "ws-1", slug: "acme" };
+    }
+  });
 
   it("doesn't wait for the views after the first", async () => {
     const view = renderProvider();
