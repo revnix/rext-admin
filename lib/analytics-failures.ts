@@ -4,6 +4,7 @@
  * error's own message, which can be a stack line, a backend detail or something the person typed,
  * and never a part of an address that isn't one of the app's own words.
  */
+import { analytics } from "@/lib/analytics";
 import { ApiError } from "@/lib/api-client/core";
 
 /** A class from the code (`TypeError`, `ApiError`, `ChunkLoadError`): letters and digits only. */
@@ -34,85 +35,77 @@ export function errorProperties(error: unknown): {
   };
 }
 
-/**
- * The fixed parts of the app's page addresses: every folder under `app/` that is a word of ours
- * (not a parameter, a group or the API). A test reads the folders and fails when one is missing
- * here, so a new page can't quietly fall out of the list.
- */
-export const ROUTE_WORDS: ReadonlySet<string> = new Set([
-  "accept",
-  "accept-admin-invitation",
-  "accept-invitation",
-  "account-recovery",
-  "admin",
-  "audit-logs",
-  "brand-voice",
-  "calendar",
-  "cancel",
-  "checkout",
-  "content",
-  "create",
-  "danger-zone",
-  "data",
-  "dev",
-  "edit",
-  "email-analytics",
-  "fonts",
-  "forgot-password",
-  "generate-content",
-  "integrations",
-  "invitations",
-  "invoices",
-  "keywords",
-  "legal",
-  "login",
-  "maintenance",
-  "members",
-  "monitoring",
-  "notifications",
-  "personas",
-  "plan",
-  "plans",
-  "platform",
-  "pricing",
-  "primitives",
-  "privacy",
-  "refund-policy",
-  "refunds",
-  "reset-password",
-  "roles",
-  "security",
-  "settings",
-  "signup",
-  "status",
-  "subscription-terms",
-  "subscriptions",
-  "success",
-  "terms",
-  "tokens",
-  "unauthorized",
-  "unsubscribe",
-  "usage",
-  "users",
-  "verify-email",
-  "w",
-  "webhooks",
-]);
+/** One level of the app's page addresses: its fixed parts by name, and "*" where a parameter sits. */
+export interface RouteTree {
+  [part: string]: RouteTree;
+}
 
 /**
- * The shape of an address: each part that is one of the app's own words is kept, and every other
- * part (a workspace's name, an id, a mistyped word) becomes a star. `/w/acme/content/6f1c` keeps
- * `w` and `content` and turns the other two into stars: enough to see which kind of page failed
+ * The app's page addresses, as the folders under `app/` lay them out: a fixed part under its own
+ * name, a parameter (`[workspaceSlug]`, `[key]`) as "*". Route groups are passed through and the
+ * API is left out. A test reads the folders and fails when this differs from them, so a new page
+ * can't quietly fall out of it.
+ */
+// biome-ignore format: one line per top-level part reads as the map it is
+export const ROUTE_TREE: RouteTree = {
+  "accept-admin-invitation": {},
+  "accept-invitation": {},
+  "account-recovery": {},
+  admin: { "audit-logs": {}, "email-analytics": {}, monitoring: {}, platform: { invitations: {} }, refunds: {}, roles: {}, security: {}, status: {}, subscriptions: { plans: {} }, users: {}, webhooks: {} },
+  checkout: { cancel: {}, success: {} },
+  dev: { primitives: {}, tokens: {} },
+  edit: { "*": { "*": {} } },
+  fonts: {},
+  "forgot-password": {},
+  invitations: { accept: {} },
+  legal: { privacy: {}, "refund-policy": {}, "subscription-terms": {}, terms: {} },
+  login: {},
+  maintenance: {},
+  pricing: {},
+  "reset-password": {},
+  settings: { data: {}, invoices: {}, notifications: {}, plan: {}, security: {}, usage: {} },
+  signup: {},
+  unauthorized: {},
+  unsubscribe: {},
+  "verify-email": {},
+  w: { "*": { content: { "*": {}, calendar: {} }, "generate-content": {}, integrations: {}, keywords: { "*": {} }, personas: { "*": { edit: {} }, create: {} }, settings: { "brand-voice": {}, "danger-zone": {}, members: {} } }, create: {} },
+};
+
+/**
+ * The shape of an address: a part is kept only where the app's own routes have that very word at
+ * that very place, and every other part is a star. What stands where a route takes a parameter (a
+ * workspace's name, an id, a keyword) is a star whatever it says: a keyword that happens to be
+ * "security" is not the settings page of that name. Past the routes the app has, everything is a
+ * star. `/w/acme/content/6f1c` keeps `w` and `content`: enough to see which kind of page failed
  * or which kind of link is broken, with nothing of whose it was.
  */
 export function pathShape(pathname: string): string {
   const parts = pathname.split("/").filter((part) => part !== "");
   if (parts.length === 0) return "/";
+  let node: RouteTree | undefined = ROUTE_TREE;
+  const shape: string[] = [];
   // A long address says no more than its first parts do.
-  const kept = parts
-    .slice(0, 6)
-    .map((part) =>
-      ROUTE_WORDS.has(part.toLowerCase()) ? part.toLowerCase() : "*",
-    );
-  return `/${kept.join("/")}${parts.length > 6 ? "/…" : ""}`;
+  for (const part of parts.slice(0, 8)) {
+    const fixed: RouteTree | undefined =
+      node && part !== "*" && Object.hasOwn(node, part)
+        ? node[part]
+        : undefined;
+    shape.push(fixed ? part : "*");
+    node = fixed ?? node?.["*"];
+  }
+  return `/${shape.join("/")}${parts.length > 8 ? "/…" : ""}`;
+}
+
+/** Says that the app's own error screen came up for a person: where, and the error's class. */
+export function reportErrorScreen(
+  where: "page" | "part",
+  error: unknown,
+  context?: string,
+): void {
+  analytics.track("error_screen_shown", {
+    where,
+    ...(context ? { context } : {}),
+    route: pathShape(window.location.pathname),
+    ...errorProperties(error),
+  });
 }
