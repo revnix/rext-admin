@@ -1,4 +1,7 @@
-import type { RunStage } from "@/lib/generate-content/run-stages";
+import type {
+  RunStage,
+  RunStageDetail,
+} from "@/lib/generate-content/run-stages";
 import type { SSEEvent } from "@/types/sse";
 
 /**
@@ -102,4 +105,130 @@ export function findFailedEvent(events: SSEEvent[]): SSEEvent | undefined {
     (event) =>
       event.status === "failed" || readEvent(event).outcome === "failed",
   );
+}
+
+// ── What the analysis found, as it finds it (rext-control#845) ────────────────
+
+/** The drafted brand voice, as the brand-voice step's end reports it. */
+export interface DraftedVoice {
+  brandName?: string;
+  about?: string;
+  sellingPosition?: string;
+  audience: string[];
+  tone: string[];
+  pillars: string[];
+}
+
+/**
+ * What each finished step of the analysis found, read from its `.completed` event's payload: the
+ * page that was read, the drafted brand voice, the competitors' sites. Undefined until its step
+ * ends; a step that ends with nothing to show (an empty site) leaves its part undefined too.
+ */
+export interface WorkspaceFindings {
+  site?: { title?: string; words?: number };
+  voice?: DraftedVoice;
+  competitors?: string[];
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const text = (value: unknown): string | undefined =>
+  typeof value === "string" && value.trim() ? value.trim() : undefined;
+
+const texts = (value: unknown): string[] =>
+  (Array.isArray(value) ? value : []).flatMap((item) => text(item) ?? []);
+
+export function workspaceFindings(events: SSEEvent[]): WorkspaceFindings {
+  const findings: WorkspaceFindings = {};
+  for (const event of events) {
+    const { step, outcome } = readEvent(event);
+    if (outcome !== "completed" || !isRecord(event.payload)) continue;
+    const payload = event.payload;
+    if (step === "scrape") {
+      const words = payload.word_count;
+      findings.site = {
+        title: text(payload.title),
+        words: typeof words === "number" && words > 0 ? words : undefined,
+      };
+    } else if (step === "brand_voice") {
+      const voice: DraftedVoice = {
+        brandName: text(payload.brand_name),
+        about: text(payload.about),
+        sellingPosition: text(payload.selling_position),
+        audience: texts(payload.target_audience),
+        tone: texts(payload.brand_voice),
+        pillars: texts(payload.content_pillar ?? payload.content_strategy),
+      };
+      // A voice with nothing in it is no voice to show.
+      if (
+        voice.brandName ||
+        voice.about ||
+        voice.sellingPosition ||
+        voice.tone.length > 0
+      ) {
+        findings.voice = voice;
+      }
+    } else if (step === "competitor_discovery") {
+      findings.competitors = texts(payload.competitors);
+    }
+  }
+  return findings;
+}
+
+const plural = (count: number, one: string, many: string) =>
+  `${count.toLocaleString("en")} ${count === 1 ? one : many}`;
+
+/**
+ * What each stage will do, is doing and found, for the run's box (`RunProgress`'s `details`): only
+ * what the run reported. `people` are the author personas saved by the brand-voice step, once the
+ * page has read them; undefined before.
+ */
+export function workspaceStageDetails(
+  findings: WorkspaceFindings,
+  site: string,
+  people?: string[],
+): Record<string, RunStageDetail> {
+  const { site: read, voice, competitors } = findings;
+  return {
+    "workspace-scrape": {
+      waiting: `The pages of ${site}.`,
+      live: `Opening ${site} and reading what it says.`,
+      result: read
+        ? [
+            read.title ? `“${read.title}”` : null,
+            read.words ? `${plural(read.words, "word", "words")} read` : null,
+          ]
+            .filter(Boolean)
+            .join(" · ") || undefined
+        : undefined,
+    },
+    "workspace-brand-voice": {
+      waiting: "How the brand sounds, who it's for, and who writes for it.",
+      live: "Working out what the brand does, how it sounds, and who is named on the site.",
+      result: voice
+        ? [
+            voice.tone.length > 0
+              ? `${plural(voice.tone.length, "tone word", "tone words")}`
+              : "Brand voice drafted",
+            people === undefined
+              ? null
+              : people.length > 0
+                ? `${plural(people.length, "person", "people")} named on the site`
+                : "no one named on the site",
+          ]
+            .filter(Boolean)
+            .join(" · ")
+        : undefined,
+    },
+    "workspace-competitors": {
+      waiting: "The sites yours is compared with in search.",
+      live: "Looking at who ranks for the same searches.",
+      result: competitors
+        ? competitors.length > 0
+          ? `${plural(competitors.length, "competitor", "competitors")} found`
+          : "None found"
+        : undefined,
+    },
+  };
 }
