@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { ContentEditor } from "@/components/generate-content/content";
 
 // marked ships as an ES module jest can't load; the editor's preview needs none of it here.
@@ -173,7 +173,7 @@ describe("ContentEditor while the article is written, as the page shows it (task
     expect(within(article).queryByText("Writing the first draft")).toBeNull();
   });
 
-  it("shows the title and the outline's sections before the first words arrive, each over the lines its text will take", () => {
+  it("shows the title and the outline's sections before the first words arrive, each over the lines its text will take", async () => {
     const { container } = render(
       editor({
         isEnhancing: true,
@@ -203,19 +203,23 @@ describe("ContentEditor while the article is written, as the page shows it (task
     expect(within(article).getAllByText("Still to come")).toHaveLength(2);
     // Placeholders shaped like the article (task 838): the introduction's three lines, then
     // each planned section's heading over its own, a subsection's shorter. No anonymous
-    // block of grey bars, and no row of tag pills.
+    // block of grey bars, and no row of tag pills. The headings are there at once; the lines
+    // wait a moment, as every skeleton does, so text that is there at once shows none.
     const sections = within(article).getAllByRole("listitem");
     expect(
       sections.map((section) => section.firstElementChild?.textContent),
     ).toEqual(["Pick a show idea", "Choose one listener"]);
+    expect(container.querySelector('[data-slot="skeleton"]')).toBeNull();
+    await waitFor(() =>
+      expect(container.querySelectorAll('[data-slot="skeleton"]')).toHaveLength(
+        8,
+      ),
+    );
     expect(
       sections.map(
         (section) => section.querySelectorAll('[data-slot="skeleton"]').length,
       ),
     ).toEqual([3, 2]);
-    expect(container.querySelectorAll('[data-slot="skeleton"]')).toHaveLength(
-      8,
-    );
     expect(
       container.querySelector('[data-slot="skeleton"].rounded-full'),
     ).toBeNull();
