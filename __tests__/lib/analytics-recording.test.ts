@@ -1,5 +1,6 @@
-import type { CapturedNetworkRequest } from "posthog-js";
+import type { CapturedNetworkRequest, CaptureResult } from "posthog-js";
 import {
+  hideTypedValues,
   loadWords,
   maskAttribute,
   maskNetworkRequest,
@@ -232,6 +233,73 @@ describe("maskAttribute", () => {
     );
     expect(maskAttribute("aria-label", "Delete", inside)).toBe("");
     expect(maskAttribute("href", "/w/acme/content", inside)).toBe("");
+  });
+});
+
+describe("hideTypedValues", () => {
+  const recording = (...items: unknown[]) =>
+    ({
+      event: "$snapshot",
+      properties: { $snapshot_data: items, $session_id: "s1" },
+    }) as unknown as CaptureResult;
+
+  it("turns a ticked radio button's own value into stars, and keeps that it was ticked", () => {
+    // The library reports a radio button's value as it is; it can be a title.
+    const sent = hideTypedValues(
+      recording(
+        {
+          type: 3,
+          data: {
+            source: 5,
+            id: 12,
+            text: "Ten garden ideas",
+            isChecked: true,
+          },
+        },
+        { type: 3, data: { source: 5, id: 13, text: "on", isChecked: false } },
+      ),
+    );
+
+    expect(sent.properties.$snapshot_data).toEqual([
+      {
+        type: 3,
+        data: { source: 5, id: 12, text: "*** ****** *****", isChecked: true },
+      },
+      { type: 3, data: { source: 5, id: 13, text: "**", isChecked: false } },
+    ]);
+    expect(sent.properties.$session_id).toBe("s1");
+  });
+
+  it("leaves the rest of a recording as it came", () => {
+    const event = recording(
+      { type: 2, data: "a whole page, compressed" },
+      { type: 3, data: { source: 0, texts: [{ id: 4, value: "Save" }] } },
+      { type: 3, data: { source: 2, type: 2, id: 9 } },
+      // What was typed is stars already.
+      {
+        type: 3,
+        data: { source: 5, id: 12, text: "******", isChecked: false },
+      },
+      { type: 3, data: { source: 5, id: 14, isChecked: true } },
+    );
+
+    expect(hideTypedValues(event)).toBe(event);
+  });
+
+  it("returns any other event as it came", () => {
+    const event = {
+      event: "$pageview",
+      properties: {
+        $snapshot_data: [{ type: 3, data: { source: 5, text: "x" } }],
+      },
+    } as unknown as CaptureResult;
+    const empty = {
+      event: "$snapshot",
+      properties: {},
+    } as unknown as CaptureResult;
+
+    expect(hideTypedValues(event)).toBe(event);
+    expect(hideTypedValues(empty)).toBe(empty);
   });
 });
 

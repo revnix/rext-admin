@@ -15,7 +15,11 @@
  * is acting as them. The provider starts and stops it (providers/posthog-provider.tsx).
  */
 
-import type { CapturedNetworkRequest, PostHogConfig } from "posthog-js";
+import type {
+  CapturedNetworkRequest,
+  CaptureResult,
+  PostHogConfig,
+} from "posthog-js";
 import { markOf, normalizeWords } from "@/lib/recording-words";
 
 /** Off unless the deploy says "true": merged switched off, and switched on by a variable. */
@@ -203,6 +207,44 @@ export function maskAttribute(
   // A state ("open"), a measure ("40"), a variant ("outline"), or the app's own words.
   if (STATE.test(value) || (!hidden && isOwnWords(value))) return value;
   return name === "value" ? stars(value) : "";
+}
+
+// ── What is typed or ticked ──────────────────────────────────────────────────
+
+// rrweb's numbers for "something changed on the page" and "a field's value did".
+const CHANGE = 3;
+const FIELD_VALUE = 5;
+
+/**
+ * A recording's batch with every field's value as stars. The library hides what is typed
+ * (maskAllInputs), but each time a checkbox or a radio button is ticked it reports that field's
+ * own value as it is, and a radio button's value can be the thing it stands for (a title, a
+ * workspace's name). A replay ticks the box from `isChecked`, never from the value, so nothing
+ * is lost. Every event passes through here on its way out (the provider's before_send); one
+ * that isn't a recording's is returned as it came.
+ */
+export function hideTypedValues(event: CaptureResult): CaptureResult {
+  if (event.event !== "$snapshot") return event;
+  const batch = event.properties?.$snapshot_data;
+  if (!Array.isArray(batch)) return event;
+  let changed = false;
+  const hidden = batch.map((item) => {
+    const data = item?.data;
+    if (
+      item?.type !== CHANGE ||
+      data?.source !== FIELD_VALUE ||
+      typeof data.text !== "string"
+    ) {
+      return item;
+    }
+    const text = stars(data.text);
+    if (text === data.text) return item;
+    changed = true;
+    return { ...item, data: { ...data, text } };
+  });
+  return changed
+    ? { ...event, properties: { ...event.properties, $snapshot_data: hidden } }
+    : event;
 }
 
 // ── Addresses and requests ───────────────────────────────────────────────────
