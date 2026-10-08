@@ -4,9 +4,14 @@
  */
 
 import {
+  brandVoiceOf,
   environmentOf,
   eventContext,
+  forgetBrandVoices,
+  hasBrandVoice,
   isTeamBrowser,
+  noteBrandVoice,
+  onBrandVoiceNoted,
   workspaceSlugOf,
 } from "@/lib/analytics-context";
 
@@ -27,6 +32,7 @@ describe("eventContext", () => {
       }),
     ).toEqual({
       workspace_id: "ws-1",
+      workspace_has_brand_voice: null,
       role: "owner",
       plan: "growth",
       plan_status: "active",
@@ -114,5 +120,78 @@ describe("isTeamBrowser", () => {
     expect(isTeamBrowser()).toBe(false);
     set("rext-internal=1; Path=/");
     expect(isTeamBrowser()).toBe(true);
+  });
+});
+
+describe("a workspace's brand voice", () => {
+  const onAcme = () =>
+    eventContext({
+      routeSlug: "acme",
+      workspace: { id: "ws-1", slug: "acme" },
+      role: "owner",
+      subscription,
+    }).workspace_has_brand_voice;
+
+  beforeEach(() => {
+    forgetBrandVoices();
+  });
+
+  it("is one by the home page's rule: an About or a brand name, and not white space", () => {
+    expect(hasBrandVoice({ about: "We make bicycles." })).toBe(true);
+    expect(hasBrandVoice({ brand_name: "Acme" })).toBe(true);
+    expect(hasBrandVoice({ about: "  ", brand_name: "" })).toBe(false);
+    expect(hasBrandVoice({})).toBe(false);
+    // A workspace made from a name alone: its detail has no brand voice in it at all.
+    expect(hasBrandVoice(undefined)).toBe(false);
+    expect(hasBrandVoice(null)).toBe(false);
+  });
+
+  it("is said on an event only once the workspace's own detail has been read: a false is never a guess", () => {
+    expect(onAcme()).toBeNull();
+
+    noteBrandVoice("ws-1", false);
+    expect(onAcme()).toBe(false);
+
+    // The set-up ran: the detail was read again.
+    noteBrandVoice("ws-1", true);
+    expect(onAcme()).toBe(true);
+  });
+
+  it("says nothing of a workspace other than the one the address names", () => {
+    noteBrandVoice("ws-1", true);
+
+    // The address names "other"; the app still remembers "acme".
+    expect(
+      eventContext({
+        routeSlug: "other",
+        workspace: { id: "ws-1", slug: "acme" },
+        role: "owner",
+        subscription,
+      }).workspace_has_brand_voice,
+    ).toBeNull();
+    // And what was read of one workspace is not said of another.
+    expect(brandVoiceOf("ws-2")).toBeNull();
+    expect(brandVoiceOf(null)).toBeNull();
+  });
+
+  it("tells whoever listens when it is read anew, and not when nothing changed", () => {
+    const heard = jest.fn();
+    const stop = onBrandVoiceNoted(heard);
+
+    noteBrandVoice("ws-1", false);
+    noteBrandVoice("ws-1", false);
+    expect(heard).toHaveBeenCalledTimes(1);
+
+    noteBrandVoice("ws-1", true);
+    expect(heard).toHaveBeenCalledTimes(2);
+
+    stop();
+    noteBrandVoice("ws-2", true);
+    expect(heard).toHaveBeenCalledTimes(2);
+  });
+
+  it("takes no workspace without an id", () => {
+    noteBrandVoice("", true);
+    expect(brandVoiceOf("")).toBeNull();
   });
 });

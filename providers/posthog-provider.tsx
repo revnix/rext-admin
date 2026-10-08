@@ -20,6 +20,7 @@ import {
   environmentOf,
   eventContext,
   isTeamBrowser,
+  onBrandVoiceNoted,
   workspaceSlugOf,
 } from "@/lib/analytics-context";
 import {
@@ -212,6 +213,10 @@ function applyContext(context: EventContext): void {
   );
   if (Object.keys(known).length > 0) posthog.register(known);
   if (context.workspace_id === null) posthog.unregister("workspace_id");
+  // What was read of one workspace says nothing of the next.
+  if (context.workspace_has_brand_voice === null) {
+    posthog.unregister("workspace_has_brand_voice");
+  }
 }
 
 function AnalyticsContextSync() {
@@ -231,7 +236,11 @@ function AnalyticsContextSync() {
   const planStatus = plan?.status;
   const billingPeriod = plan?.billing_period;
   const trialEnds = plan?.trial_end_date;
+  // Counts each time a workspace's brand voice is read (its detail arrives after the page does).
+  const [brandVoiceRead, setBrandVoiceRead] = useState(0);
+  useEffect(() => onBrandVoiceNoted(() => setBrandVoiceRead((n) => n + 1)), []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a brand voice read anew is the reason to apply again
   useEffect(() => {
     applyContext(
       eventContext({
@@ -253,6 +262,7 @@ function AnalyticsContextSync() {
     planName,
     planStatus,
     billingPeriod,
+    brandVoiceRead,
   ]);
 
   // The person's own properties, sent together once they have settled: the plan and the
