@@ -1,9 +1,28 @@
 import ts from "typescript";
-import { isWords, normalizeWords, wordsInSource } from "@/lib/recording-words";
+import {
+  isWords,
+  markOf,
+  normalizeWords,
+  wordsInSource,
+} from "@/lib/recording-words";
 
 describe("normalizeWords", () => {
   it("reads a text as the page shows it: one space between words, none around", () => {
     expect(normalizeWords("  Save\n      changes ")).toBe("Save changes");
+  });
+});
+
+describe("markOf", () => {
+  it("is the same for the same text, differs for another, and can't be read", () => {
+    expect(markOf("Save changes")).toBe(markOf("Save changes"));
+    expect(markOf("Save changes")).not.toBe(markOf("Save change"));
+    expect(markOf("Save changes")).toMatch(/^[0-9a-z]+\.[0-9a-z]+$/);
+    expect(markOf("Save changes")).not.toContain("Save");
+  });
+
+  it("tells a few thousand texts apart", () => {
+    const texts = Array.from({ length: 5000 }, (_, i) => `Label ${i}`);
+    expect(new Set(texts.map(markOf)).size).toBe(texts.length);
   });
 });
 

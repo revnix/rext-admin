@@ -7,6 +7,7 @@ import {
   recordableRoute,
   setWords,
 } from "@/lib/analytics-recording";
+import { markOf } from "@/lib/recording-words";
 
 const OWN = [
   "Save",
@@ -272,7 +273,7 @@ describe("loadWords", () => {
     setWords(null);
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
-      json: async () => ["Save"],
+      json: async () => [markOf("Save")],
     }) as unknown as typeof fetch;
 
     await expect(loadWords()).resolves.toBe(true);

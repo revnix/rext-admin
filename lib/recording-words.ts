@@ -7,7 +7,8 @@
  * to remember to mark a screen.
  *
  * The list is read from the source when the app is built (app/api/recording-words/route.ts) and
- * fetched by the browser of a person who is recorded (lib/analytics-recording.ts). A text missing
+ * fetched, as marks (markOf), by the browser of a person who is recorded
+ * (lib/analytics-recording.ts). A text missing
  * from it is hidden, so every shortcut below errs towards a shorter list: reading too little hides
  * one of the app's own words. Comments and the sample pages under app/dev are not read: they hold
  * examples, and an example can be a real person's name.
@@ -19,6 +20,25 @@ const LONGEST = 80;
 /** A text as the list holds it: runs of white space as one space, none at the ends. */
 export function normalizeWords(text: string): string {
   return text.replace(/\s+/g, " ").trim();
+}
+
+/**
+ * A text's mark on the list: 64 bits of it, as two short numbers. The list a browser fetches
+ * holds marks, not texts, so its address gives nobody the app's wording to read (the route needs
+ * no session to answer, since it is made when the app is built). Not a secret-keeping hash: it
+ * only has to be unreadable, and to tell one text from another.
+ */
+export function markOf(text: string): string {
+  let a = 0x811c9dc5;
+  let b = 0x9e3779b9;
+  for (let i = 0; i < text.length; i++) {
+    const code = text.charCodeAt(i);
+    a = Math.imul(a ^ code, 0x01000193);
+    b = Math.imul(b ^ code, 0x85ebca6b);
+    b = (b << 13) | (b >>> 19);
+  }
+  b = Math.imul(b ^ (b >>> 16), 0xc2b2ae35);
+  return `${(a >>> 0).toString(36)}.${((b ^ (b >>> 13)) >>> 0).toString(36)}`;
 }
 
 /** Worth listing: two characters or more, one of them a letter, and not a paragraph. */
