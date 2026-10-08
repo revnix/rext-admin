@@ -7,11 +7,34 @@
 
 import { POST } from "@/app/api/consent/route";
 
+// The suite's setup stands in for Response with an object that can't be constructed, and this
+// route builds its answer with `new Response`: the test brings one that keeps what it is given.
+class KeptResponse {
+  status: number;
+  headers: Headers;
+  constructor(_body: null, init: { status: number; headers: HeadersInit }) {
+    this.status = init.status;
+    this.headers =
+      init.headers instanceof Headers
+        ? init.headers
+        : new Headers(init.headers);
+  }
+}
+const setupResponse = global.Response;
+beforeAll(() => {
+  global.Response = KeptResponse as unknown as typeof Response;
+});
+afterAll(() => {
+  global.Response = setupResponse;
+});
+
+// The setup's Request reads a header by the name it was given under, so they are given as the
+// route asks for them.
 const post = (host: string, choice: unknown, origin = `https://${host}`) =>
   POST(
     new Request(`https://${host}/api/consent`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Origin: origin },
+      headers: { "content-type": "application/json", origin },
       body: JSON.stringify({ choice }),
     }),
   );
