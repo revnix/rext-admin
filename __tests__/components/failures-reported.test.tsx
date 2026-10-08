@@ -4,6 +4,7 @@
  * never a part of the address that isn't one of the app's own words.
  */
 import { render } from "@testing-library/react";
+import RootError from "@/app/error";
 import { PageNotFoundReport } from "@/components/analytics/page-not-found-report";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { RouteError } from "@/components/ui/route-error";
@@ -61,6 +62,21 @@ describe("an error screen", () => {
         error_kind: "ApiError",
         status: 503,
         digest: "3721904455",
+      },
+    ]);
+  });
+
+  it("says so for the screen of last resort too, a page with no error screen of its own", () => {
+    window.history.replaceState(null, "", "/w/acme-corp/keywords/security");
+
+    render(<RootError error={new TypeError(SECRET)} reset={jest.fn()} />);
+
+    expect(sent("error_screen_shown")).toEqual([
+      {
+        where: "page",
+        context: "RootError",
+        route: "/w/*/keywords/*",
+        error_kind: "TypeError",
       },
     ]);
   });

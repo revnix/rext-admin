@@ -8,8 +8,7 @@ import { PageFrame } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Notice } from "@/components/ui/notice";
-import { analytics } from "@/lib/analytics";
-import { errorProperties, pathShape } from "@/lib/analytics-failures";
+import { reportErrorScreen } from "@/lib/analytics-failures";
 import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
@@ -62,12 +61,7 @@ export function RouteError({
   useEffect(() => {
     log.error(`[${logContext}]`, error);
     // That a person met this screen, where, and the error's class: never its message.
-    analytics.track("error_screen_shown", {
-      where: "page",
-      context: logContext,
-      route: pathShape(window.location.pathname),
-      ...errorProperties(error),
-    });
+    reportErrorScreen("page", error, logContext);
   }, [error, logContext]);
 
   const actions = (align: "start" | "center") => (

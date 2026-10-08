@@ -8,7 +8,8 @@ import {
   errorKind,
   errorProperties,
   pathShape,
-  ROUTE_WORDS,
+  ROUTE_TREE,
+  type RouteTree,
 } from "@/lib/analytics-failures";
 import { ApiError } from "@/lib/api-client/core";
 
@@ -55,43 +56,81 @@ describe("errorProperties", () => {
 });
 
 describe("pathShape", () => {
-  it("keeps the app's own words and turns every other part into a star", () => {
+  it("keeps a part only where the app's own routes have that word at that place", () => {
     expect(pathShape("/w/acme-corp/content/6f1c2d3e")).toBe("/w/*/content/*");
-    expect(pathShape("/w/acme-corp/contnet")).toBe("/w/*/*");
+    expect(pathShape("/w/acme-corp/personas/6f1c/edit")).toBe(
+      "/w/*/personas/*/edit",
+    );
+    expect(pathShape("/w/create")).toBe("/w/create");
     expect(pathShape("/settings/security")).toBe("/settings/security");
-    expect(pathShape("/Admin/Users/")).toBe("/admin/users");
+    expect(pathShape("/admin/users/")).toBe("/admin/users");
     expect(pathShape("/")).toBe("/");
     expect(pathShape("")).toBe("/");
   });
 
-  it("says no more of a long address than its first six parts", () => {
-    expect(pathShape("/w/a/content/b/c/d/e/f")).toBe("/w/*/content/*/*/*/…");
+  it("turns what stands where a route takes a parameter into a star, whatever it says", () => {
+    // A Library keyword that happens to be a word of the app's is still a person's keyword.
+    expect(pathShape("/w/acme-corp/keywords/security")).toBe("/w/*/keywords/*");
+    expect(pathShape("/w/acme-corp/keywords/pricing")).toBe("/w/*/keywords/*");
+    // And so is a workspace that happens to be named after a page.
+    expect(pathShape("/w/content/content")).toBe("/w/*/content");
+    expect(pathShape("/w/settings")).toBe("/w/*");
+    expect(pathShape("/edit/login/signup")).toBe("/edit/*/*");
+  });
+
+  it("turns everything past the routes the app has into stars", () => {
+    expect(pathShape("/w/acme-corp/contnet")).toBe("/w/*/*");
+    expect(pathShape("/w/acme-corp/contnet/settings/members")).toBe(
+      "/w/*/*/*/*",
+    );
+    expect(pathShape("/login/admin/users")).toBe("/login/*/*");
+    expect(pathShape("/Admin/Users")).toBe("/*/*");
+    expect(pathShape("/*/w")).toBe("/*/*");
+  });
+
+  it("says no more of a long address than its first eight parts", () => {
+    expect(pathShape("/w/a/content/b/c/d/e/f/g/h")).toBe(
+      "/w/*/content/*/*/*/*/*/…",
+    );
   });
 
   it("lets nothing of a person's through, whatever the address holds", () => {
-    const shape = pathShape("/w/ana@example.com/personas/Ana%20Writer");
-    expect(shape).toBe("/w/*/personas/*");
+    expect(pathShape("/w/ana@example.com/personas/Ana%20Writer")).toBe(
+      "/w/*/personas/*",
+    );
   });
 });
 
-describe("ROUTE_WORDS", () => {
-  /** Every folder under app/ that is a fixed word of an address: not a parameter, a group or a private folder. */
-  function words(dir: string, found = new Set<string>()): Set<string> {
+describe("ROUTE_TREE", () => {
+  /**
+   * The folders under app/ as a tree: a fixed folder under its own name, a parameter as "*", a
+   * route group passed through, private folders and the API left out.
+   */
+  function tree(dir: string, top = true): RouteTree {
+    const node: RouteTree = {};
+    const merge = (into: RouteTree, from: RouteTree): RouteTree => {
+      for (const [key, value] of Object.entries(from)) {
+        into[key] = merge(into[key] ?? {}, value);
+      }
+      return into;
+    };
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       if (!entry.isDirectory()) continue;
       const name = entry.name;
-      // The API's routes are no pages.
-      if (dir.endsWith(`${path.sep}app`) && name === "api") continue;
-      if (!/^[[(_@.]/.test(name)) found.add(name);
-      words(path.join(dir, name), found);
+      const child = path.join(dir, name);
+      if (top && name === "api") continue;
+      if (/^[_@.]/.test(name)) continue;
+      if (name.startsWith("(")) {
+        merge(node, tree(child, false));
+        continue;
+      }
+      const key = name.startsWith("[") ? "*" : name;
+      node[key] = merge(node[key] ?? {}, tree(child, false));
     }
-    return found;
+    return node;
   }
 
-  it("holds every fixed part of the app's page addresses, so a new page can't fall out of the list", () => {
-    const missing = [...words(path.join(process.cwd(), "app"))].filter(
-      (word) => !ROUTE_WORDS.has(word),
-    );
-    expect(missing).toEqual([]);
+  it("is the app's pages as the folders lay them out, so a new page can't fall out of it", () => {
+    expect(ROUTE_TREE).toEqual(tree(path.join(process.cwd(), "app")));
   });
 });
