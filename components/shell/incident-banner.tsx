@@ -1,12 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ErrorBoundary } from "react-error-boundary";
 
 import { PageBand } from "@/components/layouts";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { Notice } from "@/components/ui/notice";
 import { incidentBannerQueryOptions, shownBanner } from "@/lib/incident-banner";
-import { log } from "@/lib/logger";
 
 /**
  * The incident banner (rext-control#728): one calm notice on every signed-in page while a provider
@@ -20,14 +19,8 @@ import { log } from "@/lib/logger";
  */
 export function IncidentBanner() {
   return (
-    <ErrorBoundary
-      fallback={null}
-      onError={(error) =>
-        log.error("The incident banner threw:", {
-          message: error instanceof Error ? error.message : String(error),
-        })
-      }
-    >
+    // The shared boundary with nothing as its fallback: a banner that throws is simply not there.
+    <ErrorBoundary fallback={null}>
       <IncidentBannerNotice />
     </ErrorBoundary>
   );
