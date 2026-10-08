@@ -18,13 +18,18 @@ export const viewport: Viewport = {
   colorScheme: "light",
 };
 
+// The site's own description (rext.ai's meta description), so the app and the site say the same.
+const DESCRIPTION =
+  "Rext AI is an AI article writer for SEO. You approve the outline; it writes in your brand voice with linked sources and publishes to WordPress.";
+
 export const metadata: Metadata = {
+  // The browser tab, a bookmark and a shared link: "Rext AI", and "Log in · Rext AI" on a page that
+  // names itself (task 809).
   title: {
-    template: "%s | Rext AI Admin",
-    default: "Rext AI Admin - AI-Powered Content Management Platform",
+    template: "%s · Rext AI",
+    default: "Rext AI",
   },
-  description:
-    "Research a keyword, choose a title and an outline, and get an article written in your brand voice, ready to edit and publish.",
+  description: DESCRIPTION,
   keywords: [
     "keyword research",
     "content generation",
@@ -40,20 +45,18 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://app.rext.ai",
-    title: "Rext AI Admin - AI-Powered Content Management Platform",
-    description:
-      "Research a keyword, choose a title and an outline, and get an article written in your brand voice.",
-    siteName: "Rext AI Admin",
+    title: "Rext AI",
+    description: DESCRIPTION,
+    siteName: "Rext AI",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Rext AI Admin - AI-Powered Content Management Platform",
-    description:
-      "Research a keyword, choose a title and an outline, and get an article written in your brand voice.",
+    title: "Rext AI",
+    description: DESCRIPTION,
     creator: "@RextAI",
   },
   robots: {
-    index: false, // Admin dashboard shouldn't be indexed
+    index: false, // The dashboard isn't for search results; the site is.
     follow: false,
   },
 };
