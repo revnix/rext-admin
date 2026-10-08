@@ -718,8 +718,9 @@ function OutlineGroup({
                 <AddHeading subsection={false} noun={noun} onDone={finishAdd} />
               </div>
             ) : (
+              // No recording mark: the mark promises words fixed in the code, and a list's own
+              // noun ("step") comes from the run.
               <Button
-                data-rec="show"
                 ref={addButtonRef}
                 type="button"
                 variant="ghost"
