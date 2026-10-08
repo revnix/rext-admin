@@ -31,6 +31,13 @@ export function getCSPHeader(_nonce: string): string {
   // Add new services here as needed for payment processing, analytics, etc.
   const posthogHost =
     process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://eu.i.posthog.com";
+  // posthog-js reads the project's settings from PostHog's assets host (eu.i. becomes
+  // eu-assets.i.). Allowed for requests only: no script is loaded from there, the recorder
+  // ships with the app (providers/posthog-provider.tsx).
+  const posthogAssets = posthogHost.replace(
+    /^https:\/\/([a-z0-9-]+)\.i\.posthog\.com$/,
+    "https://$1-assets.i.posthog.com",
+  );
 
   const thirdPartyDomains = {
     lemonsqueezy: {
@@ -42,7 +49,11 @@ export function getCSPHeader(_nonce: string): string {
       // iframe outright — Chrome renders it as "This content is blocked".
       checkout: "https://*.lemonsqueezy.com",
     },
-    posthog: posthogHost,
+    // The same host twice where it isn't PostHog's own cloud (a proxy has no assets host).
+    posthog:
+      posthogAssets === posthogHost
+        ? posthogHost
+        : `${posthogHost} ${posthogAssets}`,
     // The password breach check on sign-up and reset (lib/password-utils.ts) asks Have I Been
     // Pwned for a five-character hash prefix, from the browser.
     pwnedPasswords: "https://api.pwnedpasswords.com",
