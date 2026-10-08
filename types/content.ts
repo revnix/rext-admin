@@ -189,6 +189,36 @@ export interface ContentResponse {
   };
 }
 
+/** How a kept version of an article came to be (task 706). */
+export type ContentVersionSource =
+  | "generation"
+  | "edit"
+  | "restore"
+  | "publish";
+
+/**
+ * One kept version of an article's text (task 706). A version holds one sitting of edits: the same
+ * person's saves within a few minutes go into it, and `updated_at` is when it last took one.
+ */
+export interface ContentVersion {
+  id: string;
+  /** When the sitting began. */
+  created_at: string;
+  /** When it last took a save: the time to show. */
+  updated_at: string;
+  /** Null when the account is gone; the name can be missing. */
+  created_by: { id: string; name: string | null } | null;
+  source: ContentVersionSource;
+  title: string;
+  word_count: number;
+}
+
+/** A version with its text, as GET …/versions/{id} gives it. */
+export interface ContentVersionDetail extends ContentVersion {
+  introduction?: string | null;
+  body_markdown: string;
+}
+
 /**
  * Response schema for content list
  */

@@ -17,6 +17,8 @@
 import type {
   ContentListResponse,
   ContentResponse,
+  ContentVersion,
+  ContentVersionDetail,
   CreateContentRequest,
   UpdateContentRequest,
   WordPressPostStatus,
@@ -93,6 +95,45 @@ export function createContentNamespace(client: ApiClient) {
         {
           method: "GET",
         },
+      );
+    },
+
+    /**
+     * An article's kept versions, newest first, without their text (task 706).
+     */
+    versions: async (workspaceId: string, contentId: string) => {
+      return client.request<{ versions: ContentVersion[] }>(
+        `${ENDPOINTS.CONTENT.versions(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
+        { method: "GET" },
+      );
+    },
+
+    /**
+     * One version with its text.
+     */
+    version: async (
+      workspaceId: string,
+      contentId: string,
+      versionId: string,
+    ) => {
+      return client.request<ContentVersionDetail>(
+        `${ENDPOINTS.CONTENT.version(contentId, versionId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
+        { method: "GET" },
+      );
+    },
+
+    /**
+     * Put a version's text back on the article. The backend keeps the text as it stands as a
+     * version first, and answers with the article as an update does.
+     */
+    restoreVersion: async (
+      workspaceId: string,
+      contentId: string,
+      versionId: string,
+    ) => {
+      return client.request<ContentResponse>(
+        `${ENDPOINTS.CONTENT.restoreVersion(contentId, versionId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
+        { method: "POST" },
       );
     },
 

@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   Check,
   ChevronDown,
+  History,
   ListChecks,
   ListTree,
   Loader2,
@@ -15,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DragHandlePlugin } from "@/components/editor/drag-handle-plugin";
 import { FloatingToolbarPlugin } from "@/components/editor/floating-toolbar-plugin";
+import { HistoryDrawer } from "@/components/editor/history-drawer";
 import { SlashMenuPlugin } from "@/components/editor/slash-menu-plugin";
 import { useLeaveGuard } from "@/components/forms/use-leave-guard";
 import { ArticleChecklist } from "@/components/generate-content/article-checklist";
@@ -50,7 +52,11 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAutosave, type SaveState } from "@/hooks/use-autosave";
 import { useAwaitingData } from "@/hooks/use-awaiting-data";
-import { useAutosaveContent, useContentDetail } from "@/hooks/use-content";
+import {
+  useAutosaveContent,
+  useContentDetail,
+  useContentVersions,
+} from "@/hooks/use-content";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import {
@@ -73,6 +79,7 @@ import {
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
+import type { ContentItem, ContentVersion } from "@/types/content";
 
 const WORDS_A_MINUTE = 225;
 
@@ -125,6 +132,10 @@ type EditorProps = {
   checks: ArticleChecks;
   /** This person may publish: the top bar offers the Publish menu. */
   canPublish: boolean;
+  /** The article's kept versions, or null where the backend keeps none: no History then. */
+  versions: ContentVersion[] | null;
+  /** A version was restored: the article as that left it. */
+  onRestored: (article: ContentItem) => void;
   articleHref: Route;
 };
 
@@ -135,6 +146,8 @@ function ArticleEditor({
   serverMarkdown,
   checks,
   canPublish,
+  versions,
+  onRestored,
   articleHref,
 }: EditorProps) {
   const router = useRouter();
@@ -147,7 +160,9 @@ function ArticleEditor({
   // The drawers (the founder's pick for task 706): the outline on the left, the checklist on
   // the right, each over the page, at the shared sheet's own width, and closed again with Escape
   // or a click outside.
-  const [drawer, setDrawer] = useState<"outline" | "checklist" | null>(null);
+  const [drawer, setDrawer] = useState<
+    "outline" | "checklist" | "history" | null
+  >(null);
   // The text's own box: the outline looks for its headings here, not in the page around it.
   const textBox = useRef<HTMLDivElement>(null);
   // Text left on this device by an earlier visit whose save never worked.
@@ -330,6 +345,18 @@ function ArticleEditor({
             >
               <ListChecks size={16} aria-hidden />
               <span className="hidden md:inline">Checklist</span>
+            </Button>
+          ) : null}
+          {versions ? (
+            <Button
+              data-rec="show"
+              size="sm"
+              variant="ghost"
+              aria-label="History"
+              onClick={() => setDrawer("history")}
+            >
+              <History size={16} aria-hidden />
+              <span className="hidden lg:inline">History</span>
             </Button>
           ) : null}
           {canPublish ? (
@@ -552,6 +579,18 @@ function ArticleEditor({
         </SheetContent>
       </Sheet>
 
+      {versions ? (
+        <HistoryDrawer
+          open={drawer === "history"}
+          onClose={() => setDrawer(null)}
+          workspaceId={workspaceId}
+          contentId={contentId}
+          versions={versions}
+          beforeRestore={saveNow}
+          onRestored={onRestored}
+        />
+      ) : null}
+
       <AlertDialog
         open={guard.isAsking}
         onOpenChange={(open) => !open && guard.stay()}
@@ -650,6 +689,25 @@ export function ArticleEditPage({
     };
   }
 
+  // The History shows only where the backend keeps versions: its list answers.
+  const versionsQuery = useContentVersions(workspaceId, contentId);
+  const versions =
+    versionsQuery.isSuccess && Array.isArray(versionsQuery.data?.versions)
+      ? versionsQuery.data.versions
+      : null;
+  // A restore changes the article under the editor: it starts again on the restored text, with
+  // that as its saved baseline.
+  const [restores, setRestores] = useState(0);
+  const restored = (article: ContentItem) => {
+    opened.current = {
+      id: article.id,
+      title: article.title,
+      markdown: article.body_markdown ?? "",
+      checks: articleChecks(article),
+    };
+    setRestores((count) => count + 1);
+  };
+
   if (isWaiting || permissionLoading) {
     return (
       <StatePage title="Edit article" ownHeading={false}>
@@ -694,13 +752,15 @@ export function ArticleEditPage({
 
   return (
     <ArticleEditor
-      key={opened.current.id}
+      key={`${opened.current.id}-${restores}`}
       workspaceId={workspaceId}
       contentId={contentId}
       title={opened.current.title}
       serverMarkdown={opened.current.markdown}
       checks={opened.current.checks}
       canPublish={canPublish}
+      versions={versions}
+      onRestored={restored}
       articleHref={articleHref}
     />
   );

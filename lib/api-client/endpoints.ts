@@ -144,6 +144,12 @@ export const ENDPOINTS = {
     retry: (id: string) => `/api/v1/content/${id}/retry` as const,
     // DELETE cancels a scheduled publish, PATCH moves it to another day.
     schedule: (id: string) => `/api/v1/content/${id}/schedule` as const,
+    // An article's kept versions (task 706): the list, one with its text, and POST …/restore.
+    versions: (id: string) => `/api/v1/content/${id}/versions` as const,
+    version: (id: string, versionId: string) =>
+      `/api/v1/content/${id}/versions/${versionId}` as const,
+    restoreVersion: (id: string, versionId: string) =>
+      `/api/v1/content/${id}/versions/${versionId}/restore` as const,
     calendar: "/api/v1/content/calendar",
     health: "/api/v1/content/health",
     uploadBlogImage: (workspaceId: string) =>

@@ -51,32 +51,38 @@ jest.mock("@/components/ui/safe-lexical-editor", () => ({
     toolbar,
     bare,
     plugins,
+    readOnly,
   }: {
     initialValue: string;
-    onChange: (markdown: string) => void;
+    onChange?: (markdown: string) => void;
     toolbar?: boolean;
     bare?: boolean;
     plugins?: unknown;
-  }) => (
-    <>
-      <textarea
-        aria-label="Article text"
-        defaultValue={initialValue}
-        onChange={(event) => onChange(event.target.value)}
-      />
-      {/* The article's main headings, as the real editor would draw them. */}
-      {initialValue
-        .split("\n")
-        .filter((line) => line.startsWith("## "))
-        .map((line, index) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: a fixed list, and two may read the same
-          <h2 key={index}>{line.slice(3)}</h2>
-        ))}
-      <output aria-label="Editor options">
-        {`toolbar=${toolbar} bare=${bare} plugins=${plugins ? "yes" : "no"}`}
-      </output>
-    </>
-  ),
+    readOnly?: boolean;
+  }) =>
+    // A version shown in the History is the same component, read-only.
+    readOnly ? (
+      <textarea aria-label="Version text" readOnly value={initialValue} />
+    ) : (
+      <>
+        <textarea
+          aria-label="Article text"
+          defaultValue={initialValue}
+          onChange={(event) => onChange?.(event.target.value)}
+        />
+        {/* The article's main headings, as the real editor would draw them. */}
+        {initialValue
+          .split("\n")
+          .filter((line) => line.startsWith("## "))
+          .map((line, index) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: a fixed list, and two may read the same
+            <h2 key={index}>{line.slice(3)}</h2>
+          ))}
+        <output aria-label="Editor options">
+          {`toolbar=${toolbar} bare=${bare} plugins=${plugins ? "yes" : "no"}`}
+        </output>
+      </>
+    ),
 }));
 
 // marked ships as an ES module jest can't load.
@@ -85,10 +91,22 @@ jest.mock("@/lib/content/article-html", () => ({
 }));
 
 jest.mock("@/lib/api-client", () => ({
-  apiClient: { content: { update: jest.fn() } },
+  apiClient: {
+    content: {
+      update: jest.fn(),
+      versions: jest.fn(),
+      version: jest.fn(),
+      restoreVersion: jest.fn(),
+    },
+  },
 }));
-const update = jest.requireMock("@/lib/api-client").apiClient.content
-  .update as jest.Mock;
+const contentApi = jest.requireMock("@/lib/api-client").apiClient.content as {
+  update: jest.Mock;
+  versions: jest.Mock;
+  version: jest.Mock;
+  restoreVersion: jest.Mock;
+};
+const update = contentApi.update;
 
 let unmountPage: () => void = () => {};
 function renderPage() {
@@ -111,6 +129,8 @@ beforeEach(() => {
   canPublish = true;
   mockArticle = plainArticle;
   update.mockResolvedValue({});
+  // A backend that keeps no versions: the route isn't there.
+  contentApi.versions.mockRejectedValue(new Error("Not Found"));
 });
 afterEach(() => {
   jest.useRealTimers();
@@ -464,5 +484,181 @@ describe("The editor's Publish menu", () => {
     renderPage();
     expect(screen.queryByRole("button", { name: "Publish" })).toBeNull();
     expect(screen.getByRole("button", { name: "Done" })).toBeInTheDocument();
+  });
+});
+
+describe("The editor's History", () => {
+  const VERSIONS = [
+    {
+      id: "v2",
+      created_at: "2026-10-08T05:00:00Z",
+      updated_at: "2026-10-08T05:04:00Z",
+      created_by: { id: "u1", name: "Sam Rivera" },
+      source: "edit",
+      title: "How to start a podcast",
+      word_count: 1072,
+    },
+    {
+      id: "v1",
+      created_at: "2026-10-07T20:00:00Z",
+      updated_at: "2026-10-07T20:00:00Z",
+      created_by: null,
+      source: "generation",
+      title: "How to start a podcast",
+      word_count: 1,
+    },
+  ];
+
+  const openHistory = async (
+    user: ReturnType<typeof userEvent.setup>,
+  ): Promise<HTMLElement> => {
+    await user.click(await screen.findByRole("button", { name: "History" }));
+    return screen.getByRole("dialog", { name: "History" });
+  };
+
+  it("isn't offered where the backend keeps no versions", async () => {
+    renderPage();
+    await wait(50);
+    expect(contentApi.versions).toHaveBeenCalledWith("w1", "c1");
+    expect(screen.queryByRole("button", { name: "History" })).toBeNull();
+  });
+
+  it("lists the versions, each with what it is, whose and how long", async () => {
+    contentApi.versions.mockResolvedValue({ versions: VERSIONS });
+    const user = renderPage();
+    const drawer = await openHistory(user);
+
+    expect(
+      within(drawer)
+        .getAllByRole("listitem")
+        .map((row) => row.textContent?.replace(/^.*?(AM|PM)/, "")),
+    ).toEqual([
+      "Edited · Sam Rivera · 1,072 words",
+      "As first written · 1 word",
+    ]);
+  });
+
+  it("says so when no version is kept yet", async () => {
+    contentApi.versions.mockResolvedValue({ versions: [] });
+    const user = renderPage();
+    const drawer = await openHistory(user);
+    expect(
+      within(drawer).getByText(/No earlier versions yet/),
+    ).toBeInTheDocument();
+  });
+
+  it("shows a version's text, and restores it after asking, saving what is unsaved first", async () => {
+    contentApi.versions.mockResolvedValue({ versions: VERSIONS });
+    contentApi.version.mockResolvedValue({
+      ...VERSIONS[1],
+      body_markdown: "The first text",
+    });
+    contentApi.restoreVersion.mockResolvedValue({
+      id: "c1",
+      content: {
+        id: "c1",
+        title: "The first title",
+        body_markdown: "The first text",
+      },
+    });
+    const user = renderPage();
+    await user.type(screen.getByLabelText("Article text"), "?");
+
+    const drawer = await openHistory(user);
+    await user.click(
+      within(drawer).getByRole("button", { name: /As first written/ }),
+    );
+    expect(await within(drawer).findByLabelText("Version text")).toHaveValue(
+      "The first text",
+    );
+    expect(contentApi.version).toHaveBeenCalledWith("w1", "c1", "v1");
+
+    await user.click(
+      within(drawer).getByRole("button", { name: "Restore this version" }),
+    );
+    const question = await screen.findByRole("alertdialog");
+    expect(
+      within(question).getByText("Restore this version?"),
+    ).toBeInTheDocument();
+    expect(contentApi.restoreVersion).not.toHaveBeenCalled();
+    await user.click(
+      within(question).getByRole("button", { name: "Restore version" }),
+    );
+    await wait(50);
+
+    // What was typed is saved first, so the backend can keep it as a version.
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(contentApi.restoreVersion).toHaveBeenCalledWith("w1", "c1", "v1");
+    // The editor starts again on the restored article, saved.
+    expect(screen.getByLabelText("Article text")).toHaveValue("The first text");
+    expect(
+      screen.getByRole("heading", { level: 1, name: "The first title" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "History" })).toBeNull();
+    expect(screen.getByText("Saved")).toBeInTheDocument();
+  });
+
+  it("restores nothing when the text as it stands can't be saved first", async () => {
+    contentApi.versions.mockResolvedValue({ versions: VERSIONS });
+    contentApi.version.mockResolvedValue({
+      ...VERSIONS[1],
+      body_markdown: "The first text",
+    });
+    update.mockRejectedValue(new Error("offline"));
+    const user = renderPage();
+    await user.type(screen.getByLabelText("Article text"), "?");
+
+    const drawer = await openHistory(user);
+    await user.click(
+      within(drawer).getByRole("button", { name: /As first written/ }),
+    );
+    await within(drawer).findByLabelText("Version text");
+    await user.click(
+      within(drawer).getByRole("button", { name: "Restore this version" }),
+    );
+    await user.click(
+      within(await screen.findByRole("alertdialog")).getByRole("button", {
+        name: "Restore version",
+      }),
+    );
+    await wait(50);
+
+    expect(contentApi.restoreVersion).not.toHaveBeenCalled();
+    expect(
+      within(drawer).getByText("Nothing was restored"),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Article text")).toHaveValue("Hello?");
+  });
+
+  it("says so when the restore itself fails, and changes nothing", async () => {
+    contentApi.versions.mockResolvedValue({ versions: VERSIONS });
+    contentApi.version.mockResolvedValue({
+      ...VERSIONS[1],
+      body_markdown: "The first text",
+    });
+    contentApi.restoreVersion.mockRejectedValue(
+      new Error("Another article has this title"),
+    );
+    const user = renderPage();
+
+    const drawer = await openHistory(user);
+    await user.click(
+      within(drawer).getByRole("button", { name: /As first written/ }),
+    );
+    await within(drawer).findByLabelText("Version text");
+    await user.click(
+      within(drawer).getByRole("button", { name: "Restore this version" }),
+    );
+    await user.click(
+      within(await screen.findByRole("alertdialog")).getByRole("button", {
+        name: "Restore version",
+      }),
+    );
+    await wait(50);
+
+    expect(
+      within(drawer).getByText(/Another article has this title/),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Article text")).toHaveValue("Hello");
   });
 });

@@ -202,6 +202,61 @@ export function useSaveGeneratedContent() {
 }
 
 /**
+ * An article's kept versions (task 706), newest first. Under the article's own key, so every save
+ * of it refreshes the list. No retry: the editor shows its History only when this answers, and a
+ * backend without the route answers 404 at once.
+ */
+export function useContentVersions(workspaceId: string, contentId: string) {
+  return useQuery({
+    queryKey: ["content", workspaceId, contentId, "versions"],
+    queryFn: () => apiClient.content.versions(workspaceId, contentId),
+    enabled: !!workspaceId && !!contentId,
+    retry: false,
+  });
+}
+
+/** One version with its text, read when it is opened in the History. */
+export function useContentVersion(
+  workspaceId: string,
+  contentId: string,
+  versionId: string | null,
+) {
+  return useQuery({
+    queryKey: ["content", workspaceId, contentId, "versions", versionId],
+    queryFn: () =>
+      apiClient.content.version(workspaceId, contentId, versionId as string),
+    enabled: !!workspaceId && !!contentId && !!versionId,
+    retry: false,
+  });
+}
+
+/**
+ * Puts a version's text back on the article. No toast: the History says what happened in its own
+ * words. The article and its versions are read again after it.
+ */
+export function useRestoreContentVersion() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      workspaceId,
+      contentId,
+      versionId,
+    }: {
+      workspaceId: string;
+      contentId: string;
+      versionId: string;
+    }) => apiClient.content.restoreVersion(workspaceId, contentId, versionId),
+    retry: false,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["content", variables.workspaceId],
+      });
+    },
+  });
+}
+
+/**
  * Hook to schedule content for future publication
  */
 export function useScheduleContent() {
