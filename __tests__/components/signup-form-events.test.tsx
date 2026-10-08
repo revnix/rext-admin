@@ -217,6 +217,27 @@ describe("SignupForm, what it reports", () => {
     expect(register).not.toHaveBeenCalled();
   });
 
+  // The live backend refuses a name that starts in lower case; on launch day that refused one
+  // person three times in nine seconds (rext-control task 933). Until its rule is gone the name
+  // is sent with its first letter raised, and the form keeps what was typed.
+  it("sends a name typed in lower case so that the backend takes it, and leaves the field as typed", async () => {
+    register.mockRejectedValue(new ApiError(503, "Service unavailable"));
+    show();
+    await userEvent.type(screen.getByLabelText(/Full name/), "john smith");
+    await userEvent.type(screen.getByLabelText(/^\*?Email/), EMAIL);
+    await userEvent.type(screen.getByLabelText(/^\*?Password/), PASSWORD);
+    await userEvent.type(screen.getByLabelText(/Confirm password/), PASSWORD);
+
+    await pressCreate();
+
+    await waitFor(() => expect(register).toHaveBeenCalledTimes(1));
+    expect(register.mock.calls[0][0]).toMatchObject({
+      full_name: "John smith",
+      email: EMAIL,
+    });
+    expect(screen.getByLabelText(/Full name/)).toHaveValue("john smith");
+  });
+
   it("does not call it a refused sign-up when the account exists and only the login after it fails", async () => {
     register.mockResolvedValue({
       user: { id: "u1", email: EMAIL, email_verified: true },
