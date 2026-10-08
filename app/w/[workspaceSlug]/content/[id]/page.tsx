@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { log } from "@/lib/logger";
 import { PUBLISH_INTENTS } from "@/lib/content/publish-copy";
+import { MAX_ARTICLE_TEXT, savedArticleText } from "@/lib/content/saved-text";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
@@ -65,21 +66,25 @@ export default function WorkspaceContentDetailPage({
   );
   const [contentMarkdown, setContentMarkdown] = useState("");
 
+  // The article's text as this page shows it: the saved text, cut at a sane length. An article
+  // with no text (one edited down to nothing) has an empty one, which is shown as empty and not
+  // as whatever text the page held before.
+  const savedMarkdown = useMemo(
+    () => (content ? savedArticleText(content.body_markdown) : null),
+    [content],
+  );
+
   useEffect(() => {
-    if (content?.body_markdown && typeof content.body_markdown === "string") {
-      // Basic validation: ensure it's a string and within reasonable bounds
-      const MAX_CONTENT_LENGTH = 500_000; // 500KB max
-      if (content.body_markdown.length <= MAX_CONTENT_LENGTH) {
-        setContentMarkdown(content.body_markdown);
-      } else {
-        log.warn("Content body_markdown exceeds maximum length", {
-          length: content.body_markdown.length,
-          max: MAX_CONTENT_LENGTH,
-        });
-        setContentMarkdown(content.body_markdown.slice(0, MAX_CONTENT_LENGTH));
-      }
+    if (savedMarkdown === null) return;
+    const length = content?.body_markdown?.length ?? 0;
+    if (length > MAX_ARTICLE_TEXT) {
+      log.warn("Content body_markdown exceeds maximum length", {
+        length,
+        max: MAX_ARTICLE_TEXT,
+      });
     }
-  }, [content?.body_markdown]);
+    setContentMarkdown(savedMarkdown);
+  }, [savedMarkdown, content?.body_markdown?.length]);
 
   const seoResult = useMemo<SEORESULT | null>(() => {
     if (!content?.seo_data?.seo_details) return null;
@@ -401,8 +406,7 @@ export default function WorkspaceContentDetailPage({
             // the text shown here, and a copy from before the edit may still be on screen while
             // the fresh one is read.
             publishIntent={
-              !contentQuery.isFetching &&
-              contentMarkdown === (content.body_markdown ?? "")
+              !contentQuery.isFetching && contentMarkdown === savedMarkdown
                 ? publishIntent
                 : null
             }
