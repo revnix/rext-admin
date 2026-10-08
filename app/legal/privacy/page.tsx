@@ -230,18 +230,21 @@ export default function PrivacyPolicyPage() {
 
         <h2>9. Support Chat</h2>
         <p>
-          &ldquo;Chat with us&rdquo;, in the help menu, opens a chat run by{" "}
+          &ldquo;Chat with us&rdquo; and the Chat button open a chat run by{" "}
           <strong>Crisp</strong> (Crisp IM SAS, France), whose servers are in
           the European Union.
         </p>
         <ul>
           <li>
             The chat loads only when you open it. Until then, no Crisp script,
-            request or cookie touches the app.
+            request or cookie touches the app. Once you have opened it, it loads
+            on your later visits too, closed, so we can show you when
+            we&rsquo;ve replied.
           </li>
           <li>
-            We send Crisp your email, name and account ID, so we know who
-            we&rsquo;re talking to.
+            We send Crisp your email, name, account ID and plan, so we know who
+            we&rsquo;re talking to. If you open the chat before signing in, none
+            of these is sent.
           </li>
           <li>
             Crisp receives your messages and any files you send, with your IP
