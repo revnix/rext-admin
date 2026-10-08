@@ -298,7 +298,8 @@ describe("a 503 that says the session could not be checked", () => {
 describe("an expired token whose refresh did not advance the session", () => {
   const expired = () =>
     refusal(401, "token_expired", "Authentication token has expired");
-  const old = token("old", -60);
+  // Time left by this browser's clock, so nothing renews it ahead; the backend says otherwise.
+  const old = token("old", 60);
 
   /** The API answers "expired"; the session update answers with `refreshed`. */
   function expiredThenRefresh(refreshed: unknown, refreshOk = true) {
@@ -400,7 +401,8 @@ describe("an expired token whose refresh did not advance the session", () => {
 describe("the request sent again after a refresh", () => {
   const expired = () =>
     refusal(401, "token_expired", "Authentication token has expired");
-  const old = token("old", -60);
+  // Time left by this browser's clock, so nothing renews it ahead; the backend says otherwise.
+  const old = token("old", 60);
   const renewed = token("new", 600);
 
   /** The first answer is "expired", the refresh advances, and `again` answers the second send. */
@@ -459,6 +461,121 @@ describe("the request sent again after a refresh", () => {
 
     expect(value?.status).toBe(401);
     expect(signOuts()).toEqual([]);
+  });
+});
+
+describe("a token that is past its time when a request is about to leave", () => {
+  const past = token("past", -60);
+  const renewed = token("renewed", 600);
+
+  /** The session update answers with `next`; the API accepts whatever it is sent. */
+  function renewalGives(next: unknown) {
+    send.mockImplementation(async (url: string) =>
+      url === SESSION_URL ? answer(200, next) : fine(),
+    );
+  }
+  const tokensSent = () =>
+    sentTo(URL_ASKED).map(([, init]) =>
+      new Headers(init.headers).get("Authorization"),
+    );
+
+  it("is renewed first, so the backend is never asked with it", async () => {
+    const { authenticatedFetch } = freshWrapper();
+    readSession.mockResolvedValue(session(past));
+    renewalGives(session(renewed));
+
+    const { value } = await settle(authenticatedFetch(URL_ASKED));
+
+    expect(value?.status).toBe(200);
+    expect(tokensSent()).toEqual([`Bearer ${renewed}`]);
+    expect(sentTo(SESSION_URL)).toHaveLength(1);
+  });
+
+  it("is renewed once for a page's ten first requests", async () => {
+    const { authenticatedFetch } = freshWrapper();
+    readSession.mockResolvedValue(session(past));
+    renewalGives(session(renewed));
+
+    const answers = await Promise.all(
+      Array.from({ length: 10 }, () => settle(authenticatedFetch(URL_ASKED))),
+    );
+
+    expect(answers.every(({ value }) => value?.status === 200)).toBe(true);
+    expect(tokensSent()).toEqual(Array(10).fill(`Bearer ${renewed}`));
+    expect(sentTo(SESSION_URL)).toHaveLength(1);
+  });
+
+  it("goes as it is when the renewal brings nothing later, and is not tried ahead again", async () => {
+    const { authenticatedFetch } = freshWrapper();
+    readSession.mockResolvedValue(session(past));
+    // The renewal failed in passing: the same token comes back.
+    renewalGives(session(past));
+
+    await settle(authenticatedFetch(URL_ASKED));
+    await settle(authenticatedFetch(URL_ASKED));
+
+    expect(tokensSent()).toEqual([`Bearer ${past}`, `Bearer ${past}`]);
+    expect(sentTo(SESSION_URL)).toHaveLength(1);
+  });
+
+  it("stops renewing ahead when a token just renewed is past its time too: this clock is wrong", async () => {
+    const { authenticatedFetch } = freshWrapper();
+    const alsoPast = token("renewed-and-past", -30);
+    readSession
+      .mockResolvedValueOnce(session(past))
+      .mockResolvedValueOnce(session(past))
+      .mockResolvedValue(session(alsoPast));
+    renewalGives(session(alsoPast));
+
+    await settle(authenticatedFetch(URL_ASKED));
+    await jest.advanceTimersByTimeAsync(11_000);
+    await settle(authenticatedFetch(URL_ASKED));
+    await jest.advanceTimersByTimeAsync(11_000);
+    await settle(authenticatedFetch(URL_ASKED));
+
+    // One renewal in all: the backend's own clock decides from here, through its 401.
+    expect(sentTo(SESSION_URL)).toHaveLength(1);
+    expect(sentTo(URL_ASKED)).toHaveLength(3);
+  });
+
+  it("leaves a token with time left alone", async () => {
+    const { authenticatedFetch } = freshWrapper();
+    readSession.mockResolvedValue(session(token("fresh", 600)));
+    renewalGives(session(renewed));
+
+    await settle(authenticatedFetch(URL_ASKED));
+
+    expect(sentTo(SESSION_URL)).toHaveLength(0);
+  });
+});
+
+describe("a write of the session cookie that is not a refresh", () => {
+  it("waits its turn behind a refresh that is under way", async () => {
+    const { inTurnWithTokenRefresh, requestBackendTokenRefresh } =
+      freshWrapper();
+    let finishRefresh: (value: null) => void = () => undefined;
+    const refresh = requestBackendTokenRefresh(
+      () =>
+        new Promise<null>((resolve) => {
+          finishRefresh = resolve;
+        }),
+    );
+    const write = jest.fn(async () => "written");
+
+    const turn = inTurnWithTokenRefresh(write);
+    await jest.advanceTimersByTimeAsync(50);
+    expect(write).not.toHaveBeenCalled();
+
+    finishRefresh(null);
+    await refresh;
+
+    expect(await turn).toBe("written");
+    expect(write).toHaveBeenCalledTimes(1);
+  });
+
+  it("runs at once when no refresh is under way", async () => {
+    const { inTurnWithTokenRefresh } = freshWrapper();
+    expect(await inTurnWithTokenRefresh(async () => 7)).toBe(7);
   });
 });
 

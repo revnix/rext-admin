@@ -3,7 +3,12 @@
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { ApiError } from "@/lib/api-client/core";
-import { getAuthHeaders } from "@/lib/auth-utils";
+import {
+  isSignedOut,
+  SIGNED_OUT,
+  subscribeSignedOut,
+} from "@/lib/auth/signed-out";
+import { authenticatedFetch } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
 import {
   type SSEConnectionStatus,
@@ -21,6 +26,25 @@ import {
   useRef,
 } from "react";
 import { NOTIFICATION_CONSTANTS } from "@/constants/notifications";
+
+/** Resolves once the page has a session again, or the stream is given up meanwhile. */
+function untilSignedIn(signal: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    if (!isSignedOut() || signal.aborted) {
+      resolve();
+      return;
+    }
+    const done = () => {
+      unsubscribe();
+      signal.removeEventListener("abort", done);
+      resolve();
+    };
+    const unsubscribe = subscribeSignedOut(() => {
+      if (!isSignedOut()) done();
+    });
+    signal.addEventListener("abort", done, { once: true });
+  });
+}
 
 type ActiveSubscription = {
   abortController: AbortController;
@@ -208,17 +232,25 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
           const controller = abortController;
 
           try {
-            const authHeaders = await getAuthHeaders();
-            const headers: HeadersInit = {
-              Accept: "text/event-stream",
-              ...authHeaders,
-            };
+            // A page with no session has nothing to open a stream with (rext-control tasks 858
+            // and 879): it waits here, asking nobody, until the page has a session again.
+            if (isSignedOut()) {
+              await untilSignedIn(controller.signal);
+              if (!isActive || controller.signal.aborted) break;
+              retryCount = 0;
+            }
 
             const url = buildUrl();
 
             await fetchEventSource(url, {
               signal: controller.signal,
-              headers,
+              headers: { Accept: "text/event-stream" },
+              // The stream opens through the wrapper every request goes through, so it gets what
+              // they get: its token (never sent without one), a token past its time renewed
+              // first, an "expired" answer renewed and asked again, and a session the backend
+              // has ended signed out. Opened with its own headers it asked every five seconds
+              // with a token the backend had already refused, for as long as the tab stayed open.
+              fetch: (input, init) => authenticatedFetch(String(input), init),
               openWhenHidden: true,
               credentials: "include", // Include cookies for session
               onopen: async (response) => {
@@ -257,8 +289,20 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                     return;
                   }
 
-                  // For other 4xx errors, throw ApiError to be handled in the catch block
-                  throw new ApiError(status, errorMessage);
+                  // For other 4xx errors, throw ApiError to be handled in the catch block. A 401
+                  // keeps its code: the wrapper's own answer for a page with no session is told
+                  // apart from the stream's refusal by it.
+                  const code =
+                    status === 401
+                      ? await response
+                          .clone()
+                          .json()
+                          .then(
+                            (body) => body?.error?.code as string | undefined,
+                          )
+                          .catch(() => undefined)
+                      : undefined;
+                  throw new ApiError(status, errorMessage, code);
                 }
 
                 throw new ApiError(status, errorMessage);
@@ -352,6 +396,44 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
             }
 
             if (controller.signal.aborted) {
+              break;
+            }
+
+            // The page has no session: back to the top of the loop, which waits for one. Nothing
+            // is counted against the stream and nobody is asked meanwhile. While a sign-out is
+            // still on its way to the sign-in page the state doesn't say so yet, so that case
+            // pauses here first.
+            if (
+              isSignedOut() ||
+              (error instanceof ApiError && error.code === SIGNED_OUT)
+            ) {
+              notifyStatus({ connected: false, retryCount });
+              if (!isSignedOut()) {
+                await new Promise((resolve) => {
+                  setTimeout(
+                    resolve,
+                    NOTIFICATION_CONSTANTS.SSE_RETRY_MAX_DELAY_MS,
+                  );
+                });
+              }
+              continue;
+            }
+
+            // A 401 with a session in hand is the stream's own refusal (the wrapper has already
+            // renewed an expired token and signed out an ended session): asking again with the
+            // same token gets the same answer.
+            if (error instanceof ApiError && error.statusCode === 401) {
+              sseLogger.error(
+                "SSE refused for this session, not asking again",
+                {
+                  operationId,
+                },
+              );
+              stop({
+                connected: false,
+                retryCount,
+                error: "Connection refused",
+              });
               break;
             }
 

@@ -28,8 +28,12 @@ import { useAuthStore } from "@/stores/auth-store";
 let authHeadersCache: {
   headers: Record<string, string>;
   timestamp: number;
+  /** When the token in `headers` runs out, where the session says. */
+  expires?: number;
 } | null = null;
 const CACHE_TTL_MS = 10000; // Cache for 10 seconds
+// A token with no more than this left of its time is renewed before it is sent.
+const RENEW_WITHIN_MS = 5000;
 
 export const ROLE_HIERARCHY = [
   "super_admin",
@@ -217,6 +221,30 @@ export function requestBackendTokenRefresh(
   return backendRefreshPromise;
 }
 
+/**
+ * Runs a write of the session cookie that is not a token refresh (a permissions sync, a re-read
+ * that brings React's session up to date) in turn with the refresh, never beside it.
+ *
+ * Every answer of the session endpoint sets the cookie again from the token it read when the
+ * request began. A write that began before a refresh and ended after it puts the old cookie
+ * back, with the refresh token the backend has just used up: the next refresh is then refused
+ * and the person is signed out (revnix/rext-control#858). Reads made here already wait their
+ * turn (`fetchSessionSingleFlight`); this is the same turn for a component's `update()`.
+ * Never call it from inside a refresh: the lock is not re-entrant.
+ */
+export async function inTurnWithTokenRefresh<T>(
+  write: () => Promise<T>,
+): Promise<T> {
+  if (backendRefreshPromise) {
+    try {
+      await backendRefreshPromise;
+    } catch {
+      // The write below is still due after a refresh that failed in passing.
+    }
+  }
+  return withBackendSessionLock(write);
+}
+
 // Mutex: getAuthHeaders() is called concurrently by every service on the
 // page (profile, subscription, permissions, notifications, ...) whenever a
 // page mounts. The headers cache below is only written *after* getSession()
@@ -308,6 +336,67 @@ export function redirectToLogin(errorCode: string = "SessionExpired"): void {
   }, 0);
 }
 
+// The renewal tried ahead of a request, by the token it was tried for: one try per token, shared
+// by every request that reads that token meanwhile.
+let renewalAhead: { token: string; done: Promise<Session | null> } | null =
+  null;
+// Set when a token just renewed is itself past its time by this browser's clock: the clock is
+// wrong, and renewing ahead would renew on every request. The 401 path still works by the
+// backend's clock.
+let renewingAheadIsOff = false;
+
+/**
+ * A session whose access token is past its time is renewed before a request is sent with it
+ * (revnix/rext-control#858). The token lasts minutes and the sign-in days, so a returning
+ * visitor's first page sent ten requests with a token the backend had to refuse, renewed it,
+ * and sent them all again; the page flickered through that, and a stream opened in that first
+ * second never connected. The renewal is the one the 401 path uses (single-flight, under the
+ * same lock), tried once per token. If it does not come back with a later token, the request
+ * goes with the one it has and the 401 path decides, as before.
+ */
+async function renewedIfPastItsTime(
+  session: Session | null,
+): Promise<Session | null> {
+  const accessToken = session?.user?.accessToken;
+  if (!session || !accessToken || session.error || renewingAheadIsOff) {
+    return session;
+  }
+  const expires = session.accessTokenExpires ?? accessTokenExpiry(accessToken);
+  if (typeof expires !== "number" || expires - Date.now() > RENEW_WITHIN_MS) {
+    return session;
+  }
+
+  if (renewalAhead?.token !== accessToken) {
+    renewalAhead = {
+      token: accessToken,
+      done: requestBackendTokenRefresh(forceSessionRefresh, {
+        accessToken,
+        accessTokenExpires: expires,
+      }).catch(() => null),
+    };
+  }
+  const renewed = await renewalAhead.done;
+  if (
+    !renewed?.user?.accessToken ||
+    !sessionAdvancedPast(renewed, { accessToken, accessTokenExpires: expires })
+  ) {
+    return session;
+  }
+
+  const renewedExpires =
+    renewed.accessTokenExpires ?? accessTokenExpiry(renewed.user.accessToken);
+  if (
+    typeof renewedExpires === "number" &&
+    renewedExpires - Date.now() <= RENEW_WITHIN_MS
+  ) {
+    log.warn(
+      "[AuthJS] A token just renewed is past its time by this clock: no more renewing ahead",
+    );
+    renewingAheadIsOff = true;
+  }
+  return renewed;
+}
+
 /**
  * Get authentication headers for API requests
  * Works in both client and server components
@@ -331,7 +420,11 @@ export async function getAuthHeaders(
   // Check cache first (only on client-side)
   if (typeof window !== "undefined" && !skipCache && authHeadersCache) {
     const now = Date.now();
-    if (now - authHeadersCache.timestamp < CACHE_TTL_MS) {
+    const pastItsTime =
+      !renewingAheadIsOff &&
+      typeof authHeadersCache.expires === "number" &&
+      authHeadersCache.expires - now <= RENEW_WITHIN_MS;
+    if (now - authHeadersCache.timestamp < CACHE_TTL_MS && !pastItsTime) {
       return authHeadersCache.headers;
     }
   }
@@ -352,7 +445,7 @@ export async function getAuthHeaders(
   }
 
   // Client-side: use getSession(), coalesced across concurrent callers
-  const session = await fetchSessionSingleFlight();
+  const session = await renewedIfPastItsTime(await fetchSessionSingleFlight());
   const headers: Record<string, string> = {};
 
   if (session?.user?.accessToken) {
@@ -384,6 +477,9 @@ export async function getAuthHeaders(
     authHeadersCache = {
       headers,
       timestamp: Date.now(),
+      expires:
+        session?.accessTokenExpires ??
+        accessTokenExpiry(session?.user?.accessToken),
     };
   } else {
     authHeadersCache = null;

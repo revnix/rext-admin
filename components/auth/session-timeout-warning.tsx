@@ -8,6 +8,7 @@ import { log } from "@/lib/logger";
 import {
   AUTH_SESSION_UPDATE_ACTION,
   fetchSessionSingleFlight,
+  inTurnWithTokenRefresh,
   requestBackendTokenRefresh,
 } from "@/lib/auth-utils";
 import { apiClient } from "@/lib/api-client";
@@ -75,7 +76,8 @@ export function SessionTimeoutWarning() {
         log.info(
           "[Auth] Token already refreshed by another tab, skipping redundant refresh",
         );
-        await update();
+        // A read that sets the cookie again: in turn with any refresh, never beside one.
+        await inTurnWithTokenRefresh(() => update());
         return;
       }
 
@@ -113,7 +115,7 @@ export function SessionTimeoutWarning() {
         !performedLocalUpdate &&
         updatedSession?.accessTokenExpires !== session.accessTokenExpires
       ) {
-        await update();
+        await inTurnWithTokenRefresh(() => update());
       }
 
       log.info("[Auth] Session refreshed automatically", {
