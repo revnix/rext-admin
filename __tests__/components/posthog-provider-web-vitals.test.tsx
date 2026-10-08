@@ -191,6 +191,8 @@ it("sends a page's measures as numbers with the address's shape, and nothing els
     surface: "app",
     source: "client",
     route: "/w/*/content/*",
+    // The page this test's document was loaded on.
+    loaded_route: "/",
     $web_vitals_LCP_value: 1834.5,
     $web_vitals_LCP_event: { name: "LCP", value: 1834.5, rating: "good" },
   });
