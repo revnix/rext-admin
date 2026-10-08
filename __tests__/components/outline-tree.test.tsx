@@ -411,6 +411,65 @@ describe("a page with several lists", () => {
     expect(steps).not.toHaveTextContent(/new sections/);
   });
 
+  it("says a step where a row can be put between two, as everywhere else in the list", () => {
+    renderOutline({ gate: gateWith(STEPS, TOOLS) });
+    const steps = screen.getByRole("region", { name: "Steps" });
+
+    // The line between two rows (a pointer's control, hidden from assistive technology).
+    expect(steps).toHaveTextContent("Add a step here");
+    expect(steps).not.toHaveTextContent("Add a section here");
+  });
+
+  it("counts every list's additions together, and names them by a list only when they are all its own", async () => {
+    const { user } = renderOutline({
+      gate: {
+        ...gateWith(STEPS, TOOLS),
+        section_additions: ["steps", "tools"],
+      },
+    });
+    const steps = screen.getByRole("region", { name: "Steps" });
+    const tools = screen.getByRole("region", { name: "Tools" });
+
+    await user.click(within(steps).getByRole("button", { name: "Add step" }));
+    await user.type(
+      within(steps).getByRole("textbox", { name: "New step" }),
+      "Water{Enter}",
+    );
+    // One step was added: the steps' list says so, and the tools' list doesn't claim a tool.
+    expect(steps).toHaveTextContent("1 of 6 new steps");
+    expect(tools).toHaveTextContent("1 of 6 additions");
+    expect(tools).not.toHaveTextContent(/new tools/);
+
+    await user.click(within(tools).getByRole("button", { name: "Add tool" }));
+    await user.type(
+      within(tools).getByRole("textbox", { name: "New tool" }),
+      "Gloves{Enter}",
+    );
+    // Now the two are of both lists: neither list calls them its own.
+    expect(steps).toHaveTextContent("2 of 6 additions");
+    expect(tools).toHaveTextContent("2 of 6 additions");
+  });
+
+  it("gives the cap's reason in the list's own words, never as sections", async () => {
+    const { user } = renderOutline({ gate: gateWith(STEPS, TOOLS) });
+    const steps = screen.getByRole("region", { name: "Steps" });
+
+    for (const heading of ["One", "Two", "Three", "Four", "Five", "Six"]) {
+      await user.click(within(steps).getByRole("button", { name: "Add step" }));
+      await user.type(
+        within(steps).getByRole("textbox", { name: "New step" }),
+        `${heading}{Enter}`,
+      );
+    }
+    expect(steps).toHaveTextContent(
+      "6 of 6 new steps · one approval adds at most 6 steps",
+    );
+    expect(steps).not.toHaveTextContent(/sections/);
+    expect(
+      within(steps).getByRole("button", { name: "Add step" }),
+    ).toBeDisabled();
+  });
+
   it("names the keys once, under the last list, with no level key where no list has levels", () => {
     renderOutline({ gate: gateWith(STEPS, TOOLS) });
 
