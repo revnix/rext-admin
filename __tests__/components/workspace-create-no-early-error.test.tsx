@@ -40,6 +40,10 @@ jest.mock("@/stores/workspace", () => {
   };
 });
 
+beforeEach(() => {
+  window.history.replaceState(null, "", "/w/create");
+});
+
 describe("Creating a workspace on a new account", () => {
   it("shows no field error when something else takes the focus before any input", async () => {
     render(
@@ -90,23 +94,76 @@ describe("Creating a workspace on a new account", () => {
     ).toBeInTheDocument();
   });
 
-  it("says the name is required once the person leaves the empty field", async () => {
+  it("says nothing when the empty name is left: an empty field is no error until the button is pressed", async () => {
     render(
       <QueryClientProvider client={new QueryClient()}>
         <WorkspaceCreateWizard />
+        <p>Somewhere else on the page</p>
       </QueryClientProvider>,
     );
     expect(
       screen.getByRole("textbox", { name: /What is your business called/ }),
     ).toHaveFocus();
 
-    // On to the website, nothing typed: the person left the field, nothing took the focus.
+    // A tap anywhere on the page takes the caret out of the first field.
+    await userEvent.click(screen.getByText("Somewhere else on the page"));
+    // And on through the website, left empty too.
+    await userEvent.click(
+      screen.getByRole("textbox", { name: /What is its website/ }),
+    );
     await userEvent.tab();
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
 
+    expect(screen.queryByText("Name is required")).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(
+      screen.getByRole("textbox", { name: /What is your business called/ }),
+    ).not.toHaveAttribute("aria-invalid", "true");
     expect(
       screen.getByRole("textbox", { name: /What is its website/ }),
-    ).toHaveFocus();
+    ).not.toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("says so when choosing the other way in takes the caret out of the empty name", async () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <WorkspaceCreateWizard />
+      </QueryClientProvider>,
+    );
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "I don't have a website yet" }),
+    );
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+
+    expect(
+      screen.getByRole("textbox", { name: /What does the business do/ }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Name is required")).toBeNull();
+  });
+
+  it("says what is missing once the button is pressed, and from then as each field is left", async () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <WorkspaceCreateWizard />
+      </QueryClientProvider>,
+    );
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Read my website" }),
+    );
+
     expect(await screen.findByText("Name is required")).toBeInTheDocument();
+    const name = screen.getByRole("textbox", {
+      name: /What is your business called/,
+    });
+    expect(name).toHaveAttribute("aria-invalid", "true");
+    // The first field in error has the caret.
+    expect(name).toHaveFocus();
   });
 
   it("keeps quiet while the window is away and the caret is still in the empty field", () => {
@@ -142,5 +199,126 @@ describe("Creating a workspace on a new account", () => {
         "Workspace name must contain at least one letter",
       ),
     ).toBeInTheDocument();
+  });
+});
+
+describe("The way in, in the address", () => {
+  const open = () =>
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <WorkspaceCreateWizard />
+      </QueryClientProvider>,
+    );
+  const name = () =>
+    screen.getByRole("textbox", { name: /What is your business called/ });
+
+  it("goes into the address as its own step when it is chosen", async () => {
+    open();
+    const steps = window.history.length;
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "I don't have a website yet" }),
+    );
+
+    expect(window.location.search).toBe("?from=description");
+    expect(window.history.length).toBe(steps + 1);
+  });
+
+  it("comes back to the website on going back, with what was typed still there", async () => {
+    open();
+    await userEvent.type(name(), "Luna Bakery");
+    await userEvent.click(
+      screen.getByRole("button", { name: "I don't have a website yet" }),
+    );
+    expect(
+      screen.getByRole("textbox", { name: /What does the business do/ }),
+    ).toBeInTheDocument();
+
+    // The phone's back gesture.
+    await act(async () => {
+      window.history.back();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+
+    expect(window.location.search).toBe("");
+    expect(
+      screen.getByRole("textbox", { name: /What is its website/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("textbox", { name: /What does the business do/ }),
+    ).toBeNull();
+    expect(name()).toHaveValue("Luna Bakery");
+  });
+
+  it("opens on the description when the address says so: a reload keeps the way", async () => {
+    window.history.replaceState(null, "", "/w/create?from=description");
+    open();
+
+    expect(
+      await screen.findByRole("textbox", { name: /What does the business do/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Draft my brand voice" }),
+    ).toBeInTheDocument();
+  });
+
+  it("drops the way from the address when the website is chosen again", async () => {
+    window.history.replaceState(null, "", "/w/create?from=description");
+    open();
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "I have a website" }),
+    );
+
+    expect(window.location.search).toBe("");
+    expect(
+      screen.getByRole("textbox", { name: /What is its website/ }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("What was typed, kept for the tab", () => {
+  const tree = () => (
+    <QueryClientProvider client={new QueryClient()}>
+      <WorkspaceCreateWizard />
+    </QueryClientProvider>
+  );
+  const name = () =>
+    screen.getByRole("textbox", { name: /What is your business called/ });
+
+  it("is there again when the page is left and opened again, with the way chosen and no error", async () => {
+    const first = render(tree());
+    await userEvent.type(name(), "Luna Bakery");
+    await userEvent.click(
+      screen.getByRole("button", { name: "I don't have a website yet" }),
+    );
+    await userEvent.type(
+      screen.getByRole("textbox", { name: /What does the business do/ }),
+      "Sourdough",
+    );
+    first.unmount();
+    // Home, and the home page sends an account with no workspace back to the form's plain address.
+    window.history.replaceState(null, "", "/w/create");
+
+    render(tree());
+
+    expect(name()).toHaveValue("Luna Bakery");
+    expect(
+      await screen.findByRole("textbox", { name: /What does the business do/ }),
+    ).toHaveValue("Sourdough");
+    expect(window.location.search).toBe("?from=description");
+    // Nothing that came back is checked: no field has been left.
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(name()).not.toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("asks nothing on leaving: the browser's own prompt has nothing to protect", async () => {
+    render(tree());
+    await userEvent.type(name(), "Luna Bakery");
+
+    const leaving = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(leaving);
+
+    expect(leaving.defaultPrevented).toBe(false);
   });
 });

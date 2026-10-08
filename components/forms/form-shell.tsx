@@ -55,6 +55,7 @@ export function FormShell<
   sticky = false,
   status,
   dirty = false,
+  keepsDraft = false,
   children,
   className,
 }: {
@@ -70,12 +71,19 @@ export function FormShell<
   status?: ReactNode;
   /** Unsaved changes the form's own state doesn't hold (a chosen file), for the leave guard. */
   dirty?: boolean;
+  /**
+   * The page keeps what is typed by itself (the create-workspace form does, for the tab), so
+   * leaving loses nothing: no leave guard, neither the dialog nor the browser's own prompt.
+   */
+  keepsDraft?: boolean;
   children: ReactNode;
   className?: string;
 }) {
   // Not "submitted successfully": that holds even when the page catches its own save error.
   const { isDirty, isSubmitting } = form.formState;
-  const guard = useLeaveGuard((isDirty || dirty) && !isSubmitting);
+  const guard = useLeaveGuard(
+    (isDirty || dirty) && !isSubmitting && !keepsDraft,
+  );
   const hydrated = useHydrated();
 
   return (

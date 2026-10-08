@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  type FocusEvent,
   type ReactNode,
   useCallback,
   useEffect,
@@ -35,6 +34,11 @@ import { useWorkspaceCreateAnalytics } from "@/hooks/use-workspace-create-analyt
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { analytics } from "@/lib/analytics";
 import { ApiError } from "@/lib/api-client/core";
+import {
+  dropCreateDraft,
+  keepCreateDraft,
+  readCreateDraft,
+} from "@/lib/workspace/create-draft";
 import { SERVER_UNREACHABLE } from "@/lib/api-client/server-away";
 import { redirectToLogin } from "@/lib/auth-utils";
 import { extractFieldErrors } from "@/lib/error-utils";
@@ -201,11 +205,79 @@ export function WorkspaceCreateWizard({
           ? "competitors"
           : "voice",
   });
+  // An empty field is no error until the button is pressed (rext-control task 854). Leaving one
+  // empty raised "required" at once, and with the caret waiting in the first field a tap anywhere
+  // on the page was enough: two recorded newcomers met an error before they had tried anything,
+  // and stopped there. A field with something in it is still checked as it is left, and once the
+  // button has been pressed every field is.
+  const leave = (field: { value: unknown; onBlur: () => void }) => {
+    if (field.value || form.formState.submitCount > 0) field.onBlur();
+  };
+  const showWay = useCallback(
+    (from: "website" | "description") => {
+      form.setValue("from", from);
+      // The other way's field leaves with its error; what was typed in it stays.
+      form.clearErrors(["url", "description"]);
+    },
+    [form],
+  );
+  // The way in is in the address too, each choice a step of its own in the history. It lived in
+  // the page alone: on a phone, going back from "I don't have a website yet" left the form
+  // altogether, and it came back in its first state with the choice and what was typed gone. A
+  // reload or a link keeps the way; Back returns to the other one, with the name still there.
+  const onForm = useRef(true);
+  onForm.current = step === 0;
+  useEffect(() => {
+    // What this tab held when the page was left comes back with it: the way in (the address's
+    // own word first, when it has one) and whatever was typed. Nothing restored is checked: no
+    // field has been left yet.
+    const draft = readCreateDraft();
+    if (draft) {
+      for (const field of ["name", "url", "description"] as const) {
+        const kept = draft[field];
+        if (kept) form.setValue(field, kept, { shouldDirty: true });
+      }
+      if (draft.from === "description" && !addressNamesWay()) {
+        window.history.replaceState(
+          null,
+          "",
+          `${window.location.pathname}?from=description`,
+        );
+      }
+    }
+    const follow = () => {
+      // The wait and the review belong to the way the workspace was made with.
+      if (!onForm.current) return;
+      const from = wayInAddress();
+      if (form.getValues("from") !== from) showWay(from);
+    };
+    follow();
+    window.addEventListener("popstate", follow);
+    // And from here on, what the form holds is kept as it changes, until the workspace is made.
+    const watching = form.watch((values) => {
+      if (!onForm.current) return;
+      keepCreateDraft({
+        from: values.from,
+        name: values.name,
+        url: values.url,
+        description: values.description,
+      });
+    });
+    return () => {
+      window.removeEventListener("popstate", follow);
+      watching.unsubscribe();
+    };
+  }, [form, showWay]);
   const enter = (from: "website" | "description") => {
-    form.setValue("from", from);
+    showWay(from);
+    window.history.pushState(
+      null,
+      "",
+      from === "description"
+        ? `${window.location.pathname}?from=description`
+        : window.location.pathname,
+    );
     funnel.wayChosen(from);
-    // The other way's field leaves with its error; what was typed in it stays.
-    form.clearErrors(["url", "description"]);
     window.requestAnimationFrame(() =>
       form.setFocus(from === "website" ? "url" : "description"),
     );
@@ -272,6 +344,8 @@ export function WorkspaceCreateWizard({
       slugRef.current = workspace.slug;
       idRef.current = workspace.id;
       setCreatedId(workspace.id);
+      // The workspace is made: nothing is left to come back to.
+      dropCreateDraft();
       // The switcher's list stays cached for minutes, and the switcher puts back the first
       // workspace of that list when the current one isn't in it. The new workspace joins the
       // list first, so the sidebar names it, and links to it, through the analysis and the review.
@@ -533,6 +607,9 @@ export function WorkspaceCreateWizard({
           }
           // The next step, in its own words: what pressing it starts.
           submitLabel={withoutSite ? "Draft my brand voice" : "Read my website"}
+          // What is typed here is kept for this tab until the workspace is made, so leaving
+          // the page loses nothing and needs no question.
+          keepsDraft
           // Nowhere to cancel to without a workspace: the home page leads straight back here,
           // with the form emptied.
           cancel={noneYet ? undefined : { onCancel: () => router.push("/") }}
@@ -548,24 +625,15 @@ export function WorkspaceCreateWizard({
             required
           >
             {(field) => (
-              // The caret waits here on arrival: plainly empty, and the place to start. Having the
-              // focus taken before anything was typed (the first-login questions open over the
-              // form and take it) is not leaving the field: no "required" beside a field nobody
-              // has had the chance to fill. A person who tabs or clicks out of it has left it.
+              // The caret waits here on arrival: plainly empty, and the place to start.
               <Input
                 {...field}
                 autoFocus
                 maxLength={200}
                 onKeyDown={() => funnel.fieldTyped("name")}
                 onPaste={() => funnel.fieldTyped("name")}
-                onBlur={(event) => {
-                  if (
-                    field.value ||
-                    form.formState.submitCount > 0 ||
-                    !focusWasTaken(event)
-                  ) {
-                    field.onBlur();
-                  }
+                onBlur={() => {
+                  leave(field);
                   funnel.fieldLeft("name", field.value);
                 }}
               />
@@ -586,7 +654,7 @@ export function WorkspaceCreateWizard({
                   onKeyDown={() => funnel.fieldTyped("description")}
                   onPaste={() => funnel.fieldTyped("description")}
                   onBlur={() => {
-                    field.onBlur();
+                    leave(field);
                     funnel.fieldLeft("description", field.value);
                   }}
                   value={field.value ?? ""}
@@ -616,7 +684,7 @@ export function WorkspaceCreateWizard({
                   onKeyDown={() => funnel.fieldTyped("website")}
                   onPaste={() => funnel.fieldTyped("website")}
                   onBlur={() => {
-                    field.onBlur();
+                    leave(field);
                     funnel.fieldLeft("website", field.value);
                   }}
                   type="text"
@@ -802,17 +870,17 @@ export function WorkspaceCreateWizard({
 const FIRST_EVENT_WAIT_MS = 20_000;
 const QUIET_WAIT_MS = 150_000;
 
-/**
- * Whether a field lost the focus without the person leaving it: a dialog opened over the form and
- * took it, or the window itself lost it (the field is then still the document's active element,
- * and has the caret again when the person comes back).
- */
-function focusWasTaken(event: FocusEvent<HTMLElement>): boolean {
-  const next = event.relatedTarget;
-  if (next instanceof Element) {
-    return next.closest('[role="dialog"]') !== null;
-  }
-  return document.activeElement === event.target;
+/** The way in the address names: `?from=description`, or the website. */
+function wayInAddress(): "website" | "description" {
+  return new URLSearchParams(window.location.search).get("from") ===
+    "description"
+    ? "description"
+    : "website";
+}
+
+/** Whether the address says which way in at all (a link, or a step back to one). */
+function addressNamesWay(): boolean {
+  return new URLSearchParams(window.location.search).has("from");
 }
 
 /**
