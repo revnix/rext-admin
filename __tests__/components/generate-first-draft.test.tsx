@@ -132,12 +132,17 @@ jest.mock("@/components/generate-content/content", () => ({
     generatedContent,
     allContent,
     draft,
+    draftSoFar,
   }: {
     generatedContent: string;
     allContent: { meta_description?: string } | null;
     draft?: boolean;
+    draftSoFar?: boolean;
   }) => (
-    <article data-draft={draft ? "yes" : "no"}>
+    <article
+      data-draft={draft ? "yes" : "no"}
+      data-so-far={draftSoFar ? "yes" : "no"}
+    >
       <p data-testid="description">{allContent?.meta_description}</p>
       <div data-testid="body">{generatedContent}</div>
     </article>
@@ -152,6 +157,21 @@ const FINAL = "## Plan the beds\n\nThe article as it was saved.";
 const update = (node: string, content: Record<string, unknown>): Chunk => ({
   event: "updates|content_engine:8f2c",
   data: { [node]: { content } },
+});
+
+/** A section of the first draft, as the writer's stage sends it the moment it is finished. */
+const section = (index: number, heading: string, markdown: string): Chunk => ({
+  event: "custom|content_engine:8f2c",
+  data: {
+    type: "section",
+    phase: "draft",
+    key: `structure_${index}`,
+    index,
+    of: 3,
+    level: 2,
+    heading,
+    markdown,
+  },
 });
 
 async function send(run: Run, ...chunks: Chunk[]) {
@@ -264,6 +284,48 @@ describe("the writing page and the writer's first draft (task 773)", () => {
       "The final description.",
     );
     expect(screen.getByRole("article")).toHaveAttribute("data-draft", "no");
+  }, 20_000);
+
+  it("fills in section by section before the whole draft, which then takes their place (part B)", async () => {
+    running({ outline: { title: "A vegetable garden planner" } });
+    render(
+      <FreshGenerationView onBack={jest.fn()} backgroundThreadId="thread-7" />,
+    );
+    const run = await joinedRun();
+
+    await send(run, section(1, "Plan the beds", "Measure the plot first."));
+    expect(screen.getByTestId("body")).toHaveTextContent(
+      "## Plan the beds Measure the plot first.",
+    );
+    expect(screen.getByRole("article")).toHaveAttribute("data-so-far", "yes");
+    expect(screen.getByRole("article")).toHaveAttribute("data-draft", "no");
+
+    // One that arrives early waits for the section before it, then both are there in order.
+    await send(run, section(3, "Water", "Early and deep."));
+    expect(screen.getByTestId("body")).not.toHaveTextContent("Early and deep.");
+    await send(run, section(2, "Sow", "Two seeds a hole."));
+    expect(screen.getByTestId("body")).toHaveTextContent(
+      "Measure the plot first. ## Sow Two seeds a hole. ## Water Early and deep.",
+    );
+
+    // The writer ends: the whole draft takes the sections' place, once.
+    await send(
+      run,
+      update("generate_content", {
+        final_content: {
+          title: "A vegetable garden planner",
+          body_markdown: DRAFT,
+        },
+      }),
+    );
+    expect(screen.getByTestId("body")).toHaveTextContent(
+      "The writer's first words.",
+    );
+    expect(screen.getByTestId("body")).not.toHaveTextContent(
+      "Measure the plot first.",
+    );
+    expect(screen.getByRole("article")).toHaveAttribute("data-draft", "yes");
+    expect(screen.getByRole("article")).toHaveAttribute("data-so-far", "no");
   }, 20_000);
 
   it("shows the text a reloaded run already has, as a draft", async () => {

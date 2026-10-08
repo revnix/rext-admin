@@ -68,6 +68,7 @@ import { apiClient } from "@/lib/api-client";
 import { ConnectWordPressDialog } from "@/components/integrations/connect-wordpress-dialog";
 import { log } from "@/lib/logger";
 import { analytics } from "@/lib/analytics";
+import { useKeepReadingPlace } from "@/hooks/use-keep-reading-place";
 import { articleHtml } from "@/lib/content/article-html";
 import { cn } from "@/lib/utils";
 import { workspaceRoutes } from "@/lib/routes";
@@ -197,6 +198,9 @@ type ContentEditorProps = {
   /** The body is the writer's first draft, whole, shown while the later stages rewrite and check
    *  it: marked as a draft until the final text takes its place (task 773). */
   draft?: boolean;
+  /** The body is the first draft's sections so far, as the writer finishes them: marked as a
+   *  draft like the whole one, with the sections still to come below it (task 773, part B). */
+  draftSoFar?: boolean;
   /** The article is live on a connected site (its status is "published"): a draft or review save
    *  then takes the post down, so the Publish menu warns first (#676). */
   isLive?: boolean;
@@ -226,6 +230,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     runProgress,
     runStrip,
     draft = false,
+    draftSoFar = false,
     isLive = false,
     publishIntent = null,
     onPublishIntentTaken,
@@ -431,6 +436,17 @@ function ContentEditorInner(props: ContentEditorProps) {
   // The placeholder lines wait a moment, as every skeleton does (design/app-language.md §8): a
   // restored run whose text is there at once, or a first word that comes promptly, shows none.
   const showPlaceholderLines = useShowAfter(writing);
+  // Marked as a draft from its first section on, whole or not (part B).
+  const marksDraft = showsDraft || (writing && draftSoFar && !!body?.trim());
+  // Until the draft brings its own title, the one the person chose (the outline's).
+  const articleTitle =
+    (writing && draftSoFar && outline?.title) || displayTitle;
+  // The text is replaced at once twice, by the whole draft and then by the final text: the
+  // heading being read stays where it is on the screen.
+  useKeepReadingPlace(
+    scrollRef,
+    isFinal ? "final" : showsDraft ? "draft" : marksDraft ? "sections" : "none",
+  );
   // Its structure as layers, with what is written, being written and still to come (task 703).
   const structure = useMemo(
     () =>
@@ -1103,7 +1119,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                 ? ` · section ${position.section} of ${position.sections}`
                 : null}
             </p>
-            {showsDraft ? <Badge variant="neutral">First draft</Badge> : null}
+            {marksDraft ? <Badge variant="neutral">First draft</Badge> : null}
             {/* The run's stages are in the side panel, a sheet below 1280 px: there the bar holds
                 the running stage on one line, with its time and how far the run is (task 703). */}
             {runStrip ? (
@@ -1204,7 +1220,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                   </div>
                   {/* The first draft, said once where the reading starts; the bar keeps the word
                       in view (task 773). */}
-                  {showsDraft && (
+                  {marksDraft && (
                     <Notice title="First draft" className="not-prose mb-8">
                       We're still rewriting and checking the article. The final
                       text replaces this one when it's ready.
@@ -1220,7 +1236,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                         ))}
                       </div>
                     )}
-                    <h1>{displayTitle}</h1>
+                    <h1>{articleTitle}</h1>
                     {allContent?.meta_description && (
                       <p className="lead">{allContent.meta_description}</p>
                     )}
