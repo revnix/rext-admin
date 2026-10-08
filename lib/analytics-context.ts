@@ -4,6 +4,26 @@
  * the same way from a component and from outside one.
  */
 
+/** Which deploy an event is from, as the website and the backend name theirs. */
+export type EventEnvironment =
+  | "production"
+  | "staging"
+  | "preview"
+  | "development";
+
+/**
+ * The deploy a page is served by, from its host: the app itself, staging, one of Vercel's
+ * previews, or anything else (a local run). On every event, so that a number in PostHog can be
+ * read for real customers only whichever project a deploy reports to.
+ */
+export function environmentOf(hostname: string): EventEnvironment {
+  const host = hostname.toLowerCase();
+  if (host === "app.rext.ai") return "production";
+  if (host === "staging.rext.ai") return "staging";
+  if (host.endsWith(".vercel.app")) return "preview";
+  return "development";
+}
+
 export interface EventContext {
   /** The workspace on screen, or null on a page that belongs to none. */
   workspace_id: string | null;

@@ -539,7 +539,13 @@ describe("every event that leaves", () => {
     expect(
       beforeSend({ event: "title_selected", properties: { keyword: "crm" } })
         .properties,
-    ).toEqual({ keyword: "crm", surface: "app" });
+    ).toEqual({
+      keyword: "crm",
+      surface: "app",
+      source: "client",
+      // The test's page is a local run's.
+      environment: "development",
+    });
   });
 
   it("says so for someone counted without an identity too", async () => {
@@ -552,8 +558,8 @@ describe("every event that leaves", () => {
       beforeSend({
         event: "$pageview",
         properties: { $current_url: "https://app.rext.ai/w/acme/content" },
-      }).properties.surface,
-    ).toBe("app");
+      }).properties,
+    ).toMatchObject({ surface: "app", source: "client" });
   });
 });
 
