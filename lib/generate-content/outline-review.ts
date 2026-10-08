@@ -836,12 +836,26 @@ export function insertAnnouncement(
  * plural in -s: "categories", "tools needed") counts items instead, so one row never reads "1 steps".
  */
 function countByName(count: number, list: string): string {
+  const one = singularOf(list);
+  return `${count} ${count === 1 ? one : `${one}s`}`;
+}
+
+/** One row of a list by the list's own name ("step" for "Steps"), or "item". */
+function singularOf(list: string): string {
   const plural = listLabel(list).toLowerCase();
   const simple =
     /[a-z]s$/.test(plural) &&
     !/(ss|us|is|ies|sses|xes|zes|ches|shes)$/.test(plural);
-  if (!simple) return `${count} ${count === 1 ? "item" : "items"}`;
-  return `${count} ${count === 1 ? plural.slice(0, -1) : plural}`;
+  return simple ? plural.slice(0, -1) : "item";
+}
+
+/**
+ * What one row of a list is called in its controls: "section" where the rows are sections, and the
+ * list's own name in the singular where they are not (a How-to's "Steps" and "Tools": "step",
+ * "tool"), as the summary above the list already counts them (rext-control task 797).
+ */
+export function listNoun(list: string, rows: TreeRow[]): string {
+  return isSectionList(list, rows) ? "section" : singularOf(list);
 }
 
 /**

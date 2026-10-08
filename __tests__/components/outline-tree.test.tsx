@@ -396,6 +396,21 @@ describe("a page with several lists", () => {
     expect(within(tools).getByText("1 tool")).toBeInTheDocument();
   });
 
+  it("calls what is added by the list's own name: a step, not a section", async () => {
+    const { user } = renderOutline({ gate: gateWith(STEPS, TOOLS) });
+    const steps = screen.getByRole("region", { name: "Steps" });
+
+    expect(screen.queryByRole("button", { name: "Add section" })).toBeNull();
+    await user.click(within(steps).getByRole("button", { name: "Add step" }));
+    const field = within(steps).getByRole("textbox", { name: "New step" });
+    expect(field).toHaveAttribute("placeholder", "The new step");
+    await user.type(field, "Water{Enter}");
+
+    expect(within(steps).getByText("6 steps")).toBeInTheDocument();
+    expect(steps).toHaveTextContent("1 of 6 new steps");
+    expect(steps).not.toHaveTextContent(/new sections/);
+  });
+
   it("names the keys once, under the last list, with no level key where no list has levels", () => {
     renderOutline({ gate: gateWith(STEPS, TOOLS) });
 
@@ -432,7 +447,7 @@ describe("a page with several lists", () => {
       "RenameEnter",
       "Move upAlt+↑",
       "Move downAlt+↓",
-      "Add section below",
+      "Add step below",
       "RemoveDelete",
     ]);
     await user.keyboard("{Escape}");

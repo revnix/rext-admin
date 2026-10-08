@@ -16,6 +16,7 @@ import {
   insertLevelAt,
   insertRow,
   levelAnnouncement,
+  listNoun,
   listSummary,
   MAX_ADDED_SECTIONS,
   moveAnnouncement,
@@ -1839,5 +1840,35 @@ describe("the article's parts, as the gate lists them (task 814)", () => {
         readOutlineGate({ type: "outline_review" }),
       ),
     ).toBe(true);
+  });
+});
+
+/** What a row of a list is called in its controls (rext-control task 797). */
+describe("listNoun", () => {
+  const row = (list: string, level?: "H2" | "H3") =>
+    rowsFromGate([
+      {
+        id: `${list}:0`,
+        list,
+        heading: "A row",
+        ...(level ? { heading_level: level } : {}),
+      },
+    ]);
+
+  it("is a section where the rows are sections", () => {
+    expect(listNoun("sections", row("sections", "H2"))).toBe("section");
+    expect(listNoun("structure.sections", [])).toBe("section");
+    // A list under another name whose rows have heading levels is one too.
+    expect(listNoun("body", row("body", "H2"))).toBe("section");
+  });
+
+  it("is the list's own name in the singular where they are not", () => {
+    expect(listNoun("steps", row("steps"))).toBe("step");
+    expect(listNoun("how_to.tools", row("how_to.tools"))).toBe("tool");
+  });
+
+  it("is an item where the name has no simple singular", () => {
+    expect(listNoun("categories", row("categories"))).toBe("item");
+    expect(listNoun("tools_needed", row("tools_needed"))).toBe("item");
   });
 });

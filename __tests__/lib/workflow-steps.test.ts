@@ -9,6 +9,7 @@ import {
   runningStage,
   stepChoices,
   WORKFLOW_STEPS,
+  titleStepContext,
 } from "@/lib/generate-content/workflow-steps";
 import type {
   ContentOutline,
@@ -262,5 +263,31 @@ describe("stepChoices", () => {
 
     expect(state.analyzedKeyword).toBe("");
     expect(state.selectedTopic).toBeNull();
+  });
+});
+
+/** The line under the Title step's heading (rext-control task 797). */
+describe("titleStepContext", () => {
+  it("says the intent and the content type in words, after the keyword as typed", () => {
+    expect(
+      titleStepContext("balcony herb garden", "informational", "how-to-guide"),
+    ).toEqual(["balcony herb garden", "Informational", "How-to guide"]);
+  });
+
+  it("takes the analysis's first intent when the person picked none", () => {
+    expect(
+      titleStepContext(
+        "crm for startups",
+        ["commercial", "informational"],
+        "best_tools",
+      ),
+    ).toEqual(["crm for startups", "Commercial", "Best tools"]);
+  });
+
+  it("leaves out what isn't known, and never shows a key it can't read", () => {
+    expect(titleStepContext("crm for startups", undefined, null)).toEqual([
+      "crm for startups",
+    ]);
+    expect(titleStepContext("", "not-an-intent", "")).toEqual([]);
   });
 });

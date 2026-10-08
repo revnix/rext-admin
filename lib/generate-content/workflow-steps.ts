@@ -2,6 +2,7 @@
 // current, what the run is doing for it, and what was chosen at each one done.
 
 import type { PageState } from "@/types/generate-content";
+import { intentLabel, parseIntents } from "@/lib/keywords/keyword-metrics";
 import { contentTypeLabel } from "./content-type-step";
 import type { RunPhase, RunStage } from "./run-stages";
 
@@ -129,4 +130,22 @@ export function stepChoices(
       state.allContent?.title ||
       undefined,
   ];
+}
+
+/**
+ * The line under the Title step's heading: the keyword as it was typed, then the intent and the
+ * content type in words ("Informational", "How-to guide"), never as their keys (rext-control task
+ * 797). The intent is the one the person picked, else the analysis's first.
+ */
+export function titleStepContext(
+  keyword: string | null | undefined,
+  intent: unknown,
+  contentType: string | null | undefined,
+): string[] {
+  const [first] = parseIntents(intent);
+  return [
+    keyword?.trim() ?? "",
+    first ? intentLabel(first) : "",
+    contentType ? contentTypeLabel(contentType) : "",
+  ].filter(Boolean);
 }
