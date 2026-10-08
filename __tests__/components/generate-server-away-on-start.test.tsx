@@ -215,6 +215,18 @@ describe("A new keyword's analysis while the backend is away", () => {
     expect(
       mockRequested.filter((url) => url === `/api/generate/${THREAD}/stream`),
     ).toHaveLength(1);
+    // The step on screen was counted on arrival, and nothing typed went with it.
+    const views = analytics.track.mock.calls.filter(
+      ([name]) => name === "generate_step_viewed",
+    );
+    expect(views[0]).toEqual([
+      "generate_step_viewed",
+      { step: 1, step_name: "search_keyword", thread_id: undefined },
+    ]);
+    expect(JSON.stringify(views)).not.toContain("crm for startups");
+    // Each arrival once: no step is counted twice in a row.
+    const steps = views.map(([, properties]) => properties.step);
+    expect(steps.every((step, i) => step !== steps[i - 1])).toBe(true);
   });
 });
 
