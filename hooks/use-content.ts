@@ -235,6 +235,28 @@ export function useContentVersion(
  * Puts a version's text back on the article. No toast: the History says what happened in its own
  * words. The article and its versions are read again after it.
  */
+/**
+ * The article a restore answers with. The route answers the article itself, where a save answers
+ * it under `content`: both are read, and an answer with no article in it is a failed restore, not
+ * an editor left on the text it had (seen on staging: the version was restored, and the editor
+ * kept the old text, ready to save it over the restored one).
+ */
+export function restoredArticle(answer: unknown): ContentItem {
+  const flat = answer as Partial<ContentItem> | null;
+  const wrapped = (answer as { content?: Partial<ContentItem> | null } | null)
+    ?.content;
+  const article =
+    flat && typeof flat.id === "string" && typeof flat.title === "string"
+      ? flat
+      : wrapped && typeof wrapped.id === "string"
+        ? wrapped
+        : null;
+  if (!article) {
+    throw new Error("The server's answer held no article. Reload the page.");
+  }
+  return article as ContentItem;
+}
+
 export function useRestoreContentVersion() {
   const queryClient = useQueryClient();
 
@@ -251,12 +273,9 @@ export function useRestoreContentVersion() {
       /** What the editor holds unsaved: kept as a version by the same call. */
       unsaved?: RestoreUnsaved | null;
     }) =>
-      apiClient.content.restoreVersion(
-        workspaceId,
-        contentId,
-        versionId,
-        unsaved,
-      ),
+      apiClient.content
+        .restoreVersion(workspaceId, contentId, versionId, unsaved)
+        .then(restoredArticle),
     retry: false,
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
