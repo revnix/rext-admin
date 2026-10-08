@@ -74,6 +74,21 @@ async function run(
   });
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  // Everything the script reads is set here, so nothing of the machine's own gets in.
+  const settings: NodeJS.ProcessEnv = {
+    ...process.env,
+    VERCEL_API: address,
+    SMOKE_BASE_URL: `${address}/`,
+    DEPLOY_TARGET: target,
+    DEPLOY_SINCE: SINCE,
+    VERCEL_TOKEN: TOKEN,
+    VERCEL_ORG_ID: "team_1",
+    VERCEL_PROJECT_ID: "prj_1",
+    DEPLOY_POLL_SECONDS: "0.05",
+    DEPLOY_WAIT_SECONDS: "0.5",
+    DEPLOY_APPEAR_SECONDS: "0.2",
+    ...env,
+  };
   try {
     return await new Promise<{
       status: number;
@@ -83,23 +98,7 @@ async function run(
       execFile(
         "node",
         [SCRIPT],
-        {
-          encoding: "utf8",
-          env: {
-            PATH: process.env.PATH,
-            VERCEL_API: address,
-            SMOKE_BASE_URL: `${address}/`,
-            DEPLOY_TARGET: target,
-            DEPLOY_SINCE: SINCE,
-            VERCEL_TOKEN: TOKEN,
-            VERCEL_ORG_ID: "team_1",
-            VERCEL_PROJECT_ID: "prj_1",
-            DEPLOY_POLL_SECONDS: "0.05",
-            DEPLOY_WAIT_SECONDS: "0.5",
-            DEPLOY_APPEAR_SECONDS: "0.2",
-            ...env,
-          },
-        },
+        { encoding: "utf8", env: settings },
         (error, stdout, stderr) =>
           resolve({
             status: error ? Number(error.code ?? 1) : 0,
