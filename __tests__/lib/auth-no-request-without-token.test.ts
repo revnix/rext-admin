@@ -256,6 +256,29 @@ describe("a 503 that says the session could not be checked", () => {
     expect(send).toHaveBeenCalledTimes(2);
   });
 
+  it('does not use up the askings a "revoked" answer is owed', async () => {
+    const { authenticatedFetch } = freshWrapper();
+    readSession.mockResolvedValue(session("access-token"));
+    const revoked = () =>
+      refusal(401, "unauthorized", "Authentication session has been revoked");
+    // A restarting backend: could not check, twice, then "revoked" twice, then it is itself.
+    send
+      .mockResolvedValueOnce(notChecked())
+      .mockResolvedValueOnce(notChecked())
+      .mockResolvedValueOnce(revoked())
+      .mockResolvedValueOnce(revoked())
+      .mockResolvedValueOnce(fine());
+
+    const request = settle(authenticatedFetch(URL_ASKED));
+    await jest.advanceTimersByTimeAsync(2 * (700 + 1500));
+    const { value } = await request;
+
+    expect(value?.status).toBe(200);
+    expect(send).toHaveBeenCalledTimes(5);
+    await jest.advanceTimersByTimeAsync(50);
+    expect(signOuts()).toEqual([]);
+  });
+
   it("leaves any other 503 alone", async () => {
     const { authenticatedFetch } = freshWrapper();
     readSession.mockResolvedValue(session("access-token"));
