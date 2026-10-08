@@ -264,7 +264,7 @@ function ArticleEditor({
   };
 
   return (
-    <div className="flex h-dvh flex-col bg-background">
+    <div className="flex h-full flex-col bg-background">
       <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-card px-3 md:px-4">
         <Button asChild size="sm" variant="ghost">
           <Link href={articleHref} aria-label="Back to the article">
@@ -494,7 +494,7 @@ function StatePage({
   children: React.ReactNode;
 }) {
   return (
-    <main className="min-h-dvh bg-card">
+    <main className="min-h-full bg-card">
       <WorkingSurface title={title} ownHeading={ownHeading}>
         {children}
       </WorkingSurface>
