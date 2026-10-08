@@ -55,6 +55,7 @@ import {
   isSectionList,
   levelRank,
   listLabel,
+  listNoun,
   listSummary,
   outlineParts,
   MAX_ADDED_SECTIONS,
@@ -221,6 +222,8 @@ function OutlineGroup({
 }) {
   const id = useId();
   const labelId = `${id}-label`;
+  // What a row is called here: a section, or the list's own noun (a How-to's step or tool).
+  const noun = listNoun(list, rows);
   const [activeKey, setActiveKey] = useState<string | null>(null);
   // Every section's plan shows from the start, so the outline reads in depth without a click
   // (rext-control#836); the ones a person folds away stay folded.
@@ -522,7 +525,11 @@ function OutlineGroup({
             adding.level === "H3" ? "pl-15 max-lg:pl-14" : "pl-9 max-lg:pl-1",
           )}
         >
-          <AddHeading subsection={adding.level === "H3"} onDone={finishAdd} />
+          <AddHeading
+            subsection={adding.level === "H3"}
+            noun={noun}
+            onDone={finishAdd}
+          />
         </div>
       </div>
     ) : null;
@@ -612,6 +619,7 @@ function OutlineGroup({
                       end,
                       listRows,
                       rows,
+                      noun,
                       addable,
                       canAdd,
                       onRename: () => startRename(row.key),
@@ -707,7 +715,7 @@ function OutlineGroup({
           <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-2 pt-1 pb-2">
             {adding?.atFoot ? (
               <div className="w-full">
-                <AddHeading subsection={false} onDone={finishAdd} />
+                <AddHeading subsection={false} noun={noun} onDone={finishAdd} />
               </div>
             ) : (
               <Button
@@ -728,12 +736,12 @@ function OutlineGroup({
                 }
               >
                 <Plus />
-                Add section
+                Add {noun}
               </Button>
             )}
             {added > 0 && (
               <span className="text-caption text-muted-foreground num">
-                {added} of {MAX_ADDED_SECTIONS} new sections
+                {added} of {MAX_ADDED_SECTIONS} new {noun}s
                 {!canAdd && ` · ${ADD_CAP_REASON.toLowerCase()}`}
               </span>
             )}
@@ -782,6 +790,7 @@ function rowActions({
   end,
   listRows,
   rows,
+  noun,
   addable,
   canAdd,
   onRename,
@@ -795,6 +804,8 @@ function rowActions({
   end: number;
   listRows: TreeRow[];
   rows: TreeRow[];
+  /** What a row of this list is called: "section", or the list's own noun ("step"). */
+  noun: string;
   addable: boolean;
   canAdd: boolean;
   onRename: () => void;
@@ -803,7 +814,11 @@ function rowActions({
   onAdd: (gap: number, level: "H2" | "H3") => void;
   onRemove: () => void;
 }): DataTableRowAction[] {
-  const addDisabled = canAdd ? false : ADD_CAP_REASON;
+  const addDisabled = canAdd
+    ? false
+    : noun === "section"
+      ? ADD_CAP_REASON
+      : `One approval adds at most ${MAX_ADDED_SECTIONS} ${noun}s`;
   // After the row's whole block (an H2's subsections, an H3's H4s), at its own level.
   const below = addable ? placeBelow(listRows, index) : null;
   return [
@@ -855,7 +870,7 @@ function rowActions({
             label:
               below.level === "H3"
                 ? "Add subsection below"
-                : "Add section below",
+                : `Add ${noun} below`,
             icon: Plus,
             onSelect: () => onAdd(below.gap, below.level),
             disabled: addDisabled,
@@ -880,7 +895,9 @@ function rowActions({
       onSelect: onRemove,
       disabled: canRemoveRow(rows, row.key)
         ? false
-        : "An article keeps at least one section here",
+        : noun === "section"
+          ? "An article keeps at least one section here"
+          : `This list keeps at least one ${noun}`,
     },
   ];
 }
@@ -1295,9 +1312,12 @@ function RenameField({
 /** A heading typed in place, for a new section or a new subsection: Add, Cancel or Escape. */
 function AddHeading({
   subsection,
+  noun,
   onDone,
 }: {
   subsection: boolean;
+  /** What the new row is called: "section", or the list's own noun ("step"). */
+  noun: string;
   onDone: (heading: string | null) => void;
 }) {
   const [heading, setHeading] = useState("");
@@ -1313,12 +1333,18 @@ function AddHeading({
         <Input
           autoFocus
           aria-label={
-            subsection ? "New subsection heading" : "New section heading"
+            subsection
+              ? "New subsection heading"
+              : noun === "section"
+                ? "New section heading"
+                : `New ${noun}`
           }
           placeholder={
             subsection
               ? "The subsection's heading"
-              : "The new section's heading"
+              : noun === "section"
+                ? "The new section's heading"
+                : `The new ${noun}`
           }
           value={heading}
           onChange={(event) => setHeading(event.target.value)}

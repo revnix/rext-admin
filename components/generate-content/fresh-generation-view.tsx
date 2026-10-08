@@ -72,6 +72,7 @@ import { WorkflowStepIndicator } from "@/components/generate-content/workflow-st
 import {
   currentStepIndex,
   showsSteps,
+  titleStepContext,
   runningStage,
   stepChoices,
   WORKFLOW_STEPS,
@@ -2605,14 +2606,11 @@ export function FreshGenerationView({
               />
             ) : fill === "titles" ? (
               <TitleStepFilling
-                context={[
+                context={titleStepContext(
                   primaryKeyword,
-                  selectedIntent ||
-                    (Array.isArray(seoResult?.intent)
-                      ? seoResult.intent[0]
-                      : (seoResult?.intent as string)),
+                  selectedIntent || seoResult?.intent,
                   selectedContentType || recommendedContentType,
-                ]}
+                )}
                 rows={fillTitleRows(runView)}
                 keyphrase={findings.focusKeyphrase || primaryKeyword || null}
                 results={findings.results ?? []}
@@ -2680,14 +2678,11 @@ export function FreshGenerationView({
           isManualLoading && (loadingStatus?.includes("Regenerating") ?? false)
         }
         // The content type the user picked, not the backend's suggestion, which can differ.
-        context={[
+        context={titleStepContext(
           primaryKeyword,
-          selectedIntent ||
-            (Array.isArray(seoResult?.intent)
-              ? seoResult.intent[0]
-              : (seoResult?.intent as string)),
+          selectedIntent || seoResult?.intent,
           selectedContentType || recommendedContentType,
-        ]}
+        )}
       />
     ),
     content_type: (
