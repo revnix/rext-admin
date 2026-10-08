@@ -358,7 +358,14 @@ export function RefundRequestsTable({
 
           {/* Before the decision and before the money moves: the payment this refund leaves out. */}
           {(decision === "approve" || decision === "process") && (
-            <PlanChangeNotice charges={active?.plan_change_charges} />
+            <PlanChangeNotice
+              charges={active?.plan_change_charges}
+              // The request takes all that is left of the order: the plan ends with it.
+              full={
+                active !== null &&
+                active.requested_amount >= active.refundable_amount
+              }
+            />
           )}
 
           {decision !== "process" && (
