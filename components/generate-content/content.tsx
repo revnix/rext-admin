@@ -245,6 +245,8 @@ function ContentEditorInner(props: ContentEditorProps) {
   );
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Where the publish under way was asked for: this page's own menu, or the editor's.
+  const publishFrom = useRef<"article_page" | "editor">("article_page");
   const isFinal =
     !!allContent && !!readabilityScore && !!trustScore && !!seoScore;
   const tags = allContent?.tags || [];
@@ -611,6 +613,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         wordpress_status: selectedStatus,
         workspace_id: workspaceId ?? undefined,
         content_id: contentSavedId ?? undefined,
+        from: publishFrom.current,
       });
       const payload = getContentPayload();
       if (contentSavedId) {
@@ -645,6 +648,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         wordpress_status: selectedStatus,
         workspace_id: workspaceId ?? undefined,
         content_id: contentSavedId ?? response?.id ?? undefined,
+        from: publishFrom.current,
       });
       invalidateContentCache();
       // A publish makes the post live; a draft or review save takes it down, but only where it
@@ -689,10 +693,12 @@ function ContentEditorInner(props: ContentEditorProps) {
         errorMessage.includes("misconfigured") ||
         errorMessage.includes("permission");
       analytics.track("cms_publish_failed", {
+        cms_type: activeIntegrations[0]?.integration_type,
         workspace_id: workspaceId ?? undefined,
         content_id: contentSavedId ?? undefined,
         wordpress_status: selectedStatus,
         error_kind: err.name,
+        from: publishFrom.current,
       });
       setStatusModal({
         title: isIntegrationIssue
@@ -859,7 +865,11 @@ function ContentEditorInner(props: ContentEditorProps) {
 
   // Every choice in the menu asks first, in words that name it; on a live article, a draft or review
   // save says the post leaves the site (#676).
-  const openPublishConfirmation = async (status: WordPressPostStatus) => {
+  const openPublishConfirmation = async (
+    status: WordPressPostStatus,
+    from: "article_page" | "editor" = "article_page",
+  ) => {
+    publishFrom.current = from;
     if (await confirm(publishConfirmCopy(status, postIsLive))) {
       publishContent(status);
     }
@@ -878,7 +888,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     intentTaken.current = true;
     onPublishIntentTaken?.();
     if (publishIntent === "schedule") setScheduleDialogOpen(true);
-    else void openPublishConfirmation(publishIntent);
+    else void openPublishConfirmation(publishIntent, "editor");
   }, [publishIntent, isFinal, canPublish]);
 
   // The article's actions, each named (D23), in one bar above the page (task 703). "Edit article"

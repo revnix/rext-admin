@@ -38,6 +38,10 @@ type AnalyticsEvent =
   | "cms_publish_attempted"
   | "cms_publish_succeeded"
   | "cms_publish_failed"
+  // The article, after it is written
+  | "editor_opened"
+  | "article_saved"
+  | "article_version_restored"
   // Plans
   | "paywall_shown"
   | "checkout_started"

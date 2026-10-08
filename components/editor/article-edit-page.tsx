@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAutosave, type SaveState } from "@/hooks/use-autosave";
+import { analytics } from "@/lib/analytics";
 import { useAwaitingData } from "@/hooks/use-awaiting-data";
 import {
   useAutosaveContent,
@@ -136,6 +137,8 @@ type EditorProps = {
   versions: ContentVersion[] | null;
   /** A version was restored: the article as that left it. */
   onRestored: (article: ContentItem) => void;
+  /** A save reached the server: by itself, or as the person left through Done or Publish. */
+  onSaved: (trigger: "autosave" | "done") => void;
   articleHref: Route;
 };
 
@@ -148,6 +151,7 @@ function ArticleEditor({
   canPublish,
   versions,
   onRestored,
+  onSaved,
   articleHref,
 }: EditorProps) {
   const router = useRouter();
@@ -183,9 +187,11 @@ function ArticleEditor({
     uncopied.current = null;
   }, [contentId]);
 
+  // The person is leaving through Done or Publish: the save that goes with it is theirs.
+  const leaving = useRef(false);
   const save = useCallback(
-    (markdown: string) =>
-      saveArticle({
+    async (markdown: string) => {
+      const response = await saveArticle({
         workspaceId,
         contentId,
         data: {
@@ -196,8 +202,11 @@ function ArticleEditor({
           body_html: articleHtml(markdown),
           images_data: deriveImagesData(markdown),
         },
-      }),
-    [workspaceId, contentId, title, saveArticle],
+      });
+      onSaved(leaving.current ? "done" : "autosave");
+      return response;
+    },
+    [workspaceId, contentId, title, saveArticle, onSaved],
   );
 
   const { state, savedAt, change, rebase, saveNow } = useAutosave({
@@ -265,15 +274,23 @@ function ArticleEditor({
   const guard = useLeaveGuard(state !== "saved");
   const isMobile = useIsMobile();
 
+  const saveToLeave = async () => {
+    leaving.current = true;
+    try {
+      return await saveNow();
+    } finally {
+      leaving.current = false;
+    }
+  };
   const done = async () => {
-    if (await saveNow()) router.push(articleHref);
+    if (await saveToLeave()) router.push(articleHref);
   };
 
   // Publishing is the article page's: it holds the sites, the confirmations and the schedule.
   // A choice here saves what is unsaved, then goes there with the choice, where it is asked for
   // as that page's own menu would ask. A save that fails keeps the person here, with its notice.
   const publish = async (intent: PublishIntent) => {
-    if (await saveNow()) {
+    if (await saveToLeave()) {
       router.push(`${articleHref}?publish=${intent}` as Route);
     }
   };
@@ -706,7 +723,26 @@ export function ArticleEditPage({
       checks: articleChecks(article),
     };
     setRestores((count) => count + 1);
+    analytics.track("article_version_restored", { content_id: article.id });
   };
+
+  // What the editor reports (rext-control's plans/analytics/app-tracking-plan.md): that it
+  // opened, once a visit, when the article is there to edit; and every save that reached the
+  // server, with what set it off.
+  const reported = useRef({ opened: false });
+  const editing =
+    !isWaiting && !permissionLoading && canUpdate && !!opened.current;
+  useEffect(() => {
+    if (!editing || reported.current.opened) return;
+    reported.current.opened = true;
+    analytics.track("editor_opened", { content_id: contentId });
+  }, [editing, contentId]);
+  const saved = useCallback(
+    (trigger: "autosave" | "done") => {
+      analytics.track("article_saved", { content_id: contentId, trigger });
+    },
+    [contentId],
+  );
 
   if (isWaiting || permissionLoading) {
     return (
@@ -761,6 +797,7 @@ export function ArticleEditPage({
       canPublish={canPublish}
       versions={versions}
       onRestored={restored}
+      onSaved={saved}
       articleHref={articleHref}
     />
   );

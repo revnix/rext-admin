@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ArticleEditPage } from "@/components/editor/article-edit-page";
+import { analytics } from "@/lib/analytics";
 import { writeLocalDraft } from "@/lib/content/local-draft";
 
 const push = jest.fn();
@@ -120,6 +121,9 @@ function renderPage() {
 }
 
 const wait = (ms: number) => act(async () => jest.advanceTimersByTime(ms));
+const track = jest.spyOn(analytics, "track").mockImplementation(() => {});
+const tracked = (name: string) =>
+  track.mock.calls.filter(([event]) => event === name);
 
 beforeEach(() => {
   jest.useFakeTimers();
@@ -211,6 +215,34 @@ describe("The full-screen article editor", () => {
       "Hello!",
     );
     expect(update).not.toHaveBeenCalled();
+  });
+
+  it("reports that it opened, once, and each save that reached the server with what set it off", async () => {
+    const user = renderPage();
+    await wait(50);
+    expect(tracked("editor_opened")).toEqual([
+      ["editor_opened", { content_id: "c1" }],
+    ]);
+    expect(tracked("article_saved")).toEqual([]);
+
+    // A save by itself, after a pause in the typing.
+    await user.type(screen.getByLabelText("Article text"), "!");
+    await wait(4000);
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(tracked("article_saved")).toEqual([
+      ["article_saved", { content_id: "c1", trigger: "autosave" }],
+    ]);
+
+    // Done saves what is still unsaved: that save is the person's.
+    await user.type(screen.getByLabelText("Article text"), "?");
+    await user.click(screen.getByRole("button", { name: "Done" }));
+    await wait(50);
+    expect(update).toHaveBeenCalledTimes(2);
+    expect(tracked("article_saved").at(-1)).toEqual([
+      "article_saved",
+      { content_id: "c1", trigger: "done" },
+    ]);
+    expect(tracked("editor_opened")).toHaveLength(1);
   });
 
   it("offers text an earlier visit couldn't save, and saves it once restored", async () => {
@@ -589,6 +621,9 @@ describe("The editor's History", () => {
     // What was typed is saved first, so the backend can keep it as a version.
     expect(update).toHaveBeenCalledTimes(1);
     expect(contentApi.restoreVersion).toHaveBeenCalledWith("w1", "c1", "v1");
+    expect(tracked("article_version_restored")).toEqual([
+      ["article_version_restored", { content_id: "c1" }],
+    ]);
     // The editor starts again on the restored article, saved.
     expect(screen.getByLabelText("Article text")).toHaveValue("The first text");
     expect(
