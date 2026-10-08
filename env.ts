@@ -69,6 +69,9 @@ const client = {
   // "true" measures how fast a page loaded and answered, as numbers (lib/analytics-web-vitals.ts);
   // unset or anything else, nothing.
   NEXT_PUBLIC_WEB_VITALS: optional,
+  // "true" reports clicks on the app's controls, as a path of tags and the control's own words
+  // (lib/analytics-clicks.ts); unset or anything else, none.
+  NEXT_PUBLIC_CLICK_CAPTURE: optional,
   // The Crisp website the support chat opens (lib/support-chat/chat.ts); unset, no chat.
   NEXT_PUBLIC_CRISP_WEBSITE_ID: optional,
 };
@@ -109,6 +112,7 @@ export const env = createEnv({
     NEXT_PUBLIC_SESSION_RECORDING: process.env.NEXT_PUBLIC_SESSION_RECORDING,
     NEXT_PUBLIC_EXCEPTION_CAPTURE: process.env.NEXT_PUBLIC_EXCEPTION_CAPTURE,
     NEXT_PUBLIC_WEB_VITALS: process.env.NEXT_PUBLIC_WEB_VITALS,
+    NEXT_PUBLIC_CLICK_CAPTURE: process.env.NEXT_PUBLIC_CLICK_CAPTURE,
     NEXT_PUBLIC_CRISP_WEBSITE_ID: process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID,
   },
   createFinalSchema: (shape, isServer) =>

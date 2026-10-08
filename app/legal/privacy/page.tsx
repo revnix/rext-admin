@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DetailPage } from "@/components/layouts";
 import { RelatedPolicies } from "@/components/legal/related-policies";
 import { EXCEPTIONS_ON } from "@/lib/analytics-exceptions";
+import { CLICKS_ON } from "@/lib/analytics-clicks";
 import { RECORDING_ON } from "@/lib/analytics-recording";
 import { WEB_VITALS_ON } from "@/lib/analytics-web-vitals";
 
@@ -312,6 +313,14 @@ export default function PrivacyPolicyPage() {
               not handle: which kind of error, and where in our own code it
               happened. The error&rsquo;s own message is never sent, because it
               could hold something of yours.
+            </li>
+          )}
+          {CLICKS_ON && (
+            <li>
+              When it is on, it also receives which of the app&rsquo;s own
+              buttons, links and menus you press, named by the app&rsquo;s own
+              words on them. Anything you or your workspace named is left out,
+              and so is everything you type or copy.
             </li>
           )}
           {WEB_VITALS_ON && (

@@ -14,6 +14,14 @@ import {
   takeOAuthLinking,
   unregisterPostHog,
 } from "@/lib/analytics";
+import {
+  CLICK_CAPTURE,
+  CLICK_CAPTURE_OFF,
+  CLICK_MASKING,
+  CLICKS_ON,
+  clickReport,
+  noteClick,
+} from "@/lib/analytics-clicks";
 import { analyticsMode, onConsentChange } from "@/lib/analytics-consent";
 import {
   type EventContext,
@@ -467,6 +475,38 @@ function WebVitalsSync() {
 }
 
 /**
+ * Clicks on the app's controls, for a person who allows analytics (lib/analytics-clicks.ts says
+ * what a report holds). Mounted only where NEXT_PUBLIC_CLICK_CAPTURE is "true". The app looks at
+ * each click itself, on the window and so ahead of the library on the document, to say which
+ * control it was by the control's own words; the list of those words and the library's piece for
+ * a click nothing answered both come with the app, and the library is asked for clicks only once
+ * both are here. A no switches it off again.
+ */
+function ClickSync() {
+  useEffect(() => {
+    let gone = false;
+    window.addEventListener("click", noteClick, { capture: true });
+    void Promise.all([
+      import("posthog-js/dist/dead-clicks-autocapture"),
+      loadWords(),
+    ])
+      .then(() => {
+        if (!gone) posthog.set_config(CLICK_CAPTURE);
+      })
+      .catch(() => {
+        // The piece didn't load: no clicks, and nothing fetched in its place.
+      });
+    return () => {
+      gone = true;
+      window.removeEventListener("click", noteClick, { capture: true });
+      posthog.set_config(CLICK_CAPTURE_OFF);
+    };
+  }, []);
+
+  return null;
+}
+
+/**
  * PostHog's toolbar, for an admin of ours who opened it from PostHog (lib/analytics-toolbar.ts).
  * Marks their browser and loads the page once more, so the server answers with the policy that
  * lets the toolbar's script in; takes the mark away once the launch is over, or the person
@@ -557,8 +597,12 @@ function beforeSend(event: CaptureResult | null): CaptureResult | null {
   // A page's speed leaves as its numbers and the address's shape (lib/analytics-web-vitals.ts).
   const measured = webVitalsNumbers(classed);
   if (!measured) return null;
+  // A click leaves as the path of tags it was on and the control's own words, where it has any
+  // (lib/analytics-clicks.ts).
+  const clicked = clickReport(measured);
+  if (!clicked) return null;
   // A recording's batch leaves with no field's value readable (lib/analytics-recording.ts).
-  const shown = hideTypedValues(measured);
+  const shown = hideTypedValues(clicked);
   // Where the event is from, on every one: the website sends "website" to the same project and
   // the backend "server", so the sets of numbers can be told apart; and which deploy, so a
   // chart can be read for real customers only.
@@ -623,7 +667,11 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
           capture_pageleave: true,
           // The visitor's id, in the cookie rext.ai shares (lib/analytics-redact.ts).
           ...VISITOR_STORE_OPTIONS,
-          autocapture: false, // keep events intentional
+          // Events are named ones; where the deploy asks for it, ClickSync adds the clicks on the
+          // app's controls. Whatever switches that on, the library takes no text and no
+          // attribute from the page for it.
+          autocapture: false,
+          ...CLICK_MASKING,
           // Decided here, not by a switch in the PostHog project. Heatmaps are started by
           // HeatmapSync, once the one piece the library would fetch for them has arrived with
           // the app's own code. A heatmap holds positions on a page, never what was there, and
@@ -743,6 +791,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
             <HeatmapSync />
             {EXCEPTIONS_ON && <ExceptionSync />}
             {WEB_VITALS_ON && <WebVitalsSync />}
+            {CLICKS_ON && <ClickSync />}
             {RECORDING_ON && <SessionRecordingSync />}
           </>
         )}
