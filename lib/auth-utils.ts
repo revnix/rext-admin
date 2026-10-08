@@ -601,7 +601,12 @@ export async function authenticatedFetch(
   );
   let response: Response;
   let unauthorizedKind: UnauthorizedKind;
-  for (let asked = 0; ; asked++) {
+  // Each kind of answer that is asked again has its own count: a restarting backend can give a
+  // 503 or two and then the "revoked" this loop is here to doubt, and that answer still gets
+  // its two further askings.
+  let notCheckedAsked = 0;
+  let revokedAsked = 0;
+  for (;;) {
     response = await fetch(url, {
       ...options,
       headers,
@@ -617,13 +622,14 @@ export async function authenticatedFetch(
       response.status === 503 &&
       typeof window !== "undefined" &&
       canAskAgain &&
-      asked < REVOKED_ASKED_AGAIN_AFTER_MS.length &&
+      notCheckedAsked < REVOKED_ASKED_AGAIN_AFTER_MS.length &&
       (await sessionCheckCouldNotRun(response))
     ) {
       await waitUnlessCancelled(
-        REVOKED_ASKED_AGAIN_AFTER_MS[asked],
+        REVOKED_ASKED_AGAIN_AFTER_MS[notCheckedAsked],
         options.signal,
       );
+      notCheckedAsked += 1;
       continue;
     }
 
@@ -651,14 +657,15 @@ export async function authenticatedFetch(
       unauthorizedKind !== "revoked" ||
       blockedAccountError ||
       !canAskAgain ||
-      asked >= REVOKED_ASKED_AGAIN_AFTER_MS.length
+      revokedAsked >= REVOKED_ASKED_AGAIN_AFTER_MS.length
     ) {
       break;
     }
     await waitUnlessCancelled(
-      REVOKED_ASKED_AGAIN_AFTER_MS[asked],
+      REVOKED_ASKED_AGAIN_AFTER_MS[revokedAsked],
       options.signal,
     );
+    revokedAsked += 1;
   }
 
   // The backend has discarded this session entirely — most commonly because the
