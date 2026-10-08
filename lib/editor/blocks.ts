@@ -9,6 +9,7 @@ export type BlockId =
   | "bulleted"
   | "numbered"
   | "quote"
+  | "image"
   | "table"
   | "divider";
 
@@ -32,6 +33,11 @@ export const BLOCKS: readonly Block[] = [
     keywords: ["ol", "list", "numbers", "steps"],
   },
   { id: "quote", title: "Quote", keywords: ["blockquote", "citation"] },
+  {
+    id: "image",
+    title: "Image",
+    keywords: ["picture", "photo", "upload", "img"],
+  },
   { id: "table", title: "Table", keywords: ["grid", "rows", "columns"] },
   {
     id: "divider",

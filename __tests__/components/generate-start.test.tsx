@@ -49,12 +49,18 @@ jest.mock("@/components/generate-content/run-cost", () => ({
 jest.mock("@/components/ui/country-dropdown", () => ({
   CountryDropdown: ({
     value,
+    disabled,
     onChange,
   }: {
     value: string;
+    disabled?: boolean;
     onChange: (country: { alpha2: string }) => void;
   }) => (
-    <button type="button" onClick={() => onChange({ alpha2: "gb" })}>
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => onChange({ alpha2: "gb" })}
+    >
       Country {value}
     </button>
   ),
@@ -206,6 +212,17 @@ describe("KeywordForm", () => {
     expect(analyze.closest("[data-cost-tooltip]")).not.toBeNull();
     fireEvent.click(analyze);
     expect(onSubmit).toHaveBeenCalled();
+  });
+
+  it("only shows what was searched while that search's analysis fills its step in", () => {
+    granted.add("content.create");
+    const { onCountryChange } = renderForm({ readOnly: true, disabled: true });
+    expect(screen.getByLabelText("Keyword")).toHaveAttribute("readonly");
+    const country = screen.getByRole("button", { name: "Country us" });
+    expect(country).toBeDisabled();
+    fireEvent.click(country);
+    expect(onCountryChange).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: /Analyze/ })).toBeDisabled();
   });
 
   it("locks Analyze for a member who may not generate", () => {

@@ -19,11 +19,14 @@ import {
   $getSelection,
   $isRangeSelection,
   type LexicalEditor,
+  type LexicalNode,
+  type RangeSelection,
   type TextNode,
 } from "lexical";
 import {
   Heading2,
   Heading3,
+  Image as ImageIcon,
   List,
   ListOrdered,
   type LucideIcon,
@@ -33,6 +36,7 @@ import {
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { $createImageSlotNode } from "@/components/ui/lexical-editor";
 import { type Block, type BlockId, matchBlocks } from "@/lib/editor/blocks";
 import { cn } from "@/lib/utils";
 
@@ -42,9 +46,30 @@ const ICONS: Record<BlockId, LucideIcon> = {
   bulleted: List,
   numbered: ListOrdered,
   quote: Quote,
+  image: ImageIcon,
   table: Table,
   divider: Minus,
 };
+
+/**
+ * A block that stands alone (a rule, an image slot), put in where the cursor's line is, with an
+ * empty line under it to type on.
+ */
+function insertOwnBlock(selection: RangeSelection, block: LexicalNode) {
+  const line = selection.anchor.getNode().getTopLevelElement();
+  if (!line) return;
+  if (line.isEmpty()) {
+    // The empty line stays under the block.
+    line.insertBefore(block);
+    return;
+  }
+  // Under a line with text, with a new line after it: typing goes on there, not into whatever
+  // came next (a heading, say).
+  const next = $createParagraphNode();
+  line.insertAfter(block);
+  block.insertAfter(next);
+  next.select();
+}
 
 /** What each block does where the cursor is. Runs inside an editor update. */
 export function insertBlock(editor: LexicalEditor, id: BlockId) {
@@ -75,25 +100,18 @@ export function insertBlock(editor: LexicalEditor, id: BlockId) {
         includeHeaders: { rows: true, columns: false },
       });
       return;
-    case "divider": {
+    case "divider":
       // Put in directly: nothing in this editor answers Lexical's "insert a rule" command.
-      if (!$isRangeSelection(selection)) return;
-      const line = selection.anchor.getNode().getTopLevelElement();
-      if (!line) return;
-      const rule = $createHorizontalRuleNode();
-      if (line.isEmpty()) {
-        // The empty line stays under the rule, to type on.
-        line.insertBefore(rule);
-        return;
+      if ($isRangeSelection(selection)) {
+        insertOwnBlock(selection, $createHorizontalRuleNode());
       }
-      // Under a line with text, with a new line after it: typing goes on there, not into
-      // whatever came next (a heading, say).
-      const next = $createParagraphNode();
-      line.insertAfter(rule);
-      rule.insertAfter(next);
-      next.select();
       return;
-    }
+    case "image":
+      // An upload slot in the text: the editor's own, with its Upload and Remove buttons.
+      if ($isRangeSelection(selection)) {
+        insertOwnBlock(selection, $createImageSlotNode());
+      }
+      return;
   }
 }
 

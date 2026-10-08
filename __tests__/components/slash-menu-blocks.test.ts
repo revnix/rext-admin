@@ -1,5 +1,6 @@
 /**
- * The "/" menu's divider (task 706): it puts a rule in the article, and leaves a line to type on.
+ * The "/" menu's blocks that stand alone (task 706): the divider puts a rule in the article, the
+ * image block an upload slot; each leaves a line to type on.
  */
 
 import { $isHorizontalRuleNode, HorizontalRuleNode } from "@lexical/extension";
@@ -12,11 +13,16 @@ import {
   createEditor,
 } from "lexical";
 import { insertBlock } from "@/components/editor/slash-menu-plugin";
+import { $isImageNode, ImageNode } from "@/components/ui/lexical-editor";
 
-/** An article of these lines, the cursor at the end of the given one, after "Divider" is picked. */
-function afterDivider(lines: string[], cursorOn: number) {
+/** An article of these lines, the cursor at the end of the given one, after a block is picked. */
+function afterBlock(
+  block: "divider" | "image",
+  lines: string[],
+  cursorOn: number,
+) {
   const editor = createEditor({
-    nodes: [HorizontalRuleNode],
+    nodes: [HorizontalRuleNode, ImageNode],
     onError: (error) => {
       throw error;
     },
@@ -30,7 +36,7 @@ function afterDivider(lines: string[], cursorOn: number) {
         root.append(line);
       }
       root.getChildAtIndex(cursorOn)?.selectEnd();
-      insertBlock(editor, "divider");
+      insertBlock(editor, block);
     },
     { discrete: true },
   );
@@ -42,13 +48,40 @@ function afterDivider(lines: string[], cursorOn: number) {
     return {
       blocks: $getRoot()
         .getChildren()
-        .map((node) =>
-          $isHorizontalRuleNode(node) ? "rule" : node.getTextContent(),
-        ),
+        .map((node) => {
+          if ($isHorizontalRuleNode(node)) return "rule";
+          // An upload slot: an image whose address is the placeholder scheme's, with no description.
+          if ($isImageNode(node)) {
+            const { src, altText } = node.exportJSON();
+            return src.startsWith("rext-placeholder:") && altText === ""
+              ? "image slot"
+              : "image";
+          }
+          return node.getTextContent();
+        }),
       cursorOn: at ? at.getIndexWithinParent() : -1,
     };
   });
 }
+
+const afterDivider = (lines: string[], cursorOn: number) =>
+  afterBlock("divider", lines, cursorOn);
+
+describe("the image block", () => {
+  it("puts an upload slot above an empty line, which stays to type on", () => {
+    expect(afterBlock("image", ["Intro.", ""], 1)).toEqual({
+      blocks: ["Intro.", "image slot", ""],
+      cursorOn: 2,
+    });
+  });
+
+  it("puts the slot under a line with text, with a new line after it", () => {
+    expect(afterBlock("image", ["Intro.", "Next."], 0)).toEqual({
+      blocks: ["Intro.", "image slot", "", "Next."],
+      cursorOn: 2,
+    });
+  });
+});
 
 describe("the divider block", () => {
   it("goes above an empty line, which stays to type on", () => {

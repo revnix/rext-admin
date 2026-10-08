@@ -1,7 +1,14 @@
 "use client";
 
 import { RotateCcw } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 
 import { SidePaneTrigger, WithSidePane } from "@/components/layouts";
@@ -50,7 +57,11 @@ import type {
 } from "@/types/generate-content";
 import { OutlineApproveBar } from "./approve-bar";
 import { OutlineBrief } from "./outline-brief";
-import { hasSources, OutlineSources } from "./outline-sources";
+import {
+  hasSources,
+  OutlineSources,
+  type OutlineSourcesProps,
+} from "./outline-sources";
 import { ADD_CAP_REASON, OutlineTree, StreamingTree } from "./outline-tree";
 
 export interface OutlineReviewProps {
@@ -68,6 +79,22 @@ export interface OutlineReviewProps {
   onUpdate?: (outline: Outline) => void;
   onReject: () => void;
   onApprove: (approval: OutlineApproval) => void;
+  /**
+   * While the first outline is written (rext-control#694, the second pass): what the run has of it
+   * so far, read by its stages rather than from `rawTokens`, and the stages themselves, for the
+   * side pane from 1024 px (`progress`) and as one line above the outline under it (`strip`).
+   */
+  filling?: {
+    title?: string;
+    headings: string[];
+    /** What the run read before it began the outline: the gate, which carries them later, isn't here yet. */
+    sources?: Pick<
+      OutlineSourcesProps,
+      "serpResults" | "questions" | "relatedSearches"
+    >;
+    progress: ReactNode;
+    strip: ReactNode;
+  };
 }
 
 /**
@@ -90,6 +117,7 @@ export function OutlineReview({
   onUpdate,
   onReject,
   onApprove,
+  filling,
 }: OutlineReviewProps) {
   const gate = useMemo(() => readOutlineGate(gateValue), [gateValue]);
   const isDraft = !outline;
@@ -153,15 +181,19 @@ export function OutlineReview({
     setPersonaId(recommendation);
   }, [outline]);
 
-  const title = outline?.title ?? streamedField(rawTokens, "title");
+  const title =
+    outline?.title ?? filling?.title ?? streamedField(rawTokens, "title");
   const brief = outline?.brief ?? streamedField(rawTokens, "brief");
   const sources = {
-    serpResults: gate.serpResults,
-    questions: gate.questions,
-    relatedSearches: gate.relatedSearches,
+    serpResults: filling?.sources?.serpResults ?? gate.serpResults,
+    questions: filling?.sources?.questions ?? gate.questions,
+    relatedSearches: filling?.sources?.relatedSearches ?? gate.relatedSearches,
     clusters: keywordClusters,
     clusterHeadings: outline?.cluster_heading_map,
   };
+  // While the first outline is written the sources sit under it, in the Outline tab.
+  const sourcesTab = !filling && hasSources(sources);
+  const sourcesId = useId();
   const edited = rowsEdited(rows, gate.sections);
   const faqs = useMemo(() => readOutlineFaqs(outline), [outline]);
 
@@ -319,7 +351,29 @@ export function OutlineReview({
   );
 
   const treePane = isDraft ? (
-    <StreamingTree headings={streamedHeadings(rawTokens)} />
+    filling && hasSources(sources) ? (
+      // The first outline can take half a minute, and its sections often arrive together: what it
+      // is being written from is real, already here, and worth reading meanwhile. Once the outline
+      // is in, the same sources are the Sources tab.
+      <div className="space-y-8">
+        <StreamingTree headings={filling.headings} />
+        <section aria-labelledby={sourcesId} className="space-y-4">
+          <div className="space-y-1">
+            <h3 id={sourcesId} className="text-section text-foreground">
+              What the outline is written from
+            </h3>
+            <p className="text-table text-muted-foreground">
+              The sections take their place above as soon as they are written.
+            </p>
+          </div>
+          <OutlineSources {...sources} />
+        </section>
+      </div>
+    ) : (
+      <StreamingTree
+        headings={filling?.headings ?? streamedHeadings(rawTokens)}
+      />
+    )
   ) : rows.length > 0 ? (
     <div className="space-y-6">
       <OutlineTree
@@ -379,13 +433,27 @@ export function OutlineReview({
 
       {/* Under 1024 px the Brief opens from the approve bar: a floating button would cover the
           right-aligned Regenerate and Approve that end the page (E28). */}
-      <WithSidePane side={briefPane} sideTitle="Brief" trigger="inline">
+      <WithSidePane
+        side={
+          filling ? (
+            <div className="space-y-6">
+              {filling.progress}
+              {briefPane}
+            </div>
+          ) : (
+            briefPane
+          )
+        }
+        sideTitle="Brief"
+        trigger="inline"
+      >
         <div className="space-y-6">
+          {filling?.strip}
           <Tabs defaultValue="outline">
             <div className="flex items-center justify-between gap-2">
               <TabsList>
                 <TabsTrigger value="outline">Outline</TabsTrigger>
-                {hasSources(sources) && (
+                {sourcesTab && (
                   <TabsTrigger value="sources">Sources</TabsTrigger>
                 )}
               </TabsList>
@@ -411,7 +479,7 @@ export function OutlineReview({
                 )}
               </div>
             </TabsContent>
-            {hasSources(sources) && (
+            {sourcesTab && (
               <TabsContent value="sources" className="mt-4">
                 <OutlineSources {...sources} />
               </TabsContent>
@@ -420,6 +488,11 @@ export function OutlineReview({
 
           <OutlineApproveBar
             disabled={isLoading || isDraft}
+            reason={
+              filling
+                ? "You can approve once the outline is written."
+                : undefined
+            }
             onRegenerate={onReject}
             onApprove={approve}
             start={<SidePaneTrigger size="default" className="mr-auto" />}

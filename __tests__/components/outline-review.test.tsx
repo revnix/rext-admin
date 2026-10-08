@@ -941,3 +941,108 @@ describe("OutlineReview, an outline that came back empty", () => {
     expect(sectionList()).toBeInTheDocument();
   });
 });
+
+describe("OutlineReview, while the first outline is written", () => {
+  it("shows the chosen title and the headings so far, with the run's stages beside them", () => {
+    render(
+      <OutlineReview
+        outline={null}
+        rawTokens=""
+        isLoading
+        gate={undefined}
+        onApprove={jest.fn()}
+        onReject={jest.fn()}
+        filling={{
+          title: "Running shoes for beginners",
+          headings: ["Why the right shoe matters", "Cushioning and support"],
+          sources: {
+            serpResults: [],
+            questions: ["How often should I replace them?"],
+            relatedSearches: ["shoe fitting"],
+          },
+          progress: <p>The run's stages</p>,
+          strip: <p>The run's stages, one line</p>,
+        }}
+      />,
+    );
+    expect(
+      screen.getByRole("heading", { name: "Running shoes for beginners" }),
+    ).toBeInTheDocument();
+    const written = screen.getByRole("list", {
+      name: "Sections, being written",
+    });
+    expect(
+      within(written).getByText("Why the right shoe matters"),
+    ).toBeInTheDocument();
+    expect(
+      within(written).getByText("Cushioning and support"),
+    ).toBeInTheDocument();
+    // The stages head the brief's pane, and sit above the outline as one line under 1024 px.
+    const pane = screen.getByRole("complementary", { name: "Brief" });
+    expect(within(pane).getByText("The run's stages")).toBeInTheDocument();
+    expect(screen.getByText("The run's stages, one line")).toBeInTheDocument();
+    // What it is written from is under it meanwhile, in the Outline tab: no Sources tab yet.
+    const from = within(
+      screen.getByRole("region", { name: "What the outline is written from" }),
+    );
+    expect(
+      from.getByText("How often should I replace them?"),
+    ).toBeInTheDocument();
+    expect(from.getByText("shoe fitting")).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Sources" })).toBeNull();
+    // Nothing acts before the outline is whole, and the buttons say why.
+    for (const name of [/approve and generate/i, "Regenerate"]) {
+      const button = screen.getByRole("button", { name });
+      expect(button).toBeDisabled();
+      expect(button).toHaveAccessibleDescription(
+        "You can approve once the outline is written.",
+      );
+    }
+  });
+
+  it("shows the streaming tree alone when the run read no sources", () => {
+    render(
+      <OutlineReview
+        outline={null}
+        rawTokens=""
+        isLoading
+        gate={undefined}
+        onApprove={jest.fn()}
+        onReject={jest.fn()}
+        filling={{
+          title: "Running shoes for beginners",
+          headings: [],
+          progress: <p>The run's stages</p>,
+          strip: null,
+        }}
+      />,
+    );
+    expect(
+      screen.getByRole("list", { name: "Sections, being written" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", {
+        name: "What the outline is written from",
+      }),
+    ).toBeNull();
+  });
+
+  it("reads the model's text as before when the run gives no headings of its own", () => {
+    render(
+      <OutlineReview
+        outline={null}
+        rawTokens={
+          '{"title":"Tea at home","structure":{"sections":[{"heading":"Black tea"'
+        }
+        isLoading
+        gate={undefined}
+        onApprove={jest.fn()}
+        onReject={jest.fn()}
+      />,
+    );
+    expect(
+      screen.getByRole("heading", { name: "Tea at home" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Black tea")).toBeInTheDocument();
+  });
+});

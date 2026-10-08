@@ -25,6 +25,8 @@ import {
   type SerpTitleFacts,
   serpTitleFacts,
 } from "@/lib/generate-content/serp-title-facts";
+import type { RunTitleRow } from "@/lib/generate-content/run-stages";
+import { titlePlace } from "@/lib/generate-content/step-fill";
 import {
   normalizeTitle,
   scoreTitle,
@@ -334,6 +336,191 @@ export function TitleStep({
         >
           {topTen}
         </TopTenPanel>
+      }
+    >
+      {list}
+    </WithSidePane>
+  );
+}
+
+/**
+ * Step 4 while its titles are written (rext-control#694, the second pass): the step's own layout,
+ * filling in. Each title takes its row when the model has written it, with its score; the one being
+ * written and the ones to come hold their places. The side pane holds the run's stages over the top
+ * ten, which the run already has. Nothing here acts: the step takes over with the checked set.
+ */
+export function TitleStepFilling({
+  instruction = "Select a title",
+  context = [],
+  rows,
+  keyphrase,
+  results,
+  progress,
+  strip,
+}: {
+  instruction?: string;
+  /** The run's keyword, intent and content type, said once above the list. */
+  context?: (string | null | undefined)[];
+  /** The titles as the run has them (run-findings.ts' rows). */
+  rows: RunTitleRow[];
+  /** The keyword the titles are written for: the gate's focus keyphrase isn't here yet. */
+  keyphrase: string | null;
+  /** The search results the analysis read, for the top ten. */
+  results: readonly SerpResult[];
+  /** The run's stages, for the side pane (from 1024 px). */
+  progress: ReactNode;
+  /** The same as one line, above the titles (under 1024 px). */
+  strip: ReactNode;
+}) {
+  const reasonId = useId();
+  const contextLine = context.filter(Boolean).join(" · ");
+  const facts = useMemo(
+    () => serpTitleFacts(results, keyphrase),
+    [results, keyphrase],
+  );
+  const topTen = (
+    <SerpSnapshot
+      results={results}
+      heading={null}
+      keyphrase={keyphrase}
+      measure={(title) => measureTitle(title, keyphrase)}
+      marks
+    />
+  );
+
+  const list = (
+    <div className="w-full py-3">
+      <div className="mb-6 space-y-2">
+        <h2 className="text-3xl font-semibold leading-tight tracking-tight text-foreground">
+          {instruction}
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Pick a title and edit it if you like: the outline and the article use
+          it word for word.
+        </p>
+        {contextLine && (
+          <p className="text-caption text-muted-foreground">{contextLine}</p>
+        )}
+      </div>
+
+      {strip && <div className="mb-6">{strip}</div>}
+
+      {facts && (
+        <div className="mb-6 space-y-2 lg:hidden">
+          <p className="text-table">
+            <a href={`#${PANE_HEADING_ID}`} className="link">
+              {PANE_TITLE}
+            </a>
+          </p>
+          <TopTenFacts facts={facts} keyphrase={keyphrase} />
+        </div>
+      )}
+
+      <ul aria-label="Titles, being written" className="mb-6 space-y-2">
+        {rows.map((row, index) => (
+          <li
+            // The rows fill in order and never move, so the position is the identity.
+            // biome-ignore lint/suspicious/noArrayIndexKey: see above
+            key={index}
+            className="flex items-start gap-3 rounded-md border border-border bg-card p-4"
+          >
+            {/* Where the step's radio will be. */}
+            <span
+              aria-hidden="true"
+              className={cn(
+                "mt-1 size-4 shrink-0 rounded-full border border-border",
+                row.state !== "written" && "border-dashed",
+              )}
+            />
+            <div className="min-w-0 flex-1 space-y-2">
+              <p
+                className={cn(
+                  "text-base",
+                  row.state === "next"
+                    ? "text-muted-foreground"
+                    : "text-foreground",
+                )}
+              >
+                {row.state === "written" ? (
+                  <KeyphraseText text={row.title} keyphrase={keyphrase} />
+                ) : (
+                  // A title just begun has no words yet: its place stands in.
+                  row.title.trim() || titlePlace(index)
+                )}
+                {row.state === "writing" && row.title.trim() && (
+                  <span className="text-muted-foreground" aria-hidden="true">
+                    …
+                  </span>
+                )}
+              </p>
+              {row.state === "written" ? (
+                <ScoreLine score={scoreTitle(row.title, keyphrase)} />
+              ) : (
+                <p className="text-caption text-muted-foreground">
+                  {row.state === "writing" ? "Being written" : "Next"}
+                </p>
+              )}
+              {row.recommended && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="neutral">Recommended</Badge>
+                  {row.reason && (
+                    <span className="text-caption text-muted-foreground">
+                      {row.reason}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-8 flex flex-wrap items-center justify-end gap-3">
+        <p id={reasonId} className="text-caption text-muted-foreground">
+          You can pick one once all are written and checked.
+        </p>
+        <Button variant="outline" disabled aria-describedby={reasonId}>
+          <RefreshCcw />
+          Regenerate
+        </Button>
+        <Button disabled aria-describedby={reasonId}>
+          Continue
+          <ArrowRight />
+        </Button>
+      </div>
+
+      {facts && (
+        <section
+          aria-labelledby={PANE_HEADING_ID}
+          className="mt-8 border-t border-border pt-6 lg:hidden"
+        >
+          <TopTenPanel
+            headingId={PANE_HEADING_ID}
+            facts={facts}
+            keyphrase={keyphrase}
+            pick=""
+          >
+            {topTen}
+          </TopTenPanel>
+        </section>
+      )}
+    </div>
+  );
+
+  return (
+    <WithSidePane
+      sideTitle={PANE_TITLE}
+      trigger="inline"
+      side={
+        // The same space above as the heading beside it.
+        <div className="space-y-6 pt-3">
+          {progress}
+          {facts && (
+            <TopTenPanel facts={facts} showFacts keyphrase={keyphrase} pick="">
+              {topTen}
+            </TopTenPanel>
+          )}
+        </div>
       }
     >
       {list}

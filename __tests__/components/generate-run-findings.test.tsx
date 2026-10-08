@@ -120,6 +120,7 @@ jest.mock("motion/react", () => ({
   },
 }));
 jest.mock("@/components/layouts", () => ({
+  ...jest.requireActual("@/components/layouts"),
   StepColumn: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -156,26 +157,47 @@ jest.mock("@/components/generate-content/content", () => ({
   ContentEditor: ({ steps }: { steps?: ReactNode }) => <>{steps}</>,
 }));
 jest.mock("@/components/generate-content/outline-review", () => ({
+  // While the first outline is written the step shows what the run hands it (`filling`); its own
+  // test covers how (outline-review.test.tsx).
   OutlineReview: ({
     onApprove,
     isLoading,
+    filling,
   }: {
     onApprove: (approval: object) => void;
     isLoading: boolean;
+    filling?: { title?: string; headings: string[]; progress: ReactNode };
   }) => (
-    <button type="button" disabled={isLoading} onClick={() => onApprove({})}>
-      Approve the outline
-    </button>
+    <>
+      {filling && (
+        <section aria-label="The outline, being written">
+          <h2>{filling.title}</h2>
+          <ol aria-label="Sections, being written">
+            {filling.headings.map((heading) => (
+              <li key={heading}>{heading}</li>
+            ))}
+          </ol>
+          <aside aria-label="Brief">{filling.progress}</aside>
+        </section>
+      )}
+      <button type="button" disabled={isLoading} onClick={() => onApprove({})}>
+        Approve the outline
+      </button>
+    </>
   ),
   OutlineRejectSection: () => null,
 }));
 jest.mock("@/components/generate-content/keyword", () => ({
   KeywordForm: ({
     userKeyword,
+    disabled,
+    readOnly,
     onKeywordChange,
     onSubmit,
   }: {
     userKeyword: string;
+    disabled?: boolean;
+    readOnly?: boolean;
     onKeywordChange: (value: string) => void;
     onSubmit: () => void;
   }) => (
@@ -183,27 +205,41 @@ jest.mock("@/components/generate-content/keyword", () => ({
       <input
         aria-label="Keyword"
         value={userKeyword}
+        readOnly={readOnly}
         onChange={(event) => onKeywordChange(event.target.value)}
       />
-      <button type="button" onClick={onSubmit}>
+      <button type="button" disabled={disabled} onClick={onSubmit}>
         Analyse
       </button>
     </>
   ),
 }));
-jest.mock("@/components/generate-content/suggestions", () => ({
-  SuggestionsSection: ({
-    primaryKeyword,
-    onSelect,
-  }: {
-    primaryKeyword: string;
-    onSelect: (keyword: string) => void;
-  }) => (
-    <button type="button" onClick={() => onSelect(primaryKeyword)}>
-      Keep the keyword
-    </button>
-  ),
-}));
+/** Makes the Select keyword step's filling view throw, for the test of what the wait then shows. */
+const mockFilling = { breaks: false };
+// The steps' filling views are the real ones: the waits show them.
+jest.mock("@/components/generate-content/suggestions", () => {
+  const actual = jest.requireActual(
+    "@/components/generate-content/suggestions",
+  );
+  return {
+    ...actual,
+    SuggestionsFilling: (props: Record<string, unknown>) => {
+      if (mockFilling.breaks) throw new Error("a shape the view didn't expect");
+      return <actual.SuggestionsFilling {...props} />;
+    },
+    SuggestionsSection: ({
+      primaryKeyword,
+      onSelect,
+    }: {
+      primaryKeyword: string;
+      onSelect: (keyword: string) => void;
+    }) => (
+      <button type="button" onClick={() => onSelect(primaryKeyword)}>
+        Keep the keyword
+      </button>
+    ),
+  };
+});
 jest.mock("@/components/generate-content/content-type", () => ({
   __esModule: true,
   default: ({
@@ -227,6 +263,7 @@ jest.mock("@/components/generate-content/content-type", () => ({
   ),
 }));
 jest.mock("@/components/generate-content/title-step", () => ({
+  ...jest.requireActual("@/components/generate-content/title-step"),
   TitleStep: ({
     titles,
     onContinue,
@@ -323,6 +360,7 @@ const stage = (name: string): HTMLElement => {
 beforeEach(() => {
   mockRuns.length = 0;
   mockStatus.mockClear();
+  mockFilling.breaks = false;
   window.localStorage.clear();
 });
 
@@ -351,10 +389,21 @@ describe("the Generate page's progress box", () => {
       "What each site on the first page offers.",
     );
     expect(
-      screen.getByText(
+      screen.getAllByText(
         "You can leave this page. The analysis keeps going, and we’ll tell you when it’s ready.",
-      ),
+      )[0],
     ).toBeVisible();
+    // The Select keyword step is already on screen, filling in (the second pass): the keyword on
+    // its card, each figure waiting for its stage, and nothing to act on yet.
+    const card = screen.getByRole("region", { name: KEYWORD });
+    expect(within(card).getAllByText("Measured next")).toHaveLength(4);
+    expect(within(card).getByText("From the competing sites")).toBeVisible();
+    expect(
+      within(card).getByRole("button", { name: /continue with this keyword/i }),
+    ).toBeDisabled();
+    // The search field shows what was searched and can't be changed: the step belongs to it.
+    expect(screen.getByRole("button", { name: "Analyse" })).toBeDisabled();
+    expect(screen.getByLabelText("Keyword")).toHaveAttribute("readonly");
 
     const organic = [
       "almanac.com",
@@ -395,24 +444,19 @@ describe("the Generate page's progress box", () => {
     expect(read).toHaveTextContent(
       "4 results from 3 sites · 1 question people ask · 2 related searches",
     );
-    expect(read).toHaveTextContent("Result 3");
-    expect(read).not.toHaveTextContent("Result 4");
-    fireEvent.click(
-      within(read).getByRole("button", { name: "Show all 4 results" }),
+    // The results themselves are the step's: its side pane lists them all, under the stages.
+    expect(read).not.toHaveTextContent("Result 3");
+    const found = within(
+      screen.getByRole("complementary", { name: "Top search results" }),
     );
-    expect(read).toHaveTextContent("Result 4");
+    expect(found.getByText("Result 1")).toBeVisible();
+    expect(found.getByText("Result 4")).toBeVisible();
 
-    // The one call that works out every site: their names, together.
     const finding = stage("Finding competitors");
     expect(finding).toHaveAttribute("data-state", "active");
     expect(finding).toHaveTextContent(
       "Working out what each of the 3 sites offers: a guide to learn from, a tool, or a shop.",
     );
-    expect(
-      within(finding)
-        .getAllByRole("listitem")
-        .map((chip) => chip.textContent),
-    ).toEqual(["almanac.com", "gardeners.com", "growveg.com"]);
 
     await send(
       analysis,
@@ -434,12 +478,12 @@ describe("the Generate page's progress box", () => {
     expect(stage("Finding competitors")).toHaveTextContent(
       "3 competing sites · searchers want to learn · 2 of the 3 match that",
     );
-    expect(
-      within(stage("Finding competitors")).queryAllByRole("listitem"),
-    ).toEqual([]);
     expect(stage("Measuring the keyword")).toHaveTextContent(
       "Looking up monthly searches, difficulty and links for the United States.",
     );
+    // The card has the intent now, and says the figures are being measured.
+    expect(within(card).getByText("Informational")).toBeVisible();
+    expect(within(card).getAllByText("Being measured")).toHaveLength(4);
 
     await send(
       analysis,
@@ -483,6 +527,10 @@ describe("the Generate page's progress box", () => {
       "1,900 searches a month · difficulty 28 of 100 (Medium) · saved to Keywords",
     );
     expect(measured).not.toHaveTextContent("412");
+    // The card's figures are in, the links with them, as the step itself shows them.
+    expect(within(card).queryByText("Being measured")).toBeNull();
+    expect(within(card).getByText("412")).toBeVisible();
+    expect(within(card).getByText("96")).toBeVisible();
 
     // ── Step 3: the content type ─────────────────────────────────────────────
     fireEvent.click(
@@ -545,6 +593,19 @@ describe("the Generate page's progress box", () => {
     expect(stage("Checking each title")).toHaveTextContent(
       "Each one must contain “vegetable garden planner” and run 50 to 59 characters. Any that don’t are rewritten.",
     );
+    // The Title step is already on screen, a place held for each title (the second pass).
+    const titleRows = () =>
+      within(
+        screen.getByRole("list", { name: "Titles, being written" }),
+      ).getAllByRole("listitem");
+    expect(titleRows().map((row) => row.textContent)).toEqual([
+      "First titleNext",
+      "Second titleNext",
+      "Third titleNext",
+      "Fourth titleNext",
+      "Fifth titleNext",
+    ]);
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
 
     const cut = TITLE_JSON.indexOf("Templates") + "Templates".length;
     const pieces = (text: string): string[] => text.match(/[\s\S]{1,9}/g) ?? [];
@@ -560,16 +621,21 @@ describe("the Generate page's progress box", () => {
     expect(titles).toHaveTextContent(
       "3 of 5 written, from 2 related searches and 1 question people ask.",
     );
-    const rows = within(titles)
-      .getAllByRole("listitem")
-      .map((row) => row.textContent);
-    expect(rows).toEqual([
-      `1${TITLES[0]}Has the keyword56 characters`,
-      `2${TITLES[1]}Has the keyword58 charactersRecommendedIt answers what most searchers ask first.`,
-      `3${TITLES[2]}Has the keyword57 characters`,
-      "4Free Vegetable Garden Planner Templates…Being written",
-      "5Fifth titleNext",
-    ]);
+    // The titles themselves are the step's: each takes its row as it is written, with its score.
+    expect(within(titles).queryAllByRole("listitem")).toEqual([]);
+    const rows = titleRows();
+    expect(rows).toHaveLength(5);
+    expect(rows[0]).toHaveTextContent(TITLES[0]);
+    expect(rows[0]).toHaveTextContent(/of 3 checks/);
+    expect(rows[1]).toHaveTextContent(TITLES[1]);
+    expect(rows[1]).toHaveTextContent(
+      "RecommendedIt answers what most searchers ask first.",
+    );
+    expect(rows[2]).toHaveTextContent(TITLES[2]);
+    expect(rows[3]).toHaveTextContent(
+      "Free Vegetable Garden Planner Templates…Being written",
+    );
+    expect(rows[4]).toHaveTextContent("Fifth titleNext");
     expect(screen.getByRole("progressbar")).toHaveAttribute(
       "aria-valuetext",
       "3 of 5 titles written",
@@ -702,11 +768,17 @@ describe("the Generate page's progress box", () => {
     );
     const sections = stage("Outlining");
     expect(sections).toHaveTextContent("Writing the sections: 2 so far.");
+    // The headings themselves are the step's: the outline, under the title chosen.
+    expect(within(sections).queryAllByRole("listitem")).toEqual([]);
+    const outlineStep = within(
+      screen.getByRole("region", { name: "The outline, being written" }),
+    );
+    expect(outlineStep.getByRole("heading", { name: TITLES[0] })).toBeVisible();
     expect(
-      within(sections)
+      within(outlineStep.getByRole("list", { name: "Sections, being written" }))
         .getAllByRole("listitem")
         .map((row) => row.textContent),
-    ).toEqual(["1Pick your beds", "2Map the rows"]);
+    ).toEqual(["Pick your beds", "Map the rows"]);
     expect(
       screen.getByText(
         "You can leave this page. The outline keeps coming, and we’ll tell you when it’s ready.",
@@ -836,14 +908,15 @@ describe("the Generate page's progress box", () => {
     const read = stage("Reading the search results");
     expect(read).toHaveAttribute("data-state", "complete");
     expect(read).toHaveTextContent("2 results from 2 sites · 1 related search");
-    expect(read).toHaveTextContent("Thé vert : le guide");
+    // The step it was filling in comes back with it: the keyword's card, and the results it had.
+    expect(screen.getByRole("region", { name: "thé vert" })).toBeVisible();
+    expect(
+      within(
+        screen.getByRole("complementary", { name: "Top search results" }),
+      ).getByText("Thé vert : le guide"),
+    ).toBeVisible();
     const finding = stage("Finding competitors");
     expect(finding).toHaveAttribute("data-state", "active");
-    expect(
-      within(finding)
-        .getAllByRole("listitem")
-        .map((chip) => chip.textContent),
-    ).toEqual(["the.example", "palais.example"]);
 
     // The joined stream carries the subgraph's own update when it ends.
     await send(joined, {
@@ -865,5 +938,59 @@ describe("the Generate page's progress box", () => {
     expect(stage("Measuring the keyword")).toHaveTextContent(
       "Looking up monthly searches, difficulty and links for France.",
     );
+  }, 20_000);
+
+  it("falls back to the box alone when a step's filling view throws, and the run goes on", async () => {
+    mockFilling.breaks = true;
+    const error = jest.spyOn(console, "error").mockImplementation(() => {});
+    render(<FreshGenerationView onBack={jest.fn()} />);
+    fireEvent.change(screen.getByLabelText("Keyword"), {
+      target: { value: KEYWORD },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Analyse" }));
+    const analysis = await nextRun(1);
+
+    // The wait as it was before the steps filled in: its box, and no step around it.
+    expect(
+      await screen.findByRole("heading", {
+        name: "Analysing “vegetable garden planner”",
+      }),
+    ).toBeVisible();
+    expect(screen.queryByRole("region", { name: KEYWORD })).toBeNull();
+    expect(stage("Reading the search results")).toHaveAttribute(
+      "data-state",
+      "active",
+    );
+
+    // The run's stream still moves its stages.
+    await send(
+      analysis,
+      update({
+        fetch_serp: {
+          serp_result: {
+            organic_results: [
+              { position: 1, title: "Result 1", link: "https://a.example/" },
+            ],
+            people_ask: [],
+            related_searches: [],
+          },
+        },
+      }),
+      update({
+        normalize_serp: {
+          serp_normalized: {
+            normalize_results: [{ position: 1, domain: "a.example" }],
+            domain_stats: { unique_domains: 1 },
+          },
+        },
+      }),
+    );
+    expect(stage("Reading the search results")).toHaveAttribute(
+      "data-state",
+      "complete",
+    );
+    // The box alone lists what it found, as it did before.
+    expect(stage("Reading the search results")).toHaveTextContent("Result 1");
+    error.mockRestore();
   }, 20_000);
 });

@@ -62,6 +62,7 @@ import {
 import {
   createContext,
   useContext,
+  useId,
   useState,
   useEffect,
   useCallback,
@@ -132,7 +133,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { altTextFor } from "@/lib/editor/alt-text";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -260,6 +270,38 @@ function ImagePlaceholderSlot({
     fileInputRef.current?.click();
   }, [isEditable, requireEditMode, workspaceId]);
 
+  // A slot the person put in has no description. It is asked for once a file is chosen: nothing
+  // on the page can add one to the image afterwards, and without it the image would be published
+  // as decoration.
+  const [chosen, setChosen] = useState<File | null>(null);
+  const [description, setDescription] = useState("");
+  const descriptionId = useId();
+
+  const upload = useCallback(
+    async (file: File, alt: string) => {
+      if (!workspaceId) return;
+      setUploading(true);
+      try {
+        const media = await apiClient.content.uploadBlogImage(
+          workspaceId,
+          file,
+        );
+        const uploadedSrc = toAbsoluteMediaUrl(media.public_url);
+        if (!uploadedSrc) {
+          toast.error("Upload succeeded but no image URL was returned.");
+          return;
+        }
+        applyImage(uploadedSrc, alt);
+        toast.success("Image added.");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Upload failed.");
+      } finally {
+        setUploading(false);
+      }
+    },
+    [workspaceId, applyImage],
+  );
+
   const handleFileSelected = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -274,27 +316,22 @@ function ImagePlaceholderSlot({
         toast.error("Image exceeds 20MB. Please choose a smaller file.");
         return;
       }
-      setUploading(true);
-      try {
-        const media = await apiClient.content.uploadBlogImage(
-          workspaceId,
-          file,
-        );
-        const uploadedSrc = toAbsoluteMediaUrl(media.public_url);
-        if (!uploadedSrc) {
-          toast.error("Upload succeeded but no image URL was returned.");
-          return;
-        }
-        applyImage(uploadedSrc, altText);
-        toast.success("Image added.");
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Upload failed.");
-      } finally {
-        setUploading(false);
+      if (!altText) {
+        setDescription("");
+        setChosen(file);
+        return;
       }
+      await upload(file, altText);
     },
-    [workspaceId, altText, applyImage],
+    [workspaceId, altText, upload],
   );
+
+  const describeAndUpload = (event: React.FormEvent) => {
+    event.preventDefault();
+    const file = chosen;
+    setChosen(null);
+    if (file) void upload(file, altTextFor(description));
+  };
 
   const handleDismiss = useCallback(() => {
     if (!isEditable) {
@@ -319,8 +356,10 @@ function ImagePlaceholderSlot({
       <span className="inline-flex items-start gap-2 text-muted-foreground">
         <ImageIcon size={16} className="mt-0.5 shrink-0" />
         <span>
-          Suggested image{altText ? `: ${altText}` : ""} — optional. Upload one
-          here, or remove this slot and publish without it.
+          {/* A slot with no description is one the person put in themselves. */}
+          {altText
+            ? `Suggested image: ${altText} — optional. Upload one here, or remove this slot and publish without it.`
+            : "Upload an image here, or remove this slot."}
         </span>
       </span>
       <span className="inline-flex items-center gap-2">
@@ -350,6 +389,44 @@ function ImagePlaceholderSlot({
           Remove
         </Button>
       </span>
+      {/* Drawn outside the text (a portal), so typing in it is not typing in the article. */}
+      <Dialog
+        open={chosen !== null}
+        onOpenChange={(open) => !open && setChosen(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Describe the image</DialogTitle>
+            <DialogDescription>
+              A few words for people who can't see it, and for search engines.
+              It becomes the image's alt text.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={describeAndUpload} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor={descriptionId}>Description</Label>
+              <Input
+                id={descriptionId}
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="A host recording at a desk microphone"
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setChosen(null)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={altTextFor(description) === ""}>
+                Add image
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </span>
   );
 }
@@ -543,6 +620,18 @@ export function $createImageNode({
   height?: number;
 }): ImageNode {
   return new ImageNode(src, altText, width, height);
+}
+
+/**
+ * An empty upload slot, as the "/" menu's Image block puts in (task 706): the same placeholder the
+ * pipeline leaves where it suggests an image, so it saves, loads and is left out of a publish the
+ * same way until an image is uploaded into it.
+ */
+export function $createImageSlotNode(): ImageNode {
+  return $createImageNode({
+    src: `${IMAGE_PLACEHOLDER_SCHEME}${crypto.randomUUID()}`,
+    altText: "",
+  });
 }
 
 export function $isImageNode(
@@ -861,7 +950,10 @@ function ImageInsertPopover() {
         if (savedSelectionRef.current) {
           $setSelection(savedSelectionRef.current);
         }
-        const imageNode = $createImageNode({ src, altText: alt || "image" });
+        const imageNode = $createImageNode({
+          src,
+          altText: altTextFor(alt) || "image",
+        });
         $insertNodes([imageNode]);
       });
     },

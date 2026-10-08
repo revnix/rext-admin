@@ -18,6 +18,7 @@ export function KeywordForm({
   userKeyword,
   country,
   disabled = false,
+  readOnly = false,
   run = "analyze",
   restoreCountry = false,
   onSubmit,
@@ -28,6 +29,11 @@ export function KeywordForm({
   country: string;
   /** Blocks re-submission while a generation is already running */
   disabled?: boolean;
+  /**
+   * While this search's analysis fills its step in: the keyword and the country show what was
+   * searched and can't be changed, since what is on screen belongs to them.
+   */
+  readOnly?: boolean;
   /** The run the button starts: a new analysis, a new keyword on a paused run, or none (the same keyword goes on unbilled). */
   run?: "analyze" | "change_keyword" | null;
   /** A new search (no run to restore): start in the country this workspace searched in last. */
@@ -99,6 +105,7 @@ export function KeywordForm({
             className="flex-1 h-10 border-none shadow-none text-section placeholder:text-muted-foreground/30 focus-visible:ring-0 bg-transparent px-4 font-medium"
             value={value}
             onChange={(e) => handleChange(e.target.value)}
+            readOnly={readOnly}
             required
           />
         </div>
@@ -107,6 +114,7 @@ export function KeywordForm({
           <div className="min-w-0 flex-1 sm:flex-none">
             <CountryDropdown
               value={country}
+              disabled={readOnly}
               onChange={(c) => {
                 onCountryChange(c.alpha2);
                 if (workspaceId) rememberCountry(workspaceId, c.alpha2);

@@ -2,6 +2,7 @@
  * The "/" menu's blocks (task 706): which ones a typed query keeps.
  */
 
+import { altTextFor } from "@/lib/editor/alt-text";
 import { BLOCKS, matchBlocks } from "@/lib/editor/blocks";
 
 const titles = (query: string | null) => matchBlocks(query).map((b) => b.title);
@@ -23,9 +24,29 @@ describe("matchBlocks", () => {
     expect(titles("steps")).toEqual(["Numbered list"]);
     expect(titles("hr")).toEqual(["Divider"]);
     expect(titles("grid")).toEqual(["Table"]);
+    expect(titles("photo")).toEqual(["Image"]);
+    expect(titles("upload")).toEqual(["Image"]);
   });
 
   it("offers nothing for a word no block has", () => {
     expect(titles("video")).toEqual([]);
+  });
+});
+
+describe("altTextFor", () => {
+  it("swaps what would end the alt text or its title in Markdown", () => {
+    expect(altTextFor('Chart [2025] of "plays"')).toBe(
+      "Chart (2025) of 'plays'",
+    );
+  });
+
+  it("puts a description on one line, with no space round it", () => {
+    expect(altTextFor("  A host\n at a desk  ")).toBe("A host at a desk");
+    expect(altTextFor("   ")).toBe("");
+  });
+
+  it("round-trips through the editor's image pattern", () => {
+    const markdown = `![${altTextFor("a [b] c")}](https://x.test/a.png "t")`;
+    expect(markdown).toMatch(/^!\[([^\]]*)\]\(([^)\s"]+)(?:\s+"([^"]*)")?\)$/);
   });
 });

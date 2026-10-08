@@ -6,9 +6,16 @@ import { announceBackgroundGenerationRemoval } from "@/lib/generate-content/back
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
+import {
+  FillBoundary,
+  FillProgressBox,
+  FillProgressStrip,
+  StartAtTop,
+} from "@/components/generate-content/fill-progress";
 import { RunProgress } from "@/components/generate-content/run-progress";
 import { useRunStages } from "@/hooks/use-run-stages";
 import { describeRun } from "@/lib/generate-content/run-findings";
+import { fillPhase, fillTitleRows } from "@/lib/generate-content/step-fill";
 import {
   useCancelOnUnmount,
   useOncePerKey,
@@ -39,8 +46,14 @@ import type {
 import { HeroSection } from "@/components/generate-content/hero";
 import { KeywordForm } from "@/components/generate-content/keyword";
 import { RecentKeywords } from "@/components/generate-content/recent-keywords";
-import { SuggestionsSection } from "@/components/generate-content/suggestions";
-import { TitleStep } from "@/components/generate-content/title-step";
+import {
+  SuggestionsFilling,
+  SuggestionsSection,
+} from "@/components/generate-content/suggestions";
+import {
+  TitleStep,
+  TitleStepFilling,
+} from "@/components/generate-content/title-step";
 import { serpResultsFromGate } from "@/lib/keywords/serp-results";
 import { StepColumn } from "@/components/layouts";
 import {
@@ -2376,6 +2389,64 @@ export function FreshGenerationView({
   );
   const editorShown = showContentStream && !restoreError && !timedOutStages;
 
+  // The search field over step 2, and over that step while its analysis fills it in (`waiting`),
+  // where it only shows what was searched.
+  const keywordForm = (waiting = false) => (
+    <KeywordForm
+      userKeyword={userKeyword}
+      country={country}
+      readOnly={waiting}
+      disabled={
+        waiting ||
+        isManualLoading ||
+        !canAnalyze({
+          atKeywordStep: instructionType === "keyword Selection",
+          value: userKeyword,
+          primaryKeyword,
+          country,
+          analyzedCountry,
+        })
+      }
+      restoreCountry={!backgroundThreadId}
+      // On the keyword step only a new keyword or country is billed.
+      run={
+        instructionType !== "keyword Selection"
+          ? "analyze"
+          : isKeywordReanalysis({
+                value: userKeyword,
+                primaryKeyword,
+                country,
+                analyzedCountry,
+              })
+            ? "change_keyword"
+            : null
+      }
+      // Step 2 already owns a thread paused on the keyword interrupt.
+      // Re-analysing there must resume that thread — starting a new one
+      // trips the "article already in progress" guard on its own job.
+      onSubmit={
+        instructionType === "keyword Selection"
+          ? () => handleWorkflow("KEYWORD_SELECT", userKeyword)
+          : handleKeywordSubmit
+      }
+      onKeywordChange={(val) =>
+        dispatch({ type: "SET_USER_KEYWORD", payload: val })
+      }
+      onCountryChange={(val) => dispatch({ type: "SET_COUNTRY", payload: val })}
+    />
+  );
+  // A step's column: the start screen is shorter, and the outline starts at the top.
+  const stepColumnClass = (step: string, fromTop: boolean) =>
+    cn(
+      "flex flex-col items-center justify-center relative lg:px-8 transition-all duration-700",
+      step === "keyword"
+        ? "min-h-[70vh]"
+        : !showContentStream
+          ? "min-h-[85vh]"
+          : "min-h-0",
+      fromTop ? "justify-start" : " justify-center",
+    );
+
   if (
     (isLoading || isManualLoading) &&
     !reanalysingInPlace &&
@@ -2383,8 +2454,8 @@ export function FreshGenerationView({
     !showContentStream &&
     (isRegeneratingTopics || !suppressLibraryTopicLoader)
   ) {
-    return stepperRow(
-      true,
+    const run = runStages.run;
+    const box = (
       <div
         className={cn(
           "max-w-3xl mx-auto w-full flex flex-col items-center relative lg:px-6 transition-all duration-700 mt-4",
@@ -2393,9 +2464,9 @@ export function FreshGenerationView({
             : "min-h-0 pt-2",
         )}
       >
-        {runStages.run && (
+        {run && (
           <RunProgress
-            stages={runStages.run.stages}
+            stages={run.stages}
             {...runView}
             onCancel={_handleCancelGeneration}
             className="max-w-2xl"
@@ -2408,7 +2479,95 @@ export function FreshGenerationView({
         >
           {libraryResearch ? libraryResearchNote(libraryResearch) : null}
         </p>
-      </div>,
+      </div>
+    );
+    // The analysis, the titles and the first outline fill their step in while they run (FB2.13, the
+    // second pass): the step's own layout, with the stages in its side pane. A run from the Library
+    // has no Select keyword step to fill, and its note on its research is said under the box. If a
+    // filling view throws, the box alone takes its place.
+    const fill = run && runView ? fillPhase(run.phase) : null;
+    if (
+      !run ||
+      !runView ||
+      !fill ||
+      libraryResearch ||
+      (fill === "analysis" && isLibrary)
+    ) {
+      return stepperRow(true, box);
+    }
+    const progress = {
+      stages: run.stages,
+      view: runView,
+      onCancel: _handleCancelGeneration,
+    };
+    const stages = <FillProgressBox {...progress} />;
+    const strip = <FillProgressStrip {...progress} />;
+    const { findings } = runStages;
+    return stepperRow(
+      true,
+      <FillBoundary fallback={box}>
+        <StartAtTop key={fill} />
+        <StepColumn
+          withSidePane
+          className={stepColumnClass("filling", fill === "outline")}
+        >
+          {fill === "analysis" && userKeyword && (
+            <div className="w-full">{keywordForm(true)}</div>
+          )}
+          <div className="w-full">
+            {fill === "analysis" ? (
+              <SuggestionsFilling
+                keyword={
+                  findings.searched?.keyword || userKeyword || primaryKeyword
+                }
+                findings={findings}
+                stages={run.stages}
+                progress={stages}
+                strip={strip}
+              />
+            ) : fill === "titles" ? (
+              <TitleStepFilling
+                context={[
+                  primaryKeyword,
+                  selectedIntent ||
+                    (Array.isArray(seoResult?.intent)
+                      ? seoResult.intent[0]
+                      : (seoResult?.intent as string)),
+                  selectedContentType || recommendedContentType,
+                ]}
+                rows={fillTitleRows(runView)}
+                keyphrase={findings.focusKeyphrase || primaryKeyword || null}
+                results={findings.results ?? []}
+                progress={stages}
+                strip={strip}
+              />
+            ) : (
+              <OutlineReview
+                outline={null}
+                rawTokens=""
+                isLoading
+                gate={undefined}
+                workspaceId={workspaceId}
+                keywordClusters={keywordClusters}
+                onApprove={() => {}}
+                onReject={() => {}}
+                filling={{
+                  title:
+                    findings.selectedTitle || state.selectedTopic || undefined,
+                  headings: findings.headings ?? [],
+                  sources: {
+                    serpResults: findings.results ?? [],
+                    questions: findings.questions ?? [],
+                    relatedSearches: findings.relatedSearches ?? [],
+                  },
+                  progress: stages,
+                  strip,
+                }}
+              />
+            )}
+          </div>
+        </StepColumn>
+      </FillBoundary>,
     );
   }
 
@@ -2508,17 +2667,10 @@ export function FreshGenerationView({
           // A keyword analysed in place: the search field keeps the width it had (FB2.3).
           (reanalysingInPlace && inPlaceSidePane)
         }
-        className={cn(
-          "flex flex-col items-center justify-center relative lg:px-8 transition-all duration-700",
-          instructionType === "keyword"
-            ? "min-h-[70vh]"
-            : !showContentStream
-              ? "min-h-[85vh]"
-              : "min-h-0",
+        className={stepColumnClass(
+          instructionType,
           // In place, the search field also stays at the top, where the new analysis will show.
-          instructionType === "outline_review" || reanalysingInPlace
-            ? "justify-start"
-            : " justify-center",
+          instructionType === "outline_review" || reanalysingInPlace,
         )}
       >
         <AnimatePresence mode="wait">
@@ -2530,50 +2682,7 @@ export function FreshGenerationView({
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
           className="w-full"
         >
-          {isKeywordFlow && !isLibrary && (
-            <KeywordForm
-              userKeyword={userKeyword}
-              country={country}
-              disabled={
-                isManualLoading ||
-                !canAnalyze({
-                  atKeywordStep: instructionType === "keyword Selection",
-                  value: userKeyword,
-                  primaryKeyword,
-                  country,
-                  analyzedCountry,
-                })
-              }
-              restoreCountry={!backgroundThreadId}
-              // On the keyword step only a new keyword or country is billed.
-              run={
-                instructionType !== "keyword Selection"
-                  ? "analyze"
-                  : isKeywordReanalysis({
-                        value: userKeyword,
-                        primaryKeyword,
-                        country,
-                        analyzedCountry,
-                      })
-                    ? "change_keyword"
-                    : null
-              }
-              // Step 2 already owns a thread paused on the keyword interrupt.
-              // Re-analysing there must resume that thread — starting a new one
-              // trips the "article already in progress" guard on its own job.
-              onSubmit={
-                instructionType === "keyword Selection"
-                  ? () => handleWorkflow("KEYWORD_SELECT", userKeyword)
-                  : handleKeywordSubmit
-              }
-              onKeywordChange={(val) =>
-                dispatch({ type: "SET_USER_KEYWORD", payload: val })
-              }
-              onCountryChange={(val) =>
-                dispatch({ type: "SET_COUNTRY", payload: val })
-              }
-            />
-          )}
+          {isKeywordFlow && !isLibrary && keywordForm()}
         </motion.div>
 
         {timedOutStages && !restoreError ? (
