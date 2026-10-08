@@ -1,3 +1,4 @@
+import ts from "typescript";
 import { isWords, normalizeWords, wordsInSource } from "@/lib/recording-words";
 
 describe("normalizeWords", () => {
@@ -16,7 +17,8 @@ describe("isWords", () => {
 });
 
 describe("wordsInSource", () => {
-  const words = (source: string) => new Set(wordsInSource(source));
+  const words = (source: string, fileName = "page.tsx") =>
+    new Set(wordsInSource(ts, fileName, source));
 
   it("reads the text between tags, as the page shows it", () => {
     const found = words(`
@@ -67,15 +69,56 @@ describe("wordsInSource", () => {
     `);
     expect(found.has("flex items-center gap-2 px-3")).toBe(false);
     expect(found.has("@/lib/utils")).toBe(false);
+    expect(
+      words('import { LexicalComposer } from "@lexical/react/LexicalComposer";')
+        .size,
+    ).toBe(0);
     expect(found.has("sidebar-menu-button")).toBe(true);
     expect(found.has("outline")).toBe(true);
     expect(found.has("sm")).toBe(true);
   });
 
-  it("returns nothing that isn't written in the source", () => {
-    const source = '<Button>Save</Button> const a = "Cancel";';
-    for (const text of wordsInSource(source)) {
-      expect(source).toContain(text.split(" ")[0]);
+  it("never reads a comment: an example in one can be somebody's name", () => {
+    const found = words(`
+      /**
+       * Initials of a name ("Sam Rivera" → "SR", "Lena" → "L").
+       */
+      // e.g. "Mary Smith"
+      export function Avatar() {
+        return (
+          <div>
+            {/* shows "Jordan Lee" when signed in */}
+            <span>Signed in</span>
+          </div>
+        );
+      }
+    `);
+    expect(found.has("Signed in")).toBe(true);
+    for (const name of [
+      "Sam Rivera",
+      "SR",
+      "Lena",
+      "Mary Smith",
+      "Jordan Lee",
+    ]) {
+      expect(found.has(name)).toBe(false);
     }
+  });
+
+  it("returns no scrap of code", () => {
+    const found = words(`
+      const visible = items.length > 0 ? <List /> : null;
+      const check = (a: number, b: number) => a > b && b < 10;
+      export const title = "Personas";
+    `);
+    expect([...found]).toEqual(["Personas"]);
+  });
+
+  it("reads a file without JSX too", () => {
+    const found = words(
+      'export const STATUS = { draft: "Draft" } as const;',
+      "status.ts",
+    );
+    expect(found.has("Draft")).toBe(true);
   });
 });

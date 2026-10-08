@@ -3,9 +3,9 @@
  *
  * GET /api/recording-words -> ["Save", "Status", …]
  *
- * Read from the source once, when the app is built: the answer is static, so the running app
- * serves the build's list and reads no file. Where the source can't be read the list is empty,
- * and a recording then shows no text at all.
+ * Read from the source once, when the app is built, with the TypeScript compiler's parser: the
+ * answer is static, so the running app serves the build's list and reads no file. Where the
+ * source or the compiler isn't there the list is empty, and nothing is recorded.
  */
 
 import { readdirSync, readFileSync } from "node:fs";
@@ -25,8 +25,14 @@ const SOURCE_FOLDERS = [
   "stores",
 ];
 
-function appWords(): string[] {
+/** The sample pages (the primitives, the tokens): their content is examples, not the app's words. */
+const SAMPLES = /^dev(?:[\\/]|$)/;
+
+async function appWords(): Promise<string[]> {
   const words = new Set<string>();
+  // The compiler is there when the app is built, which is when this runs.
+  const ts = await import("typescript").catch(() => null);
+  if (!ts) return [];
   const root = /* turbopackIgnore: true */ process.cwd();
   for (const folder of SOURCE_FOLDERS) {
     let files: string[];
@@ -41,9 +47,10 @@ function appWords(): string[] {
     for (const file of files) {
       if (!/\.tsx?$/.test(file) || /\.d\.ts$|\.test\.tsx?$/.test(file))
         continue;
+      if (folder === "app" && SAMPLES.test(file)) continue;
       try {
         const source = readFileSync(path.join(root, folder, file), "utf8");
-        for (const text of wordsInSource(source)) words.add(text);
+        for (const text of wordsInSource(ts, file, source)) words.add(text);
       } catch {
         // A folder named like a source file, or one that went away: nothing to read.
       }
@@ -52,8 +59,8 @@ function appWords(): string[] {
   return [...words].sort();
 }
 
-export function GET() {
-  return Response.json(appWords(), {
+export async function GET() {
+  return Response.json(await appWords(), {
     headers: { "Cache-Control": "public, max-age=3600" },
   });
 }
