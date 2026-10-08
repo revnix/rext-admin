@@ -282,8 +282,9 @@ export default function PrivacyPolicyPage() {
             When it is on, PostHog receives the pages you open and what you do
             on them (for example that a keyword was analysed, a title chosen, an
             article published or a plan bought, but not the keyword, the title
-            or the article), together with your account ID, email, name and
-            role. It keeps an identifier in your browser&rsquo;s storage.
+            or the article), together with your account ID and role, not your
+            email or your name. It keeps an identifier in your browser&rsquo;s
+            storage.
           </li>
           {RECORDING_ON && (
             <li>
