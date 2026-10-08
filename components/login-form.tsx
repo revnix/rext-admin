@@ -26,6 +26,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { apiClient } from "@/lib/api-client";
 import { analytics } from "@/lib/analytics";
+import {
+  firstRefusedField,
+  SIGN_IN_FIELDS,
+  signInRefusal,
+} from "@/lib/analytics-forms";
 import { classifyError } from "@/lib/error-utils";
 import {
   BACKEND_AWAY_CODE,
@@ -135,6 +140,9 @@ export function LoginForm({
     if (result?.error) {
       if (result.code === BACKEND_AWAY_CODE) return "away";
 
+      // This page is never recorded: a refusal says its kind, never its words.
+      analytics.track("signin_refused", { kind: signInRefusal(result.code) });
+
       if (result.code === "ACCOUNT_DEACTIVATED") {
         // Reactivation is deliberately NOT granted by signing in again: the
         // password alone doesn't prove the mailbox owner wants the account
@@ -234,6 +242,7 @@ export function LoginForm({
 
   const onSubmit = async (values: LoginData) => {
     setIsLoading(true);
+    analytics.track("signin_submitted", { method: "credentials" });
 
     // Clear any previous session invalidity flag
     if (typeof window !== "undefined") {
@@ -256,6 +265,7 @@ export function LoginForm({
         );
         signedIn = await attemptSignIn(values);
         if (signedIn === "away") {
+          analytics.track("signin_refused", { kind: "away" });
           toast.error("Rext is updating", {
             id: AWAY_TOAST_ID,
             description: "Try again in a few seconds.",
@@ -266,6 +276,9 @@ export function LoginForm({
       }
     } catch (error) {
       log.error("[AuthJS] Sign in failed:", error);
+      analytics.track("signin_refused", {
+        kind: signInRefusal(error instanceof Error ? error.message : null),
+      });
       const classifiedError = classifyError(error);
       toast.error(
         classifiedError.type === "network_error" ||
@@ -334,7 +347,16 @@ export function LoginForm({
       />
 
       {/* A submit before the page runs is the browser's own: post keeps the fields out of the address. */}
-      <form method="post" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+      <form
+        method="post"
+        onSubmit={form.handleSubmit(onSubmit, (errors) =>
+          analytics.track("signin_refused", {
+            kind: "form",
+            field: firstRefusedField(errors, SIGN_IN_FIELDS),
+          }),
+        )}
+        noValidate
+      >
         <FieldGroup>
           <FieldController
             control={form.control}
