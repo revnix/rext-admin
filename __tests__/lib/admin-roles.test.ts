@@ -1,8 +1,11 @@
 import { adminInvitationSchema } from "@/schemas/admin-schemas";
 import {
   ADMIN_ROLES,
+  adminInvitationLink,
+  adminInvitationReturn,
   adminLandingRoute,
   adminRoleLabel,
+  sameAddress,
 } from "@/types/admin-invitation";
 
 const invitation = (admin_role: string) =>
@@ -42,5 +45,42 @@ describe("the platform roles an admin can be invited to (task 915)", () => {
     expect(adminLandingRoute("admin")).toBe("/admin");
     // The admin home turns a support admin away; the users list is theirs.
     expect(adminLandingRoute("support")).toBe("/admin/users");
+  });
+});
+
+describe("an invitation opened signed out comes back after signing in (task 915)", () => {
+  it("makes the link the email's button opens", () => {
+    expect(adminInvitationLink("abc-123_x")).toBe(
+      "/accept-admin-invitation?token=abc-123_x",
+    );
+  });
+
+  it("follows an invitation's link from the sign-in page's address, and nothing else", () => {
+    const link = adminInvitationLink("abc");
+    expect(adminInvitationReturn(link)).toBe(link);
+
+    for (const other of [
+      null,
+      undefined,
+      "",
+      "/",
+      "/admin",
+      "/w/acme/content",
+      "/accept-admin-invitation",
+      "/accept-admin-invitation/elsewhere?token=abc",
+      "//evil.example/accept-admin-invitation?token=abc",
+      "https://evil.example/accept-admin-invitation?token=abc",
+    ]) {
+      expect(adminInvitationReturn(other)).toBeNull();
+    }
+  });
+
+  it("compares two addresses as the backend does: trimmed, whatever their capitals", () => {
+    expect(
+      sameAddress(" New.Admin@Example.com ", "new.admin@example.com"),
+    ).toBe(true);
+    expect(sameAddress("new.admin@example.com", "other@example.com")).toBe(
+      false,
+    );
   });
 });

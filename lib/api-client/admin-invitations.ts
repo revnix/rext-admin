@@ -2,21 +2,12 @@
  * Admin Invitations API Namespace
  *
  * Handles platform-level admin invitation operations.
- * Only accessible to super_admin users.
  *
- * ⚠️ KNOWN INCONSISTENCIES (backend-driven):
- *
- * ### Path Pattern Mismatch:
- * - CRUD operations use: `/api/v1/admin/platform/invitations`
- * - Token operations use: `/api/v1/admin-invitations/{token}/*` (different path structure)
- * - Expected pattern: Consistent use of `/api/v1/admin/invitations` throughout
- *
- * ### Root Cause:
- * Token-based endpoints use a non-standard CRUD separator (hyphenated `/admin-invitations/`)
- * while main CRUD endpoints use path-based pattern (`/admin/platform/invitations`).
- *
- * These will be addressed in a backend API v2 migration.
- * See: lib/api-client/endpoints.ts for full path documentation and convention guide.
+ * Two families of addresses, as the backend has them:
+ * - the admin's own (create, list, resend, revoke): `/api/v1/admin/platform/invitations`;
+ * - the invited person's (validate, accept, decline): `/api/v1/admin-invitations/…`, each a POST
+ *   with the invitation's token in the body. The token is never part of an address: an address is
+ *   written to the request and error logs as it is (task 915).
  */
 
 import type {

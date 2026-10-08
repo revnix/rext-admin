@@ -5,6 +5,8 @@
  * Separate from workspace invitations for clarity.
  */
 
+import { AUTH_PAGES } from "@/lib/auth-routes";
+
 /** A platform role as the API names it. */
 export type AdminRole = "super_admin" | "admin" | "support";
 
@@ -20,6 +22,25 @@ export const adminRoleLabel = (role: string) =>
  */
 export const adminLandingRoute = (role: string) =>
   role === "support" ? "/admin/users" : "/admin";
+
+/** The accept page with its token: what the email's button opens. */
+export const adminInvitationLink = (token: string) =>
+  `${AUTH_PAGES.ACCEPT_ADMIN_INVITATION}?token=${encodeURIComponent(token)}`;
+
+/**
+ * The sign-in page's `redirect` when it is an invitation's link, and nothing otherwise. Someone
+ * who opens the email signed out is sent to sign in, and comes back to the invitation to accept
+ * it (task 915). It is the one address the sign-in form follows from its own address: where a
+ * person lands after signing in is otherwise not for a link to choose.
+ */
+export const adminInvitationReturn = (redirect: string | null | undefined) =>
+  redirect?.startsWith(`${AUTH_PAGES.ACCEPT_ADMIN_INVITATION}?token=`)
+    ? redirect
+    : null;
+
+/** Two addresses as the backend compares them: trimmed, and whatever their capitals. */
+export const sameAddress = (one: string, other: string) =>
+  one.trim().toLowerCase() === other.trim().toLowerCase();
 
 export interface AdminInvitation {
   id: string;

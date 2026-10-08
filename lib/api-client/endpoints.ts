@@ -459,7 +459,7 @@ export const ENDPOINTS = {
   /**
    * Admin Invitations Endpoints
    * @note Platform-level admin invitation management
-   * @note Path mismatch: CRUD uses `/admin/platform/invitations` vs token ops use `/admin-invitations/{token}`
+   * @note The admin's own calls use `/admin/platform/invitations`; the invited person's use `/admin-invitations/…`
    * @note Only accessible to super_admin users
    */
   ADMIN_INVITATIONS: {
