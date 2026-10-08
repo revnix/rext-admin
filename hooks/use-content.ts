@@ -235,26 +235,50 @@ export function useContentVersion(
  * Puts a version's text back on the article. No toast: the History says what happened in its own
  * words. The article and its versions are read again after it.
  */
-/**
- * The article a restore answers with. The route answers the article itself, where a save answers
- * it under `content`: both are read, and an answer with no article in it is a failed restore, not
- * an editor left on the text it had (seen on staging: the version was restored, and the editor
- * kept the old text, ready to save it over the restored one).
- */
-export function restoredArticle(answer: unknown): ContentItem {
+/** The article in an answer: the route answers it itself, where a save answers it under `content`. */
+function articleIn(answer: unknown): ContentItem | null {
   const flat = answer as Partial<ContentItem> | null;
   const wrapped = (answer as { content?: Partial<ContentItem> | null } | null)
     ?.content;
-  const article =
-    flat && typeof flat.id === "string" && typeof flat.title === "string"
-      ? flat
-      : wrapped && typeof wrapped.id === "string"
-        ? wrapped
-        : null;
-  if (!article) {
-    throw new Error("The server's answer held no article. Reload the page.");
+  if (flat && typeof flat.id === "string" && typeof flat.title === "string") {
+    return flat as ContentItem;
   }
-  return article as ContentItem;
+  if (wrapped && typeof wrapped.id === "string") return wrapped as ContentItem;
+  return null;
+}
+
+/**
+ * The restore went through, and the article as it stands now could not be read back. Not a failed
+ * restore: the editor must not go on saving the text it holds, which is the text from before.
+ */
+export class RestoredUnread extends Error {
+  constructor() {
+    super(
+      "The version was restored, but this page couldn't read the article back. Reload the page before you go on.",
+    );
+    this.name = "RestoredUnread";
+  }
+}
+
+/**
+ * The article after a restore that was answered. Read from the answer in either shape; when the
+ * answer holds none, the article is read afresh, since the restore has happened all the same
+ * (seen on staging: the version was restored and the editor kept the old text, ready to save it
+ * over the restored one). Only when that fails too is it `RestoredUnread`.
+ */
+export async function restoredArticle(
+  answer: unknown,
+  readAgain: () => Promise<unknown>,
+): Promise<ContentItem> {
+  const article = articleIn(answer);
+  if (article) return article;
+  try {
+    const again = articleIn(await readAgain());
+    if (again) return again;
+  } catch {
+    // Said below: the restore itself was answered.
+  }
+  throw new RestoredUnread();
 }
 
 export function useRestoreContentVersion() {
@@ -275,7 +299,11 @@ export function useRestoreContentVersion() {
     }) =>
       apiClient.content
         .restoreVersion(workspaceId, contentId, versionId, unsaved)
-        .then(restoredArticle),
+        .then((answer) =>
+          restoredArticle(answer, () =>
+            apiClient.content.get(workspaceId, contentId),
+          ),
+        ),
     retry: false,
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({

@@ -95,6 +95,7 @@ jest.mock("@/lib/api-client", () => ({
   apiClient: {
     content: {
       update: jest.fn(),
+      get: jest.fn(),
       versions: jest.fn(),
       version: jest.fn(),
       restoreVersion: jest.fn(),
@@ -103,6 +104,7 @@ jest.mock("@/lib/api-client", () => ({
 }));
 const contentApi = jest.requireMock("@/lib/api-client").apiClient.content as {
   update: jest.Mock;
+  get: jest.Mock;
   versions: jest.Mock;
   version: jest.Mock;
   restoreVersion: jest.Mock;
@@ -729,14 +731,23 @@ describe("The editor's History", () => {
     expect(screen.getByLabelText("Article text")).toHaveValue("The first text");
   });
 
-  it("takes an answer with no article in it as a restore that failed, in words the person sees", async () => {
+  it("reads the article afresh when a restore's answer holds none, and starts again on it", async () => {
     contentApi.versions.mockResolvedValue({ versions: VERSIONS });
     contentApi.version.mockResolvedValue({
       ...VERSIONS[1],
       body_markdown: "The first text",
     });
-    contentApi.restoreVersion.mockResolvedValue({
-      message: "Version restored",
+    contentApi.restoreVersion.mockImplementation(async () => {
+      // The restore has happened: what the server holds from now on is the restored article.
+      contentApi.get.mockResolvedValue({
+        id: "c1",
+        content: {
+          id: "c1",
+          title: "The first title",
+          body_markdown: "The first text",
+        },
+      });
+      return { message: "Version restored" };
     });
     const user = renderPage();
 
@@ -755,13 +766,44 @@ describe("The editor's History", () => {
     );
     await wait(50);
 
-    // The version is still open, with what went wrong said under it: nothing is left looking
-    // as if the restore had done nothing.
-    expect(within(drawer).getByLabelText("Version text")).toBeInTheDocument();
+    expect(screen.getByLabelText("Article text")).toHaveValue("The first text");
+    expect(screen.queryByRole("dialog", { name: "History" })).toBeNull();
+  });
+
+  it("stops saving and says to reload when a restore went through and the article can't be read back", async () => {
+    contentApi.versions.mockResolvedValue({ versions: VERSIONS });
+    contentApi.version.mockResolvedValue({
+      ...VERSIONS[1],
+      body_markdown: "The first text",
+    });
+    contentApi.restoreVersion.mockImplementation(async () => {
+      contentApi.get.mockRejectedValue(new Error("offline"));
+      return { message: "Version restored" };
+    });
+    const user = renderPage();
+    await user.type(screen.getByLabelText("Article text"), "?");
+
+    const drawer = await openHistory(user);
+    await user.click(
+      within(drawer).getByRole("button", { name: /As first written/ }),
+    );
+    await within(drawer).findByLabelText("Version text");
+    await user.click(
+      within(drawer).getByRole("button", { name: "Restore this version" }),
+    );
+    await user.click(
+      within(await screen.findByRole("alertdialog")).getByRole("button", {
+        name: "Restore version",
+      }),
+    );
+    await wait(50);
+
     expect(
-      within(drawer).getByText(/The version wasn't restored/),
+      within(drawer).getByText(/The version was restored, but this page/),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText("Article text")).toHaveValue("Hello");
+    // The text from before the restore is never saved over the restored article.
+    await wait(6000);
+    expect(update).not.toHaveBeenCalled();
   });
 
   it("says so when the restore itself fails, and changes nothing", async () => {
