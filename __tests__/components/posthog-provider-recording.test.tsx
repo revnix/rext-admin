@@ -188,6 +188,7 @@ it("starts the heatmap for a person who allows analytics, once its piece has arr
     rageclick: false,
     capture_dead_clicks: false,
     capture_exceptions: false,
+    capture_performance: { web_vitals: false },
     disable_surveys: true,
     disable_external_dependency_loading: true,
   });
