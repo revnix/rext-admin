@@ -197,6 +197,27 @@ describe("measureTitle", () => {
     );
     expect(japanese?.length).toEqual({ typical: 17, limit: 30, over: 0 });
   });
+
+  it("takes the limit from the titles' own script when no keyphrase says which", () => {
+    const japanese = serpTitleFacts(
+      [
+        { title: "家庭菜園の始め方：初心者向けガイド" },
+        {
+          title:
+            "家庭菜園の始め方：初心者向けガイドと育てやすい野菜の選び方をくわしく解説します",
+        },
+      ] as SerpResult[],
+      null,
+    );
+    // The long one is past 30 of its own characters, and the panel says 30, not the Latin 59.
+    expect(japanese?.length).toMatchObject({ limit: 30, over: 1 });
+
+    const thai = serpTitleFacts(
+      [{ title: "ปลูกผักในบ้าน ง่ายๆ สำหรับมือใหม่" }] as SerpResult[],
+      null,
+    );
+    expect(thai?.length.limit).toBe(55);
+  });
 });
 
 describe("comparePick", () => {

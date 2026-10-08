@@ -4,7 +4,6 @@ import {
   containsKeyphrase,
   normalizeTitle,
   titleFamily,
-  titleMaxChars,
   titleRange,
   titleWidth,
 } from "./title-score";
@@ -57,6 +56,9 @@ export function serpTitleFacts(
   if (results.length === 0) return null;
   const phrase = keyphrase?.trim() || null;
   const sizes = results.map((result) => measureTitle(result.title, phrase));
+  // One limit to show for the page: that of the script its titles are in, read from all of them
+  // together. Each title is still measured against its own.
+  const page = results.map((result) => normalizeTitle(result.title)).join(" ");
   // The gate's results are read as sent: one without a position counts from its place.
   const where = (test: (title: string, phrase: string) => boolean) =>
     results.flatMap((result, index) =>
@@ -71,7 +73,7 @@ export function serpTitleFacts(
       : null,
     length: {
       typical: median(sizes.map((size) => size.length)),
-      limit: titleMaxChars(phrase) / widthsPerCharacter(phrase ?? ""),
+      limit: Math.floor(titleRange(page, phrase)[1] / widthsPerCharacter(page)),
       over: sizes.filter((size) => size.cutOff).length,
     },
     sharedWords: sharedWords(results, phrase),
