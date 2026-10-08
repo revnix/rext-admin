@@ -62,6 +62,7 @@ import {
 import {
   createContext,
   useContext,
+  useId,
   useState,
   useEffect,
   useCallback,
@@ -133,6 +134,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -260,6 +269,38 @@ function ImagePlaceholderSlot({
     fileInputRef.current?.click();
   }, [isEditable, requireEditMode, workspaceId]);
 
+  // A slot the person put in has no description. It is asked for once a file is chosen: nothing
+  // on the page can add one to the image afterwards, and without it the image would be published
+  // as decoration.
+  const [chosen, setChosen] = useState<File | null>(null);
+  const [description, setDescription] = useState("");
+  const descriptionId = useId();
+
+  const upload = useCallback(
+    async (file: File, alt: string) => {
+      if (!workspaceId) return;
+      setUploading(true);
+      try {
+        const media = await apiClient.content.uploadBlogImage(
+          workspaceId,
+          file,
+        );
+        const uploadedSrc = toAbsoluteMediaUrl(media.public_url);
+        if (!uploadedSrc) {
+          toast.error("Upload succeeded but no image URL was returned.");
+          return;
+        }
+        applyImage(uploadedSrc, alt);
+        toast.success("Image added.");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Upload failed.");
+      } finally {
+        setUploading(false);
+      }
+    },
+    [workspaceId, applyImage],
+  );
+
   const handleFileSelected = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -274,27 +315,22 @@ function ImagePlaceholderSlot({
         toast.error("Image exceeds 20MB. Please choose a smaller file.");
         return;
       }
-      setUploading(true);
-      try {
-        const media = await apiClient.content.uploadBlogImage(
-          workspaceId,
-          file,
-        );
-        const uploadedSrc = toAbsoluteMediaUrl(media.public_url);
-        if (!uploadedSrc) {
-          toast.error("Upload succeeded but no image URL was returned.");
-          return;
-        }
-        applyImage(uploadedSrc, altText);
-        toast.success("Image added.");
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Upload failed.");
-      } finally {
-        setUploading(false);
+      if (!altText) {
+        setDescription("");
+        setChosen(file);
+        return;
       }
+      await upload(file, altText);
     },
-    [workspaceId, altText, applyImage],
+    [workspaceId, altText, upload],
   );
+
+  const describeAndUpload = (event: React.FormEvent) => {
+    event.preventDefault();
+    const file = chosen;
+    setChosen(null);
+    if (file) void upload(file, description.trim());
+  };
 
   const handleDismiss = useCallback(() => {
     if (!isEditable) {
@@ -352,6 +388,44 @@ function ImagePlaceholderSlot({
           Remove
         </Button>
       </span>
+      {/* Drawn outside the text (a portal), so typing in it is not typing in the article. */}
+      <Dialog
+        open={chosen !== null}
+        onOpenChange={(open) => !open && setChosen(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Describe the image</DialogTitle>
+            <DialogDescription>
+              A few words for people who can't see it, and for search engines.
+              It becomes the image's alt text.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={describeAndUpload} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor={descriptionId}>Description</Label>
+              <Input
+                id={descriptionId}
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="A host recording at a desk microphone"
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setChosen(null)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={description.trim() === ""}>
+                Add image
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </span>
   );
 }
