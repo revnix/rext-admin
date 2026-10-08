@@ -38,6 +38,31 @@ export const adminInvitationReturn = (redirect: string | null | undefined) =>
     ? redirect
     : null;
 
+/**
+ * Whether a backend access token names a role among its own. The backend lets a support admin
+ * into the users list by the roles written in the token, so a token signed before the role was
+ * given doesn't open it. Null when the token can't be read or names no roles at all: nobody is
+ * held back on that.
+ */
+export const tokenNamesRole = (
+  accessToken: string | null | undefined,
+  role: string,
+): boolean | null => {
+  try {
+    const part = accessToken?.split(".")[1];
+    if (!part) return null;
+    const payload = JSON.parse(
+      atob(part.replace(/-/g, "+").replace(/_/g, "/")),
+    );
+    if (!Array.isArray(payload?.roles)) return null;
+    return payload.roles.some(
+      (named: unknown) => String(named).toLowerCase() === role,
+    );
+  } catch {
+    return null;
+  }
+};
+
 /** Two addresses as the backend compares them: trimmed, and whatever their capitals. */
 export const sameAddress = (one: string, other: string) =>
   one.trim().toLowerCase() === other.trim().toLowerCase();
