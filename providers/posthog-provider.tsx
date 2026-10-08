@@ -317,9 +317,14 @@ function beforeSend(event: CaptureResult | null): CaptureResult | null {
   // An admin acting as a customer: nothing leaves, page views and identification included.
   if (isImpersonating()) return null;
   const redacted = redactEventUrls(event);
-  return runningMode === "anonymous"
-    ? anonymousEvent(redacted, routeOnScreen)
-    : redacted;
+  const sent =
+    runningMode === "anonymous"
+      ? anonymousEvent(redacted, routeOnScreen)
+      : redacted;
+  // Where the event is from, on every one: the website sends "website" to its own project, so
+  // the two sets of numbers can be laid side by side.
+  if (sent) sent.properties = { ...sent.properties, surface: "app" };
+  return sent;
 }
 
 /**

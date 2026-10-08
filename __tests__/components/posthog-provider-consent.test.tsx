@@ -503,6 +503,34 @@ describe("where analytics is on unless switched off", () => {
   });
 });
 
+describe("every event that leaves", () => {
+  it("says it is the app's, with what it already carried", async () => {
+    mode.mockResolvedValue("full");
+    renderProvider();
+    await waitFor(() => expect(mockPosthog.init).toHaveBeenCalled());
+    const beforeSend = mockPosthog.init.mock.calls[0][1].before_send;
+
+    expect(
+      beforeSend({ event: "title_selected", properties: { keyword: "crm" } })
+        .properties,
+    ).toEqual({ keyword: "crm", surface: "app" });
+  });
+
+  it("says so for someone counted without an identity too", async () => {
+    mode.mockResolvedValue("anonymous");
+    renderProvider();
+    await waitFor(() => expect(mockPosthog.init).toHaveBeenCalled());
+    const beforeSend = mockPosthog.init.mock.calls[0][1].before_send;
+
+    expect(
+      beforeSend({
+        event: "$pageview",
+        properties: { $current_url: "https://app.rext.ai/w/acme/content" },
+      }).properties.surface,
+    ).toBe("app");
+  });
+});
+
 describe("while an admin acts as a customer", () => {
   afterEach(() => setImpersonating(false));
 
