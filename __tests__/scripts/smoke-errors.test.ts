@@ -32,6 +32,22 @@ describe("whose a console error is", () => {
     ).toBe("ours");
   });
 
+  it("is ours when the policy refuses something that has no address", () => {
+    // An inline script of our own: the only addresses in the line are the policy's allowed hosts.
+    expect(
+      whose(
+        "Executing inline script violates the following Content Security Policy directive 'script-src 'self' https://app.lemonsqueezy.com https://*.crisp.chat'. Either the 'unsafe-inline' keyword, a hash, or a nonce is required to enable inline execution.",
+        APP,
+      ),
+    ).toBe("ours");
+    expect(
+      whose(
+        "Refused to apply inline style because it violates the following Content Security Policy directive: \"style-src 'self' https://client.crisp.chat\".",
+        APP,
+      ),
+    ).toBe("ours");
+  });
+
   it("is ours when our own code logs an error, with or without an address", () => {
     expect(whose("TypeError: plans.map is not a function", APP)).toBe("ours");
     expect(

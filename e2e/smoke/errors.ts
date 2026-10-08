@@ -43,18 +43,18 @@ export function tidy(text: string): string {
 export function whose(text: string, base: string): "ours" | "theirs" | "noise" {
   // The browser's own line for a failed request: the requests themselves are judged below.
   if (text.startsWith("Failed to load resource")) return "noise";
-  const hosts = (text.match(ADDRESS) ?? []).flatMap((address) => {
+  // A policy refusal names what was refused and then quotes the policy, with every host it allows:
+  // only what comes before the quote says whose it is. A refusal that names no address (an inline
+  // script or style of our own) is ours.
+  const said = text.split("Content Security Policy")[0];
+  const named = (said.match(ADDRESS) ?? []).flatMap((address) => {
     try {
       return [new URL(address).hostname];
     } catch {
       return [];
     }
   });
-  // A line that names only other companies' hosts is about them. A policy refusal also quotes the
-  // policy, with every host it allows, so only the first address (what was refused) counts there.
-  const named = text.includes("Content Security Policy")
-    ? hosts.slice(0, 1)
-    : hosts;
+  // A line that names only other companies' hosts is about them.
   if (named.length > 0 && named.every((host) => !isOurs(host, base))) {
     return "theirs";
   }
