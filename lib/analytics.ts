@@ -17,6 +17,7 @@ type AnalyticsEvent =
   | "onboarding_milestone_completed"
   | "onboarding_completed"
   // Generating an article
+  | "generate_step_viewed"
   | "content_generation_started"
   | "keyword_search_completed"
   | "keyword_selected"

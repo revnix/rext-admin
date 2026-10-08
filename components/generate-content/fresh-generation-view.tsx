@@ -24,6 +24,7 @@ import {
   useCancelOnUnmount,
   useOncePerKey,
 } from "@/hooks/use-strict-mode-safe";
+import { useGenerateStepViewed } from "@/hooks/use-generate-step-viewed";
 import {
   ARTICLE_STAGE_LABELS,
   FIRST_ARTICLE_TOKEN,
@@ -402,6 +403,12 @@ export function FreshGenerationView({
   const runRefusedRef = useRef(false);
 
   // Track generation completion once per thread to avoid duplicate events
+  // The run on screen was not started by this page (a reload, a link from the dock): what the page
+  // shows of it was made before, and the events below say so (`restored`). The address names the
+  // run this page starts too, so that one is told apart by its id.
+  const [startedHere, setStartedHere] = useState<string | null>(null);
+  const openedOnRun =
+    Boolean(backgroundThreadId) && backgroundThreadId !== startedHere;
   const trackedThreadRef = useRef<string | null>(null);
   const trackedKeywordSearchRef = useRef<string | null>(null);
   const trackedTitleSuggestionsRef = useRef<string | null>(null);
@@ -1075,6 +1082,8 @@ export function FreshGenerationView({
       workspace_id: workspaceId ?? undefined,
       thread_id: threadId,
       word_count: allContent?.word_count,
+      content_type: selectedContentType ?? undefined,
+      restored: openedOnRun,
     });
     updateBackgroundJob(threadId, {
       status: "completed",
@@ -1087,6 +1096,8 @@ export function FreshGenerationView({
     threadId,
     workspaceId,
     allContent?.word_count,
+    selectedContentType,
+    openedOnRun,
     updateBackgroundJob,
   ]);
 
@@ -1100,8 +1111,9 @@ export function FreshGenerationView({
       workspace_id: workspaceId ?? undefined,
       thread_id: threadId,
       suggested_keyword_count: suggestedKeywords.length,
+      restored: openedOnRun,
     });
-  }, [threadId, suggestedKeywords.length, workspaceId]);
+  }, [threadId, suggestedKeywords.length, workspaceId, openedOnRun]);
 
   // Track title_suggestions_generated once per thread when topics arrive
   useEffect(() => {
@@ -1113,8 +1125,9 @@ export function FreshGenerationView({
       workspace_id: workspaceId ?? undefined,
       thread_id: threadId,
       title_count: topics.length,
+      restored: openedOnRun,
     });
-  }, [threadId, topics.length, workspaceId]);
+  }, [threadId, topics.length, workspaceId, openedOnRun]);
 
   // Track outline_generated once per thread when the parsed outline arrives
   useEffect(() => {
@@ -1126,8 +1139,9 @@ export function FreshGenerationView({
       workspace_id: workspaceId ?? undefined,
       thread_id: threadId,
       section_count: parsedOutline.sections?.length ?? 0,
+      restored: openedOnRun,
     });
-  }, [threadId, parsedOutline, workspaceId]);
+  }, [threadId, parsedOutline, workspaceId, openedOnRun]);
 
   const liveBodyMarkdown = (() => {
     const buf = normalizeEscapedJsonish(content.streamedText);
@@ -1808,6 +1822,8 @@ export function FreshGenerationView({
           thread_id: threadId ?? undefined,
           // The kind of failure, not its text: an error's message can quote an address or a title.
           error_kind: _e instanceof Error ? _e.name : "unknown",
+          // What was being written when it stopped: "outline", "content" or "none".
+          stage: tokenTargetRef.current,
         });
         if (activeThreadId) {
           updateBackgroundJob(activeThreadId, {
@@ -1903,6 +1919,7 @@ export function FreshGenerationView({
       }
 
       dispatch({ type: "SET_THREAD_ID", payload: newThreadId });
+      setStartedHere(newThreadId);
       streamingThreadRef.current = newThreadId;
       if (workspaceSlug) {
         window.history.replaceState(
@@ -2182,6 +2199,10 @@ export function FreshGenerationView({
         analytics.track("keyword_selected", {
           workspace_id: workspaceId ?? undefined,
           thread_id: threadId ?? undefined,
+          // A saved keyword is taken by the page itself; a different keyword or country sends the
+          // run back through the analysis, and the person picks again after it.
+          from_library: isLibrary,
+          reanalysis: isReanalysis,
         });
         setInPlaceAnalysis(isReanalysis);
         setInPlaceSidePane(
@@ -2269,36 +2290,6 @@ export function FreshGenerationView({
           return started;
         });
 
-      case "OUTLINE_APPROVE":
-        // The article's billed stages need their whole cost: checked before the view moves on.
-        if (!ensureCredits("generate")) return;
-        setTokenTarget("content");
-        tokenTargetRef.current = "content";
-        content.resetStream();
-        setToolCalls([]);
-        dispatch({ type: "SET_GENERATED_CONTENT", payload: "" });
-        dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
-        dispatch({
-          type: "SET_RUN_PHASE",
-          payload: { phase: "article" },
-        });
-        analytics.track("outline_approved", {
-          workspace_id: workspaceId ?? undefined,
-          thread_id: threadId ?? undefined,
-        });
-        return startBackgroundWorkflow({
-          payload: {
-            action: "approve",
-            ...(parsedOutline?.tone ? { tone: parsedOutline.tone } : {}),
-            ...(parsedOutline?.target_audience?.length
-              ? { target_audience: parsedOutline.target_audience }
-              : {}),
-            ...(parsedOutline?.target_word_count && {
-              target_word_count: parsedOutline.target_word_count,
-            }),
-          },
-          status: "Approving and generating content...",
-        });
       case "OUTLINE_REJECT":
         // Keep the graph paused at the outline-review interrupt while the user
         // enters feedback. Sending `reject` here makes the graph issue a
@@ -2522,13 +2513,25 @@ export function FreshGenerationView({
       fromTop ? "justify-start" : " justify-center",
     );
 
-  if (
+  // The page waits on a run, with the step that run prepares as the current one.
+  const waitingOnRun =
     (isLoading || isManualLoading) &&
     !reanalysingInPlace &&
     !showOutlineReview &&
     !showContentStream &&
-    (isRegeneratingTopics || !suppressLibraryTopicLoader)
-  ) {
+    (isRegeneratingTopics || !suppressLibraryTopicLoader);
+  // One event per arrival on a step, the steps row's current one (rext-control task 712).
+  useGenerateStepViewed({
+    index: currentStepIndex(
+      instructionType,
+      waitingOnRun ? runState?.phase : null,
+    ),
+    threadId,
+    restored: openedOnRun,
+    fromLibrary: isLibrary,
+  });
+
+  if (waitingOnRun) {
     const run = runStages.run;
     const box = (
       <div
