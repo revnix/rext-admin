@@ -35,7 +35,9 @@ const versionTime = (
 const SOURCE_WORDS: Record<ContentVersionSource, string> = {
   generation: "As first written",
   edit: "Edited",
-  restore: "Before a restore",
+  // The text as the restore put it back (the text it replaced is kept just before it, as an
+  // edit).
+  restore: "Restored",
   publish: "As published",
 };
 
