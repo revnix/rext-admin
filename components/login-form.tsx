@@ -100,26 +100,27 @@ export function LoginForm({
         AccountBanned:
           "Your account has been banned. Please contact support for assistance.",
         // A sign-in with Google or GitHub that didn't go through: the provider's side, or ours
-        // refusing it (the backend's answer, limiter included, arrives here as OAuthError). None
-        // of it is about the person's details, so each says what to do, not what it was called.
+        // refusing it (the backend's answer arrives here as OAuthError). Most often that is the
+        // backend's limiter, ten such sign-ins in five minutes shared by everyone who signs in
+        // through this server: the person did nothing wrong and only needs to hear when to try
+        // again. None of it is about their details, so each says what to do, not what it was.
         OAuthError:
-          "Signing in with Google or GitHub didn't work just now. Wait a minute and try again.",
+          "Signing in with Google or GitHub didn't work just now. Try again in a few minutes.",
         OAuthSignin:
-          "Signing in with Google or GitHub didn't work just now. Wait a minute and try again.",
+          "Signing in with Google or GitHub didn't work just now. Try again in a few minutes.",
         OAuthCallback:
-          "Signing in with Google or GitHub didn't work just now. Wait a minute and try again.",
+          "Signing in with Google or GitHub didn't work just now. Try again in a few minutes.",
         Callback:
-          "Signing in with Google or GitHub didn't work just now. Wait a minute and try again.",
+          "Signing in with Google or GitHub didn't work just now. Try again in a few minutes.",
         OAuthCreateAccount:
-          "We couldn't create your account from that sign-in just now. Wait a minute and try again.",
+          "We couldn't create your account from that sign-in just now. Try again in a few minutes.",
         EmailCreateAccount: "Could not create email account.",
         OAuthAccountNotLinked:
           "To confirm your identity, sign in with the same account you used originally.",
         EmailSignin: "Check your email for the sign in link.",
         CredentialsSignin:
           "Sign in failed. Check the details you provided are correct.",
-        Default:
-          "Signing in didn't work just now. Wait a minute and try again.",
+        Default: "Signing in didn't work just now. Try again in a few minutes.",
       };
 
       // Use errorCode if it's a descriptive message (not generic)
