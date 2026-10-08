@@ -19,7 +19,6 @@ import { SlashMenuPlugin } from "@/components/editor/slash-menu-plugin";
 import { useLeaveGuard } from "@/components/forms/use-leave-guard";
 import { ArticleChecklist } from "@/components/generate-content/article-checklist";
 import { StructureTree } from "@/components/generate-content/structure-tree";
-import { WorkingSurface } from "@/components/layouts";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -292,117 +291,123 @@ function ArticleEditor({
   };
 
   return (
-    <div className="flex h-full flex-col bg-background">
-      <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-card px-3 md:px-4">
-        <Button data-rec="show" asChild size="sm" variant="ghost">
-          <Link href={articleHref} aria-label="Back to the article">
-            <ArrowLeft size={16} aria-hidden />
-            <span className="hidden md:inline">Article</span>
-          </Link>
-        </Button>
-        <p className="hidden min-w-0 flex-1 truncate text-label font-medium text-foreground md:block">
-          {title}
-        </p>
-        <div className="flex-1 md:flex-none" aria-live="polite">
-          <SaveStatus state={state} savedAt={savedAt} />
-        </div>
-        <Button
-          data-rec="show"
-          size="sm"
-          variant="ghost"
-          aria-label="Outline"
-          onClick={() => setDrawer("outline")}
-        >
-          <ListTree size={16} aria-hidden />
-          <span className="hidden md:inline">Outline</span>
-        </Button>
-        {hasChecks ? (
+    // Inside the app's shell (task 839), in the page's working surface. Full-bleed: it cancels the
+    // surface's side gutters (16, 24 and 32 px), so its bar runs from edge to edge. The page
+    // scrolls as every page does; the bar stays in view under the app's top bar, with a failed
+    // save's notice. At least the height the shell leaves, so a short article's page is one colour.
+    <div className="-mx-4 flex min-h-[calc(100dvh-var(--header-height)-var(--bottom-bar-height))] flex-col bg-card md:-mx-6 lg:min-h-[calc(100dvh-var(--header-height))] xl:-mx-8">
+      <div className="sticky top-(--header-height) z-10">
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-card px-3 md:px-4">
+          <Button data-rec="show" asChild size="sm" variant="ghost">
+            <Link href={articleHref} aria-label="Back to the article">
+              <ArrowLeft size={16} aria-hidden />
+              <span className="hidden md:inline">Article</span>
+            </Link>
+          </Button>
+          <p className="hidden min-w-0 flex-1 truncate text-label font-medium text-foreground md:block">
+            {title}
+          </p>
+          <div className="flex-1 md:flex-none" aria-live="polite">
+            <SaveStatus state={state} savedAt={savedAt} />
+          </div>
           <Button
             data-rec="show"
             size="sm"
             variant="ghost"
-            aria-label="Checklist"
-            onClick={() => setDrawer("checklist")}
+            aria-label="Outline"
+            onClick={() => setDrawer("outline")}
           >
-            <ListChecks size={16} aria-hidden />
-            <span className="hidden md:inline">Checklist</span>
+            <ListTree size={16} aria-hidden />
+            <span className="hidden md:inline">Outline</span>
           </Button>
-        ) : null}
-        {canPublish ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                data-rec="show"
-                size="sm"
-                variant="outline"
-                aria-label="Publish"
-                disabled={state === "saving"}
-              >
-                <Send size={16} aria-hidden />
-                <span className="hidden md:inline">Publish</span>
-                <ChevronDown size={16} aria-hidden />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                data-rec="show"
-                onSelect={() => publish("publish")}
-              >
-                Publish
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                data-rec="show"
-                onSelect={() => publish("draft")}
-              >
-                Save as draft
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                data-rec="show"
-                onSelect={() => publish("pending")}
-              >
-                Submit for review
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                data-rec="show"
-                onSelect={() => publish("schedule")}
-              >
-                Schedule for later
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : null}
-        <Button
-          data-rec="show"
-          size="sm"
-          onClick={done}
-          disabled={state === "saving"}
-        >
-          Done
-        </Button>
-      </header>
-
-      {state === "failed" ? (
-        <div className="border-b border-border bg-card px-4 py-3">
-          <Notice
-            tone="danger"
-            title="Your last changes aren't saved yet"
-            action={
-              <Button
-                data-rec="show"
-                size="sm"
-                variant="outline"
-                onClick={() => saveNow()}
-              >
-                Retry now
-              </Button>
-            }
+          {hasChecks ? (
+            <Button
+              data-rec="show"
+              size="sm"
+              variant="ghost"
+              aria-label="Checklist"
+              onClick={() => setDrawer("checklist")}
+            >
+              <ListChecks size={16} aria-hidden />
+              <span className="hidden md:inline">Checklist</span>
+            </Button>
+          ) : null}
+          {canPublish ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  data-rec="show"
+                  size="sm"
+                  variant="outline"
+                  aria-label="Publish"
+                  disabled={state === "saving"}
+                >
+                  <Send size={16} aria-hidden />
+                  <span className="hidden md:inline">Publish</span>
+                  <ChevronDown size={16} aria-hidden />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  data-rec="show"
+                  onSelect={() => publish("publish")}
+                >
+                  Publish
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  data-rec="show"
+                  onSelect={() => publish("draft")}
+                >
+                  Save as draft
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  data-rec="show"
+                  onSelect={() => publish("pending")}
+                >
+                  Submit for review
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  data-rec="show"
+                  onSelect={() => publish("schedule")}
+                >
+                  Schedule for later
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
+          <Button
+            data-rec="show"
+            size="sm"
+            onClick={done}
+            disabled={state === "saving"}
           >
-            Keep writing: they stay on this device, and save as soon as a try
-            works.
-          </Notice>
-        </div>
-      ) : null}
+            Done
+          </Button>
+        </header>
+
+        {state === "failed" ? (
+          <div className="border-b border-border bg-card px-4 py-3">
+            <Notice
+              tone="danger"
+              title="Your last changes aren't saved yet"
+              action={
+                <Button
+                  data-rec="show"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => saveNow()}
+                >
+                  Retry now
+                </Button>
+              }
+            >
+              Keep writing: they stay on this device, and save as soon as a try
+              works.
+            </Notice>
+          </div>
+        ) : null}
+      </div>
 
       {found ? (
         <div className="border-b border-border bg-card px-4 py-3">
@@ -431,8 +436,9 @@ function ArticleEditor({
         </div>
       ) : null}
 
-      <main
-        className="min-h-0 flex-1 overflow-y-auto bg-card"
+      {/* A div: the shell's main element is the page's landmark. */}
+      <div
+        className="flex-1 bg-card"
         // What counts as an edit: typing, deleting, a shortcut, a paste, a cut, a drop, or a
         // toolbar button. Placing the cursor or moving it doesn't.
         onBeforeInputCapture={edited}
@@ -456,8 +462,8 @@ function ArticleEditor({
           }
         }}
       >
-        {/* The shared editor layout: its frame and gutters, and the article's own title as the h1. */}
-        <WorkingSurface title={title} ownHeading flush>
+        {/* The surface's gutters again, for the text. */}
+        <div className="px-4 md:px-6 xl:px-8">
           <article className="prose lg:prose-lg prose-app mx-auto w-full pt-8 pb-24">
             {/* layout-ok: the article's own title, in its prose (WorkingSurface's ownHeading) */}
             <h1>{title}</h1>
@@ -465,7 +471,9 @@ function ArticleEditor({
             <div
               ref={textBox}
               data-drag-gutter
-              className="relative lg:-ml-8 lg:pl-8"
+              // A heading the outline goes to stops under the editor's bar, not behind it (the
+              // page's own scroll padding already clears the app's top bar).
+              className="relative lg:-ml-8 lg:pl-8 [&_:is(h1,h2,h3)]:scroll-mt-16"
             >
               <SafeLexicalEditor
                 key={start.key}
@@ -486,8 +494,8 @@ function ArticleEditor({
               />
             </div>
           </article>
-        </WorkingSurface>
-      </main>
+        </div>
+      </div>
 
       <footer className="flex shrink-0 items-center justify-between border-t border-border bg-card px-4 py-2 text-caption text-muted-foreground">
         <span className="num">
@@ -569,8 +577,8 @@ function ArticleEditor({
 }
 
 /**
- * The page's states before the editor itself (loading, no permission, no article), in the same shared
- * layout as the editor, so their frame and gutters are its.
+ * The page's states before the editor itself (loading, no permission, no article), in the page's
+ * working surface, with the room above and below that the editor itself doesn't take.
  */
 function StatePage({
   title,
@@ -578,23 +586,27 @@ function StatePage({
   children,
 }: {
   title: string;
-  /** False while loading: nothing in the page is a heading yet, so the layout draws the title. */
+  /** False while loading: nothing in the page is a heading yet, so the title is given to screen readers. */
   ownHeading?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <main className="min-h-full bg-card">
-      <WorkingSurface title={title} ownHeading={ownHeading}>
-        {children}
-      </WorkingSurface>
-    </main>
+    <div className="py-6">
+      {ownHeading ? null : (
+        // layout-ok: the page's heading while nothing on it is one yet (the surface draws none)
+        <h1 className="sr-only">{title}</h1>
+      )}
+      {children}
+    </div>
   );
 }
 
 /**
- * The full-screen article editor (task 706): the article alone on the page, saved by itself as it
- * is written. The save state shows in the top bar; a save that fails says so and can be retried, and
- * the text stays on this device until a save works. Leaving asks only while a change isn't saved.
+ * The article editor (task 706): the article alone in the page's area, saved by itself as it is
+ * written. It sits in the app's shell like every page (task 839), under the shell's top bar, with
+ * a bar of its own: the save state, the drawers, Publish and Done. A save that fails says so and
+ * can be retried, and the text stays on this device until a save works. Leaving asks only while a
+ * change isn't saved.
  */
 export function ArticleEditPage({
   workspaceSlug,

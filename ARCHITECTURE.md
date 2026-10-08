@@ -23,7 +23,8 @@ app/
                             danger-zone); page.tsx redirects to /; /brand_voice and /members redirect to their settings
                             sections; /topics and /knowledge redirect (both features are removed)
   w/, w/create              all workspaces; create a workspace; w/layout.tsx mounts the shell for every /w page
-  edit/[workspaceSlug]/[id] the full-screen article editor, outside the shell (a /w page always gets it): the article
+  edit/[workspaceSlug]/[id] the article editor: inside the shell, mounted by its own layout with the sidebar collapsed by
+                            default (ShellLayout's sidebar="collapsed"; a /w page gets the saved state). The article
                             saves by itself (hooks/use-autosave.ts), with its text kept on the device until a save works;
                             the article page's "Edit article" opens it (workspaceRoutes.contentEdit), and the page
                             itself no longer edits
