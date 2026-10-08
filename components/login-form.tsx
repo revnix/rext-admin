@@ -338,9 +338,12 @@ export function LoginForm({
               checked={rememberMe}
               onCheckedChange={(checked) => setRememberMe(checked === true)}
             />
-            <Label htmlFor="remember">Remember me for 30 days</Label>
+            <Label data-rec="show" htmlFor="remember">
+              Remember me for 30 days
+            </Label>
           </div>
           <Button
+            data-rec="show"
             type="submit"
             className="w-full"
             disabled={!hydrated || isLoading || isLoadingInvitation}

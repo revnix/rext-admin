@@ -35,7 +35,7 @@ export function CheckEmail({ email }: { email: string }) {
         </p>
       </div>
 
-      <Button asChild className="w-full">
+      <Button data-rec="show" asChild className="w-full">
         <Link href={`/login?email=${encodeURIComponent(email)}` as Route}>
           Log in
         </Link>
@@ -45,6 +45,7 @@ export function CheckEmail({ email }: { email: string }) {
         <p>
           No email after a few minutes? Check your spam folder, or{" "}
           <Button
+            data-rec="show"
             type="button"
             variant="link"
             className="h-auto p-0 font-medium"

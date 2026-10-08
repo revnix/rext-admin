@@ -201,6 +201,7 @@ export function WorkspaceChangeRoleDialog({
 
           <DialogFooter>
             <Button
+              data-rec="show"
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
@@ -208,7 +209,7 @@ export function WorkspaceChangeRoleDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting}>
+            <Button data-rec="show" type="submit" disabled={submitting}>
               {submitting && <Loader2 className="animate-spin" aria-hidden />}
               Change role
             </Button>

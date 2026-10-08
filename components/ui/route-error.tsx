@@ -68,9 +68,11 @@ export function RouteError({
         align === "center" && "justify-center",
       )}
     >
-      <Button onClick={reset}>Try again</Button>
+      <Button data-rec="show" onClick={reset}>
+        Try again
+      </Button>
       {navigationType === "back" ? (
-        <Button variant="outline" onClick={() => router.back()}>
+        <Button data-rec="show" variant="outline" onClick={() => router.back()}>
           Go back
         </Button>
       ) : (

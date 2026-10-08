@@ -74,6 +74,7 @@ export function MobileBottomBar({
         })}
         <li className="flex-1">
           <button
+            data-rec="show"
             type="button"
             aria-expanded={openMobile}
             onClick={() => setOpenMobile(true)}

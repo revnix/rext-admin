@@ -54,6 +54,7 @@ export function AccountTrash() {
       description="Workspaces you deleted. Restore one while it's still restorable, or delete it for good."
       action={
         <Button
+          data-rec="show"
           variant="outline"
           size="icon"
           onClick={() => void deleted.refetch()}

@@ -92,6 +92,7 @@ export function WorkspaceWelcomeModal({
         {/* Close button */}
         <div className="absolute top-4 right-4 z-10">
           <Button
+            data-rec="show"
             variant="ghost"
             size="icon"
             onClick={handleClose}
@@ -187,6 +188,7 @@ export function WorkspaceWelcomeModal({
           >
             <div className="flex flex-col sm:flex-row gap-3">
               <Button
+                data-rec="show"
                 onClick={handleStartExploring}
                 size="lg"
                 className="flex-1 gap-2"
@@ -207,6 +209,7 @@ export function WorkspaceWelcomeModal({
                 className="mt-0.5"
               />
               <label
+                data-rec="show"
                 htmlFor="dont-show-again"
                 className="cursor-pointer select-none leading-relaxed text-left"
               >

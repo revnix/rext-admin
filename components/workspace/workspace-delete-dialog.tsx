@@ -163,6 +163,7 @@ export function WorkspaceDeleteDialog({
 
   const defaultTrigger = (
     <Button
+      data-rec="show"
       variant="ghost"
       size="sm"
       className="text-destructive hover:text-destructive"

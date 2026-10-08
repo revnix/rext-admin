@@ -129,6 +129,7 @@ function HelpMenu() {
         <TooltipTrigger asChild>
           <DropdownMenuTrigger asChild>
             <Button
+              data-rec="show"
               variant="ghost"
               size="icon"
               aria-label="Help"
@@ -141,13 +142,13 @@ function HelpMenu() {
         <TooltipContent side="bottom">Help</TooltipContent>
       </Tooltip>
       <DropdownMenuContent align="end" className="min-w-48">
-        <DropdownMenuItem asChild>
+        <DropdownMenuItem data-rec="show" asChild>
           <a href={HELP_URL} target="_blank" rel="noopener noreferrer">
             <BookOpen />
             Help center
           </a>
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => void chat.open()}>
+        <DropdownMenuItem data-rec="show" onSelect={() => void chat.open()}>
           <MessageCircle />
           Chat with us
         </DropdownMenuItem>
@@ -160,7 +161,13 @@ function HelpLink() {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon" asChild className={iconButton}>
+        <Button
+          data-rec="show"
+          variant="ghost"
+          size="icon"
+          asChild
+          className={iconButton}
+        >
           <a
             href={HELP_URL}
             target="_blank"

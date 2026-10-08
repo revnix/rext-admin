@@ -88,7 +88,7 @@ function AccountRecoveryContent() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button asChild className="w-full">
+          <Button data-rec="show" asChild className="w-full">
             <Link href={"/login" as Route}>Back to login</Link>
           </Button>
         </CardContent>
@@ -108,7 +108,9 @@ function AccountRecoveryContent() {
       <CardContent className="grid gap-4">
         {/* A submit before the page runs is the browser's own: post keeps the fields out of the address. */}
         <form method="post" onSubmit={submitRequest} className="grid gap-3">
-          <Label htmlFor="email">Account email</Label>
+          <Label data-rec="show" htmlFor="email">
+            Account email
+          </Label>
           <Input
             id="email"
             type="email"
@@ -119,6 +121,7 @@ function AccountRecoveryContent() {
             disabled={isSubmitting}
           />
           <Button
+            data-rec="show"
             type="submit"
             className="w-full"
             disabled={!hydrated || isSubmitting}

@@ -198,7 +198,12 @@ export function TrashTable({
               tone="danger"
               title="The trash didn't load"
               action={
-                <Button size="sm" variant="outline" onClick={onRetry}>
+                <Button
+                  data-rec="show"
+                  size="sm"
+                  variant="outline"
+                  onClick={onRetry}
+                >
                   Try again
                 </Button>
               }

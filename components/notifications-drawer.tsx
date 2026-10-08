@@ -243,6 +243,7 @@ export function NotificationsDrawer({
           </div>
           <div className="flex flex-wrap gap-2">
             <Button
+              data-rec="show"
               variant="outline"
               size="sm"
               onClick={handleMarkAllAsRead}
@@ -251,6 +252,7 @@ export function NotificationsDrawer({
               Mark all read
             </Button>
             <Button
+              data-rec="show"
               variant="ghost"
               size="sm"
               onClick={handleClearRead}
@@ -280,7 +282,12 @@ export function NotificationsDrawer({
                 tone="danger"
                 title="Your notifications didn't load"
                 action={
-                  <Button variant="outline" size="sm" onClick={retry}>
+                  <Button
+                    data-rec="show"
+                    variant="outline"
+                    size="sm"
+                    onClick={retry}
+                  >
                     Try again
                   </Button>
                 }

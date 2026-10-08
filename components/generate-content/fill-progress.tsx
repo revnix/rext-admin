@@ -66,6 +66,7 @@ export function FillProgressStrip({
         </div>
       )}
       <Button
+        data-rec="show"
         variant="ghost"
         size="sm"
         aria-expanded={open}

@@ -106,7 +106,7 @@ export function ForgotPasswordForm({
             )}
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
-                <Label htmlFor="email" className="ml-1">
+                <Label data-rec="show" htmlFor="email" className="ml-1">
                   Email
                 </Label>
                 <Input
@@ -121,6 +121,7 @@ export function ForgotPasswordForm({
               </div>
               <div className="flex flex-col gap-3">
                 <Button
+                  data-rec="show"
                   type="submit"
                   className="w-full h-11 !shadow-none"
                   disabled={!hydrated || isLoading || success}

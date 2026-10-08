@@ -249,6 +249,7 @@ export function WorkspaceMembersPanel({
       tooltipMessage="Only workspace admins can invite members"
     >
       <Button
+        data-rec="show"
         size="sm"
         className="h-9"
         onClick={() => setShowInviteDialog(true)}
@@ -293,6 +294,7 @@ export function WorkspaceMembersPanel({
         actions={
           <>
             <Button
+              data-rec="show"
               variant="outline"
               size="icon"
               className="size-9"

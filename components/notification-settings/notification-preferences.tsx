@@ -278,9 +278,15 @@ export function NotificationPreferencesForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="daily">Daily</SelectItem>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem data-rec="show" value="daily">
+                  Daily
+                </SelectItem>
+                <SelectItem data-rec="show" value="weekly">
+                  Weekly
+                </SelectItem>
+                <SelectItem data-rec="show" value="monthly">
+                  Monthly
+                </SelectItem>
               </SelectContent>
             </Select>
           )}

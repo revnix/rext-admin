@@ -204,7 +204,7 @@ function PlanCard({
             Choose {plan.display_name}
           </Button>
         ) : isCurrent ? (
-          <Button variant="outline" className="w-full" disabled>
+          <Button data-rec="show" variant="outline" className="w-full" disabled>
             Your plan
           </Button>
         ) : hasPaidPlan ? (
@@ -222,7 +222,7 @@ function PlanCard({
             buttonText={`Choose ${plan.display_name}`}
           />
         ) : (
-          <Button variant="outline" className="w-full" disabled>
+          <Button data-rec="show" variant="outline" className="w-full" disabled>
             Not available yet
           </Button>
         )}
@@ -256,7 +256,12 @@ export function PlanGrid() {
         tone="danger"
         title="The plans didn't load"
         action={
-          <Button variant="outline" size="sm" onClick={() => catalog.refetch()}>
+          <Button
+            data-rec="show"
+            variant="outline"
+            size="sm"
+            onClick={() => catalog.refetch()}
+          >
             Try again
           </Button>
         }
@@ -303,7 +308,9 @@ export function PlanGrid() {
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <TabsList aria-label="Billing period">
-          <TabsTrigger value={BillingPeriod.MONTHLY}>Monthly</TabsTrigger>
+          <TabsTrigger data-rec="show" value={BillingPeriod.MONTHLY}>
+            Monthly
+          </TabsTrigger>
           <TabsTrigger value={BillingPeriod.YEARLY}>
             Yearly{saving > 0 ? `, ${saving}% less` : ""}
           </TabsTrigger>
@@ -316,7 +323,12 @@ export function PlanGrid() {
           tone="danger"
           title="Your billing status didn't load"
           action={
-            <Button variant="outline" size="sm" onClick={billing.retry}>
+            <Button
+              data-rec="show"
+              variant="outline"
+              size="sm"
+              onClick={billing.retry}
+            >
               Try again
             </Button>
           }

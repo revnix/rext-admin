@@ -92,7 +92,12 @@ export function CalendarBoard({
         tone="danger"
         title="The board didn't load"
         action={
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <Button
+            data-rec="show"
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+          >
             Try again
           </Button>
         }

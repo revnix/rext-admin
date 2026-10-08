@@ -160,6 +160,7 @@ export function ActiveSessions() {
       action={
         others > 0 && (
           <Button
+            data-rec="show"
             variant="outline"
             onClick={() => revokeAllMutation.mutate()}
             disabled={revokeAllMutation.isPending}
@@ -188,7 +189,12 @@ export function ActiveSessions() {
           error ? (
             <div className="flex flex-col items-center gap-3">
               <p>Your sessions didn't load.</p>
-              <Button variant="outline" size="sm" onClick={() => refetch()}>
+              <Button
+                data-rec="show"
+                variant="outline"
+                size="sm"
+                onClick={() => refetch()}
+              >
                 Try again
               </Button>
             </div>

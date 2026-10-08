@@ -92,6 +92,7 @@ export function DownloadAuditLog({
 
   return (
     <Button
+      data-rec="show"
       variant={variant}
       size={size}
       onClick={handleDownload}

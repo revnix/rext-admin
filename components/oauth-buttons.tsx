@@ -54,6 +54,7 @@ export function OAuthButtons({
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-3">
         <Button
+          data-rec="show"
           variant="outline"
           className="w-full"
           onClick={() => handleOAuthSignIn("google")}
@@ -79,6 +80,7 @@ export function OAuthButtons({
         </Button>
 
         <Button
+          data-rec="show"
           variant="outline"
           className="w-full"
           onClick={() => handleOAuthSignIn("github")}

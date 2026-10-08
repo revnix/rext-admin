@@ -150,7 +150,11 @@ export default function AcceptAdminInvitationPage() {
             </CardDescription>
           </CardHeader>
           <CardFooter className="flex justify-center">
-            <Button variant="outline" onClick={() => router.push("/" as Route)}>
+            <Button
+              data-rec="show"
+              variant="outline"
+              onClick={() => router.push("/" as Route)}
+            >
               Return Home
             </Button>
           </CardFooter>
@@ -326,6 +330,7 @@ export default function AcceptAdminInvitationPage() {
 
         <CardFooter className="flex flex-col sm:flex-row gap-3">
           <Button
+            data-rec="show"
             variant="outline"
             onClick={() => void handleDecline()}
             disabled={declineMutation.isPending || isAccepting}
@@ -341,6 +346,7 @@ export default function AcceptAdminInvitationPage() {
             )}
           </Button>
           <Button
+            data-rec="show"
             onClick={handleAccept}
             disabled={isAccepting}
             className="w-full sm:flex-1"

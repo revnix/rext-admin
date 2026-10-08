@@ -416,7 +416,9 @@ export function WorkspaceInviteMembersDialog({
                   {results.filter((r) => r.status !== "pending").length} failed
                 </p>
               </div>
-              <Button onClick={handleClose}>Close</Button>
+              <Button data-rec="show" onClick={handleClose}>
+                Close
+              </Button>
             </div>
           </div>
         ) : (
@@ -428,7 +430,9 @@ export function WorkspaceInviteMembersDialog({
           >
             {/* Email Chips Input */}
             <div className="space-y-3">
-              <Label htmlFor="invite-emails">Email addresses</Label>
+              <Label data-rec="show" htmlFor="invite-emails">
+                Email addresses
+              </Label>
               <div className="min-h-[100px] p-3 border-2 rounded-md focus-within:border-ring">
                 <div className="flex flex-wrap gap-2">
                   {/* Email chips */}
@@ -443,6 +447,7 @@ export function WorkspaceInviteMembersDialog({
                           {getChipIcon(chip.status)}
                           <span>{chip.email}</span>
                           <Button
+                            data-rec="show"
                             type="button"
                             variant="ghost"
                             size="sm"
@@ -583,11 +588,21 @@ export function WorkspaceInviteMembersDialog({
                     <SelectValue placeholder="Choose how long" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">1 day</SelectItem>
-                    <SelectItem value="3">3 days</SelectItem>
-                    <SelectItem value="7">7 days (recommended)</SelectItem>
-                    <SelectItem value="14">14 days</SelectItem>
-                    <SelectItem value="30">30 days</SelectItem>
+                    <SelectItem data-rec="show" value="1">
+                      1 day
+                    </SelectItem>
+                    <SelectItem data-rec="show" value="3">
+                      3 days
+                    </SelectItem>
+                    <SelectItem data-rec="show" value="7">
+                      7 days (recommended)
+                    </SelectItem>
+                    <SelectItem data-rec="show" value="14">
+                      14 days
+                    </SelectItem>
+                    <SelectItem data-rec="show" value="30">
+                      30 days
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               )}
@@ -603,6 +618,7 @@ export function WorkspaceInviteMembersDialog({
 
             <DialogFooter className="gap-2">
               <Button
+                data-rec="show"
                 type="button"
                 variant="outline"
                 onClick={handleClose}

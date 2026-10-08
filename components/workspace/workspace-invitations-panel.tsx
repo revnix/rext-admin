@@ -246,6 +246,7 @@ export function WorkspaceInvitationsPanel({
         search={{ placeholder: "Search by email" }}
         actions={
           <Button
+            data-rec="show"
             variant="outline"
             size="icon"
             className="size-9"

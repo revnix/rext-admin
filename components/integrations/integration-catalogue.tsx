@@ -121,7 +121,7 @@ export function IntegrationCatalogue({
       <PlatformCard
         name="Somewhere else?"
         action={
-          <Button asChild variant="outline">
+          <Button data-rec="show" asChild variant="outline">
             <a href={INTEGRATION_REQUEST_URL}>
               <Mail aria-hidden />
               Request an integration

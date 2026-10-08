@@ -2743,6 +2743,7 @@ export function FreshGenerationView({
           <div className="w-full space-y-3">
             <RunProgress stages={timedOutStages} timedOut />
             <Button
+              data-rec="show"
               type="button"
               variant="outline"
               size="sm"

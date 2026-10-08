@@ -115,6 +115,7 @@ export function PaymentMethodDialog() {
         <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-between items-center">
           {paymentMethodUrl && (
             <Button
+              data-rec="show"
               variant="ghost"
               size="sm"
               asChild
@@ -131,6 +132,7 @@ export function PaymentMethodDialog() {
             </Button>
           )}
           <Button
+            data-rec="show"
             variant="outline"
             size="sm"
             onClick={closePaymentMethodDialog}

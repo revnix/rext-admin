@@ -44,7 +44,12 @@ export function ReceiptDialog({ order }: ReceiptDialogProps) {
 
   return (
     <>
-      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+      <Button
+        data-rec="show"
+        variant="outline"
+        size="sm"
+        onClick={() => setOpen(true)}
+      >
         <Receipt className="mr-2 h-4 w-4" />
         Receipt
       </Button>
@@ -73,7 +78,7 @@ export function ReceiptDialog({ order }: ReceiptDialogProps) {
             {order.receipt_url && (
               // LemonSqueezy's own copy: the authoritative document for tax
               // purposes, and the only place to change billing details on it.
-              <Button variant="ghost" asChild>
+              <Button data-rec="show" variant="ghost" asChild>
                 <a
                   href={order.receipt_url}
                   target="_blank"
@@ -85,6 +90,7 @@ export function ReceiptDialog({ order }: ReceiptDialogProps) {
               </Button>
             )}
             <Button
+              data-rec="show"
               variant="outline"
               onClick={() => downloadInvoicePdf(invoice, "Receipt")}
               className="gap-2"

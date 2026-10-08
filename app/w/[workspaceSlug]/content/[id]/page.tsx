@@ -232,6 +232,7 @@ export default function WorkspaceContentDetailPage({
               permission to view it.
             </p>
             <Button
+              data-rec="show"
               variant="outline"
               className="h-10 px-4 rounded-md"
               onClick={() =>
@@ -263,6 +264,7 @@ export default function WorkspaceContentDetailPage({
                 details. Please try again or contact support.
               </p>
               <Button
+                data-rec="show"
                 onClick={() =>
                   workspaceError ? window.location.reload() : refetchContent()
                 }
@@ -290,6 +292,7 @@ export default function WorkspaceContentDetailPage({
                 The content with ID "{id}" could not be found.
               </p>
               <Button
+                data-rec="show"
                 onClick={() =>
                   router.push(
                     workspaceRoutes.content(workspace?.slug || "") as Route,

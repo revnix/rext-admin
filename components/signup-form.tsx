@@ -387,6 +387,7 @@ export function SignupForm({
           </FieldController>
 
           <Button
+            data-rec="show"
             type="submit"
             className="w-full"
             disabled={!hydrated || isLoading || isLoadingInvitation}

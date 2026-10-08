@@ -111,7 +111,7 @@ export function CalendarItemSheet({
             )}
 
             <SheetFooter className="flex-col gap-2">
-              <Button asChild>
+              <Button data-rec="show" asChild>
                 <Link
                   href={
                     workspaceRoutes.contentDetail(
@@ -124,7 +124,7 @@ export function CalendarItemSheet({
                 </Link>
               </Button>
               {entry.url && (
-                <Button asChild variant="outline">
+                <Button data-rec="show" asChild variant="outline">
                   <a href={entry.url} target="_blank" rel="noopener noreferrer">
                     View on the site
                     <ExternalLink />
@@ -139,7 +139,11 @@ export function CalendarItemSheet({
                   cancelText="Keep it scheduled"
                   onConfirm={() => onCancelSchedule(entry)}
                 >
-                  <Button variant="outline" disabled={cancelling}>
+                  <Button
+                    data-rec="show"
+                    variant="outline"
+                    disabled={cancelling}
+                  >
                     {cancelling ? "Cancelling…" : "Cancel schedule"}
                   </Button>
                 </ConfirmationDialog>

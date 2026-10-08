@@ -98,10 +98,12 @@ export function PurchaseCompleteDialog({
           <DialogDescription className="num">{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button data-rec="show" variant="outline" onClick={onClose}>
             Close
           </Button>
-          <Button onClick={onGoToDashboard}>Go to dashboard</Button>
+          <Button data-rec="show" onClick={onGoToDashboard}>
+            Go to dashboard
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

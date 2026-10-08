@@ -110,6 +110,7 @@ function GenerateButton({ navigation }: { navigation: ShellNavigation }) {
         <TooltipTrigger asChild>
           {/* aria-disabled, not disabled: it stays focusable, so the tooltip can say why. */}
           <button
+            data-rec="show"
             type="button"
             aria-disabled="true"
             className={cn(className, "cursor-not-allowed opacity-50")}
@@ -173,7 +174,13 @@ function NavRow({
   const Icon = item.icon;
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
+      {/* The entry's title is one of the shell's own (use-shell-navigation.ts). */}
+      <SidebarMenuButton
+        asChild
+        isActive={active}
+        tooltip={item.title}
+        data-rec="own"
+      >
         <Link
           href={item.url as Route}
           prefetch={item.prefetch}
@@ -254,6 +261,7 @@ function SettingsRow({
           <SidebarMenuButton
             isActive={Boolean(current) && !open}
             className="data-[state=open]:bg-transparent data-[state=open]:hover:bg-sidebar-accent"
+            data-rec="own"
           >
             {Icon && <Icon />}
             <span className="flex-1">{item.title}</span>
@@ -270,7 +278,11 @@ function SettingsRow({
           <SidebarMenuSub>
             {pages.map((page) => (
               <SidebarMenuSubItem key={page.url}>
-                <SidebarMenuSubButton asChild isActive={page.url === activeUrl}>
+                <SidebarMenuSubButton
+                  asChild
+                  isActive={page.url === activeUrl}
+                  data-rec="own"
+                >
                   <Link
                     href={page.url as Route}
                     prefetch={page.prefetch}
