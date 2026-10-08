@@ -39,6 +39,15 @@ export function WorkspaceTakingShape({
   };
   const voiceEnded = ended("workspace-brand-voice");
   const competitorsEnded = ended("workspace-competitors");
+  // The people can still be saved after the brand-voice step's own end, so "none" is known only
+  // when the step that saves them didn't complete, or every stage has ended.
+  const voiceCompleted =
+    stages.find((stage) => stage.id === "workspace-brand-voice")?.state ===
+    "complete";
+  const peopleSettled =
+    (voiceEnded && !voiceCompleted) ||
+    (stages.length > 0 && stages.every((stage) => ended(stage.id)));
+  const hasPeople = people !== undefined && people.length > 0;
   // A shape waits a moment before it shows, as every skeleton does: a part that is there at once
   // (a reconnect to a finished run) shows none.
   const showShapes = useShowAfter(true);
@@ -96,11 +105,8 @@ export function WorkspaceTakingShape({
         )}
       </Part>
 
-      <Part
-        title="Author personas"
-        ready={people !== undefined && people.length > 0}
-      >
-        {people !== undefined && people.length > 0 ? (
+      <Part title="Author personas" ready={hasPeople || peopleSettled}>
+        {hasPeople ? (
           <ul className="divide-y divide-border rounded-md border border-border bg-card">
             {people.map((person, index) => (
               <li
@@ -119,6 +125,10 @@ export function WorkspaceTakingShape({
               </li>
             ))}
           </ul>
+        ) : peopleSettled ? (
+          <Nothing>
+            No author personas were drafted. You can add them later.
+          </Nothing>
         ) : (
           showShapes && (
             <div

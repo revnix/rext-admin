@@ -84,7 +84,11 @@ function event(step: string, payload?: Record<string, unknown>): SSEEvent {
     operation_id: "op-1",
     scope: "workspace",
     step,
-    status: step.endsWith("completed") ? "completed" : "started",
+    status: step.endsWith("completed")
+      ? "completed"
+      : step.endsWith("failed")
+        ? "failed"
+        : "started",
     message: "",
     payload,
     timestamp: new Date(Date.UTC(2026, 9, 8, 6, 14, clock)).toISOString(),
@@ -270,7 +274,22 @@ describe("Creating a workspace, while its website is read", () => {
     ).toBeInTheDocument();
   });
 
+  it("stops the people's shape when the step that saves them fails, or the run has ended without any", async () => {
+    mockSaved = [];
+    const { send } = await create();
+    send(
+      event("scrape.completed", { title: "Acme", word_count: 900 }),
+      event("brand_voice.failed"),
+    );
+    const people = screen.getByRole("region", { name: "Author personas" });
+    expect(people).toHaveAttribute("aria-busy", "false");
+    expect(people).toHaveTextContent(
+      "No author personas were drafted. You can add them later.",
+    );
+  });
+
   it("says so when a step ends with nothing to show", async () => {
+    mockSaved = [];
     const { send } = await create();
     send(
       event("scrape.completed", { title: null, word_count: 0 }),
@@ -282,6 +301,12 @@ describe("Creating a workspace, while its website is read", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText("None found. You can add them in the next step."),
+    ).toBeInTheDocument();
+    // Every stage has ended and no one was saved: the people's part says so too.
+    expect(
+      screen.getByText(
+        "No author personas were drafted. You can add them later.",
+      ),
     ).toBeInTheDocument();
   });
 
