@@ -222,6 +222,9 @@ export default async function proxy(request: NextRequest) {
     // Every email's unsubscribe link: it works without signing in (commercial-email law expects
     // that), and the token in the link is the proof.
     "/unsubscribe",
+    // The app's own policies say what it does with a visitor's data, the sign-up page's included:
+    // they are read before an account exists (task 936).
+    "/legal/",
     // The development pages read no data. They open signed out wherever they're on
     // (lib/dev-pages.ts), so pr-checks' accessibility checks reach them.
     ...(devPagesOn() ? ["/dev/"] : []),

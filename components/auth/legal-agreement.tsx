@@ -1,4 +1,5 @@
-// The legal pages live on the website, open to anyone signed out (the app's /legal pages aren't).
+// What an account agrees to is the website's terms and policy. The app's own pages (/legal) are
+// linked under the forms by PolicyLinks; which of the two an account agrees to is task 163's.
 const TERMS_URL = "https://rext.ai/terms-and-conditions";
 const PRIVACY_URL = "https://rext.ai/privacy-policy";
 

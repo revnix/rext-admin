@@ -26,6 +26,7 @@ export const PAGES_WITHOUT_SESSION: readonly string[] = [
   "/invitations/accept",
   "/account-recovery",
   "/unsubscribe",
+  "/legal/",
   "/dev/",
 ];
 
