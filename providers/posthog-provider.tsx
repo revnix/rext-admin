@@ -543,8 +543,10 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
           rageclick: false,
           capture_dead_clicks: false,
           // Everything else the library can fetch and run is off by name, so that letting the
-          // toolbar in (below) lets nothing else in.
+          // toolbar in (below) lets nothing else in. (Web vitals only: a recording's list of
+          // requests reads the same option's other half, which stays as the project has it.)
           capture_exceptions: false,
+          capture_performance: { web_vitals: false },
           disable_surveys: true,
           disable_product_tours: true,
           disable_conversations: true,
