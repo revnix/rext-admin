@@ -82,7 +82,7 @@ describe("The sign-in page says why the person is there", () => {
     openSignInPage("error=OAuthError");
 
     expect(toast.error).toHaveBeenCalledWith(
-      "Signing in with Google or GitHub didn't work just now. Wait a minute and try again.",
+      "Signing in with Google or GitHub didn't work just now. Try again in a few minutes.",
     );
   });
 
@@ -90,7 +90,7 @@ describe("The sign-in page says why the person is there", () => {
     openSignInPage("error=SomethingNew");
 
     expect(toast.error).toHaveBeenCalledWith(
-      "Signing in didn't work just now. Wait a minute and try again.",
+      "Signing in didn't work just now. Try again in a few minutes.",
     );
   });
 
