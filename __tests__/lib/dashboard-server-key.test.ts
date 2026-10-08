@@ -52,6 +52,6 @@ it("goes with the sign-in call to the backend, and with no other call", () => {
 it("is a server-side setting: nothing reads it under a name the browser's code would carry", () => {
   const env = fs.readFileSync(path.join(process.cwd(), "env.ts"), "utf8");
 
-  expect(env).toContain("DASHBOARD_SERVER_KEY: optional");
+  expect(env).toContain("DASHBOARD_SERVER_KEY: z");
   expect(env).not.toContain("NEXT_PUBLIC_DASHBOARD_SERVER_KEY");
 });
