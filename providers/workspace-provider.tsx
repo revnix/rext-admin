@@ -10,6 +10,7 @@ import {
   useMemo,
 } from "react";
 import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
+import { hasBrandVoice, noteBrandVoice } from "@/lib/analytics-context";
 import { ApiError } from "@/lib/api-client";
 import { alreadyRetried } from "@/lib/api-client/server-away";
 import { workspaceQueries } from "@/lib/query-keys";
@@ -137,6 +138,9 @@ export function WorkspaceProvider({
     if (workspace) {
       setCurrentWorkspace(workspace);
       addToRecentWorkspaces(workspace.id);
+      // The workspace's own detail says whether it has a brand voice: analytics is told here,
+      // and nowhere a workspace is only remembered (lib/analytics-context.ts).
+      noteBrandVoice(workspace.id, hasBrandVoice(workspace.brand_voice));
     }
   }, [workspace, setCurrentWorkspace, addToRecentWorkspaces]);
 

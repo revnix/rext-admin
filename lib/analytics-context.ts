@@ -40,9 +40,58 @@ export function isTeamBrowser(): boolean {
     .some((part) => part.trim() === `${INTERNAL_COOKIE}=1`);
 }
 
+// ── A workspace's brand voice ────────────────────────────────────────────────
+// A workspace can be made from a name alone, with its brand voice set up later: an event says
+// which kind it happened in (`workspace_has_brand_voice`). The fact comes from the workspace's own
+// detail, which the workspace's pages read (providers/workspace-provider.tsx) and which has no
+// brand voice in it when there is none. Until that detail has been read nothing is said: the
+// workspace the app merely remembers, from a list, looks the same with none and with one not
+// loaded yet, and a false must never be a guess.
+
+/** What a workspace's detail holds of its brand voice: the two fields the rule looks at. */
+type BrandVoiceRead =
+  | { about?: string | null; brand_name?: string | null }
+  | null
+  | undefined;
+
+/** Whether that is a brand voice, by the home page's own rule: an About or a brand name. */
+export function hasBrandVoice(brandVoice: BrandVoiceRead): boolean {
+  return Boolean(brandVoice?.about?.trim() || brandVoice?.brand_name?.trim());
+}
+
+const brandVoices = new Map<string, boolean>();
+const BRAND_VOICE_EVENT = "rext:analytics-brand-voice";
+
+/** Called when a workspace's detail has been read: it has a brand voice, or it has none. */
+export function noteBrandVoice(workspaceId: string, has: boolean): void {
+  if (!workspaceId || brandVoices.get(workspaceId) === has) return;
+  brandVoices.set(workspaceId, has);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(BRAND_VOICE_EVENT));
+  }
+}
+
+/** What has been read of a workspace's brand voice; null until its detail has been. */
+export function brandVoiceOf(workspaceId: string | null): boolean | null {
+  return workspaceId ? (brandVoices.get(workspaceId) ?? null) : null;
+}
+
+/** Runs `listener` whenever a workspace's brand voice has been read anew. Returns the way to stop. */
+export function onBrandVoiceNoted(listener: () => void): () => void {
+  window.addEventListener(BRAND_VOICE_EVENT, listener);
+  return () => window.removeEventListener(BRAND_VOICE_EVENT, listener);
+}
+
+/** For the tests: forgets what was read. */
+export function forgetBrandVoices(): void {
+  brandVoices.clear();
+}
+
 export interface EventContext {
   /** The workspace on screen, or null on a page that belongs to none. */
   workspace_id: string | null;
+  /** Whether that workspace has a brand voice; null until its detail has been read. */
+  workspace_has_brand_voice: boolean | null;
   role: string | null;
   plan: string | null;
   plan_status: string | null;
@@ -80,6 +129,7 @@ export function eventContext({
   const plan = subscription?.plan_name ?? null;
   return {
     workspace_id: onScreen,
+    workspace_has_brand_voice: brandVoiceOf(onScreen),
     role: role ?? null,
     plan,
     plan_status: plan ? (subscription?.status ?? null) : null,
