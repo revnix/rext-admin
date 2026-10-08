@@ -46,9 +46,10 @@ export function WorkspaceDraft({
   const showShapes = useShowAfter(true);
   const { voice, competitors } = findings;
   // The personas are saved during the run and can arrive after the first read of them: until the
-  // run has ended, none read yet means "still looking", never "no one".
+  // run has ended, none read yet means "still looking", never "no one". Once it has ended the part
+  // is settled, also when the run stopped before anyone was read.
   const peopleKnown =
-    people !== undefined && (people.length > 0 || peopleFinal);
+    peopleFinal || (people !== undefined && people.length > 0);
   const noVoice = (
     <Nothing>
       Nothing could be drafted from the site. You can write it in the review.
@@ -140,8 +141,15 @@ export function WorkspaceDraft({
       </Part>
 
       <Part title="Author personas" ready={peopleKnown}>
-        {peopleKnown && people ? (
-          <AuthorPersonas people={people} />
+        {peopleKnown ? (
+          people ? (
+            <AuthorPersonas people={people} />
+          ) : (
+            <Nothing>
+              The people named on your site weren't read. You can add personas
+              later.
+            </Nothing>
+          )
         ) : (
           <>
             <span className="sr-only">

@@ -400,6 +400,24 @@ describe("The people named on the site", () => {
       "No one is named on your site. You can add personas later.",
     );
   });
+  it("stop being looked for when the run stops before anyone was read", async () => {
+    const { send } = await create();
+    // The reading failed: the brand-voice step never ran, so the personas were never read.
+    send({
+      ...event("scrape.started"),
+      step: "scrape.failed",
+      status: "failed",
+    });
+    const people = part("Author personas");
+    expect(people).toHaveAttribute("aria-busy", "false");
+    expect(people).toHaveTextContent(
+      "The people named on your site weren't read. You can add personas later.",
+    );
+    expect(screen.queryByText(/No one is named/)).toBeNull();
+    expect(
+      within(people).queryByText("Looking for the people named on your site."),
+    ).toBeNull();
+  });
 });
 
 describe("Behind the scenes: the work as it happens", () => {
