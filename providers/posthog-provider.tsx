@@ -34,6 +34,7 @@ import {
   redactStoredAddresses,
   redactUrl,
   STORED_ADDRESS_OPTIONS,
+  VISITOR_STORE_OPTIONS,
 } from "@/lib/analytics-redact";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { useWorkspaceStore } from "@/stores/workspace";
@@ -468,7 +469,8 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
             process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://eu.i.posthog.com",
           capture_pageview: false, // tracked manually via PostHogPageView
           capture_pageleave: true,
-          persistence: "localStorage",
+          // The visitor's id, in the cookie rext.ai shares (lib/analytics-redact.ts).
+          ...VISITOR_STORE_OPTIONS,
           autocapture: false, // keep events intentional
           // Decided here, not by a switch in the PostHog project. Heatmaps stay off until the
           // piece the library fetches for them ships with the app: asked for from outside, it

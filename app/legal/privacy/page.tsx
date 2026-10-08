@@ -283,8 +283,9 @@ export default function PrivacyPolicyPage() {
             on them (for example that a keyword was analysed, a title chosen, an
             article published or a plan bought, but not the keyword, the title
             or the article), together with your account ID and role, not your
-            email or your name. It keeps an identifier in your browser&rsquo;s
-            storage.
+            email or your name. It keeps an identifier in a cookie for rext.ai
+            and in your browser&rsquo;s storage. Our website uses the same one,
+            so a visit to rext.ai and your use of the app count as one person.
           </li>
           {RECORDING_ON && (
             <li>
