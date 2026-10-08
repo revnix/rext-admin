@@ -11,9 +11,14 @@ import { loadWords } from "@/lib/analytics-recording";
 import { PostHogProvider } from "@/providers/posthog-provider";
 
 let mockStarted = false;
+// The library's session, and whoever asked to hear of a new one.
+const mockSession: {
+  id: string;
+  listeners: Array<(id: string) => void>;
+} = { id: "session-1", listeners: [] };
 const mockPosthog = {
   init: jest.fn(),
-  startSessionRecording: jest.fn(() => {
+  startSessionRecording: jest.fn((_override?: unknown) => {
     mockStarted = true;
   }),
   stopSessionRecording: jest.fn(() => {
@@ -24,7 +29,8 @@ jest.mock("posthog-js", () => ({
   __esModule: true,
   default: {
     init: (...args: unknown[]) => mockPosthog.init(...args),
-    startSessionRecording: () => mockPosthog.startSessionRecording(),
+    startSessionRecording: (override?: unknown) =>
+      mockPosthog.startSessionRecording(override),
     stopSessionRecording: () => mockPosthog.stopSessionRecording(),
     sessionRecordingStarted: () => mockStarted,
     capture: jest.fn(),
@@ -33,7 +39,17 @@ jest.mock("posthog-js", () => ({
     opt_in_capturing: jest.fn(),
     opt_out_capturing: jest.fn(),
     get_property: jest.fn(),
-    onSessionId: jest.fn(),
+    get_session_id: () => mockSession.id,
+    // As the library does: told at once of the session there is, then of each new one.
+    onSessionId: (listener: (id: string) => void) => {
+      mockSession.listeners.push(listener);
+      listener(mockSession.id);
+      return () => {
+        mockSession.listeners = mockSession.listeners.filter(
+          (known) => known !== listener,
+        );
+      };
+    },
     register: jest.fn(),
     unregister: jest.fn(),
     setPersonProperties: jest.fn(),
@@ -107,6 +123,8 @@ beforeEach(() => {
   jest.clearAllMocks();
   window.localStorage.clear();
   mockStarted = false;
+  mockSession.id = "session-1";
+  mockSession.listeners = [];
   mockSwitch.on = true;
   mockPage.path = "/w/acme/content";
   mockPage.status = "authenticated";
@@ -162,11 +180,69 @@ it("can't be started from PostHog's side, and holds only what the app allows", a
   expect(options.session_recording.maskTextFn("Mary", null)).toBe("****");
 });
 
+it("sends a recording's batch with no field's value readable", async () => {
+  render(page());
+  await waitFor(() => expect(mockPosthog.init).toHaveBeenCalled());
+  const beforeSend = mockPosthog.init.mock.calls[0][1].before_send;
+
+  const sent = beforeSend({
+    event: "$snapshot",
+    properties: {
+      $snapshot_data: [
+        {
+          type: 3,
+          data: { source: 5, id: 7, text: "Ten garden ideas", isChecked: true },
+        },
+      ],
+    },
+  });
+
+  expect(sent.properties.$snapshot_data[0].data).toEqual({
+    source: 5,
+    id: 7,
+    text: "*** ****** *****",
+    isChecked: true,
+  });
+  expect(sent.properties.surface).toBe("app");
+});
+
 it("starts for a signed-in person who allows analytics, on a working page, once the list is there", async () => {
   render(page());
   await started();
 
   expect(words).toHaveBeenCalledTimes(1);
+});
+
+it("records every session of the app's, whatever share the project samples", async () => {
+  render(page());
+  await started();
+
+  expect(mockPosthog.startSessionRecording).toHaveBeenCalledWith({
+    sampling: true,
+  });
+});
+
+it("says so again for a new session on the same page, and no more once it stops", async () => {
+  const view = render(page());
+  await started();
+
+  // Half an hour away, then back: the library starts a new session and decides afresh.
+  mockSession.id = "session-2";
+  act(() => {
+    for (const listener of mockSession.listeners) listener("session-2");
+  });
+  await waitFor(() =>
+    expect(mockPosthog.startSessionRecording).toHaveBeenCalledTimes(2),
+  );
+  expect(mockPosthog.startSessionRecording).toHaveBeenLastCalledWith({
+    sampling: true,
+  });
+
+  mockPage.path = "/checkout";
+  view.rerender(page());
+  expect(mockSession.listeners).toHaveLength(0);
+  await settled();
+  expect(mockPosthog.startSessionRecording).toHaveBeenCalledTimes(2);
 });
 
 it("records nothing without the list of the app's own words", async () => {

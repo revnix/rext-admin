@@ -21,6 +21,7 @@ import {
   workspaceSlugOf,
 } from "@/lib/analytics-context";
 import {
+  hideTypedValues,
   loadWords,
   RECORDING_ON,
   RECORDING_OPTIONS,
@@ -321,8 +322,30 @@ function SessionRecordingSync() {
   // A layout effect: a page that isn't recorded stops the recorder before the browser hands it
   // the new page's content.
   useLayoutEffect(() => {
-    if (record) posthog.startSessionRecording();
-    else if (posthog.sessionRecordingStarted()) posthog.stopSessionRecording();
+    if (!record) {
+      if (posthog.sessionRecordingStarted()) posthog.stopSessionRecording();
+      return;
+    }
+    // Every session of the app's is recorded. The PostHog project's sample rate is shared with
+    // the website, which records a share of its visitors: the app says "this one" for itself
+    // and leaves that setting alone.
+    const start = () => posthog.startSessionRecording({ sampling: true });
+    start();
+    // The library decides by the sample rate again for each new session (a return after half
+    // an hour away starts one on the same page), so it is told again, once its own handling of
+    // the new session is done.
+    let session = posthog.get_session_id();
+    let told: ReturnType<typeof setTimeout> | undefined;
+    const forget = posthog.onSessionId((next) => {
+      if (next === session) return;
+      session = next;
+      clearTimeout(told);
+      told = setTimeout(start, 0);
+    });
+    return () => {
+      clearTimeout(told);
+      forget();
+    };
   }, [record]);
 
   // Unmounted when the person says no, or signs out.
@@ -388,10 +411,13 @@ function beforeSend(event: CaptureResult | null): CaptureResult | null {
     runningMode === "anonymous"
       ? anonymousEvent(redacted, routeOnScreen)
       : redacted;
-  // Where the event is from, on every one: the website sends "website" to its own project, so
-  // the two sets of numbers can be laid side by side.
-  if (sent) sent.properties = { ...sent.properties, surface: "app" };
-  return sent;
+  if (!sent) return null;
+  // A recording's batch leaves with no field's value readable (lib/analytics-recording.ts).
+  const shown = hideTypedValues(sent);
+  // Where the event is from, on every one: the website sends "website" to the same project, so
+  // the two sets of numbers can be told apart.
+  shown.properties = { ...shown.properties, surface: "app" };
+  return shown;
 }
 
 /**
