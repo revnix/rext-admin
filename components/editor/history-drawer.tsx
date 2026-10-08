@@ -26,6 +26,11 @@ import type {
 } from "@/types/content";
 
 /** What each kind of version holds, in a word or two. */
+/** When a version last took a save; one that took none after it was made, when it was made. */
+const versionTime = (
+  version: Pick<ContentVersion, "created_at" | "updated_at">,
+) => version.updated_at ?? version.created_at;
+
 const SOURCE_WORDS: Record<ContentVersionSource, string> = {
   generation: "As first written",
   edit: "Edited",
@@ -166,7 +171,7 @@ export function HistoryDrawer({
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
                 <p className="text-label font-medium text-foreground">
-                  {dateFormat.shortWithTime(opened.updated_at)}
+                  {dateFormat.shortWithTime(versionTime(opened))}
                 </p>
                 <p className="mb-4 text-caption text-muted-foreground">
                   {summary(opened)}
@@ -229,7 +234,7 @@ export function HistoryDrawer({
                     className="flex w-full cursor-pointer flex-col gap-0.5 rounded-md px-3 py-2 text-left hover:bg-muted"
                   >
                     <span className="text-label font-medium text-foreground">
-                      {dateFormat.shortWithTime(version.updated_at)}
+                      {dateFormat.shortWithTime(versionTime(version))}
                     </span>
                     <span className="text-caption text-muted-foreground">
                       {summary(version)}
