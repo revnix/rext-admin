@@ -1,7 +1,7 @@
 import type { Route } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Logo } from "@/components/brand-logo";
+import { Logo, LogoMark } from "@/components/brand-logo";
 import { PageBand } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 
@@ -16,7 +16,9 @@ export function SignedOutFrame({ children }: { children: ReactNode }) {
         <PageBand>
           <div className="flex items-center justify-between gap-4">
             <Link href={"/login" as Route} aria-label="Rext AI: log in">
-              <Logo className="h-7" />
+              {/* The mark alone on a phone: the wordmark and both ways in don't fit 390 px. */}
+              <LogoMark className="h-7 sm:hidden" />
+              <Logo className="hidden h-7 sm:block" />
             </Link>
             <nav aria-label="Account" className="flex items-center gap-2">
               <Button data-rec="show" asChild variant="ghost" size="sm">
