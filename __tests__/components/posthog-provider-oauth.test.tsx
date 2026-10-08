@@ -29,12 +29,19 @@ jest.mock("posthog-js", () => ({
   },
 }));
 jest.mock("@/stores/subscription-store", () => ({
-  useSubscriptionStore: (selector: (state: unknown) => unknown) =>
-    selector({ subscription: null }),
+  useSubscriptionStore: Object.assign(
+    (selector: (state: unknown) => unknown) => selector({ subscription: null }),
+    { getState: () => ({ subscription: null }) },
+  ),
 }));
 jest.mock("@/stores/workspace", () => ({
   useWorkspaceStore: (selector: (state: unknown) => unknown) =>
     selector({ currentWorkspace: null, workspaceList: [] }),
+}));
+jest.mock("@/stores/workspace/use-workspace-context-store", () => ({
+  useWorkspaceContextStore: {
+    getState: () => ({ currentWorkspace: null, workspaceList: [] }),
+  },
 }));
 // Analytics is on for this person (a region that isn't asked first): the provider starts.
 jest.mock("@/lib/analytics-consent", () => ({

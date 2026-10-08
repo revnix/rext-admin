@@ -43,22 +43,33 @@ jest.mock("posthog-js", () => ({
       mockPosthog.setPersonProperties(...args),
   },
 }));
+const mockSubscriptionState = {
+  subscription: {
+    subscription: {
+      plan_name: "growth",
+      status: "active",
+      billing_period: "monthly",
+      trial_end_date: null,
+    },
+  },
+};
 jest.mock("@/stores/subscription-store", () => ({
-  useSubscriptionStore: (selector: (state: unknown) => unknown) =>
-    selector({
-      subscription: {
-        subscription: {
-          plan_name: "growth",
-          status: "active",
-          billing_period: "monthly",
-          trial_end_date: null,
-        },
-      },
-    }),
+  useSubscriptionStore: Object.assign(
+    (selector: (state: unknown) => unknown) => selector(mockSubscriptionState),
+    { getState: () => mockSubscriptionState },
+  ),
 }));
+// The app's memory of the workspace last opened; a test may point it elsewhere.
+const mockWorkspaceState = {
+  currentWorkspace: { id: "ws-1", slug: "acme" },
+  workspaceList: [{}, {}],
+};
 jest.mock("@/stores/workspace", () => ({
   useWorkspaceStore: (selector: (state: unknown) => unknown) =>
-    selector({ currentWorkspace: { id: "ws-1" }, workspaceList: [{}, {}] }),
+    selector(mockWorkspaceState),
+}));
+jest.mock("@/stores/workspace/use-workspace-context-store", () => ({
+  useWorkspaceContextStore: { getState: () => mockWorkspaceState },
 }));
 jest.mock("posthog-js/react", () => ({
   PostHogProvider: ({ children }: { children: React.ReactNode }) => (
@@ -149,6 +160,30 @@ describe("where the person is asked first, and hasn't answered", () => {
     expect(question()).toBeNull();
   });
 
+  it("sends what was done while it asked with the plan and the role, like any other event", async () => {
+    renderProvider();
+    const allow = await screen.findByRole("button", { name: "Allow" });
+    analytics.track("user_signed_in", { method: "credentials" });
+
+    await userEvent.click(allow);
+
+    await waitFor(() =>
+      expect(mockPosthog.capture).toHaveBeenCalledWith("user_signed_in", {
+        method: "credentials",
+      }),
+    );
+    const held = mockPosthog.capture.mock.calls.findIndex(
+      ([event]) => event === "user_signed_in",
+    );
+    const planSet = mockPosthog.register.mock.calls.findIndex(
+      ([properties]) => properties.plan === "growth",
+    );
+    expect(planSet).toBeGreaterThanOrEqual(0);
+    expect(mockPosthog.register.mock.invocationCallOrder[planSet]).toBeLessThan(
+      mockPosthog.capture.mock.invocationCallOrder[held],
+    );
+  });
+
   it("counts page routes only on No thanks: no identity, nothing of whose page it is", async () => {
     renderProvider();
     await userEvent.click(
@@ -209,6 +244,23 @@ describe("where analytics is on unless switched off", () => {
       trial_ends_at: null,
       workspaces: 2,
     });
+  });
+
+  it("carries no workspace while the app still holds another than the page's own", async () => {
+    mockWorkspaceState.currentWorkspace = { id: "ws-9", slug: "another" };
+    try {
+      renderProvider();
+      await waitFor(() => expect(pageViews()).toHaveLength(1));
+
+      const registered = Object.assign(
+        {},
+        ...mockPosthog.register.mock.calls.map(([properties]) => properties),
+      );
+      expect(registered).not.toHaveProperty("workspace_id");
+      expect(mockPosthog.unregister).toHaveBeenCalledWith("workspace_id");
+    } finally {
+      mockWorkspaceState.currentWorkspace = { id: "ws-1", slug: "acme" };
+    }
   });
 
   it("doesn't send the person's properties again on the next page load when nothing changed", async () => {

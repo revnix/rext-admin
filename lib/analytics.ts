@@ -71,6 +71,16 @@ export function registerPostHog(bridge: PostHogBridge): void {
   }
 }
 
+/**
+ * Called when the provider goes away (a remount in development, a test's end): back to not
+ * knowing the person's answer, as on a fresh page.
+ */
+export function forgetPostHog(): void {
+  _posthog = null;
+  refused = false;
+  pending.length = 0;
+}
+
 /** Called by the provider when the person says no: nothing more is sent, held or kept. */
 export function unregisterPostHog(): void {
   _posthog = null;
