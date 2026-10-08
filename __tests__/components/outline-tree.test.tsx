@@ -1382,10 +1382,14 @@ describe("dragging a section by its handle", () => {
       fireEvent.pointerMove(document, { clientX: 10, clientY: toY });
     });
   };
-  const drop = () =>
-    act(async () => {
+  // The drag library stops every click for 50 ms after a release, so that the release is not read
+  // as a click on what lies under it: wait that out, or the next click is lost on a fast machine.
+  const drop = async () => {
+    await act(async () => {
       fireEvent.pointerUp(document);
     });
+    await act(() => new Promise((resolve) => setTimeout(resolve, 60)));
+  };
 
   it("moves a section with its subsections to the gap between whole sections", async () => {
     const { approve } = renderOutline();
