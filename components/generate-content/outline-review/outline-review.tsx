@@ -206,6 +206,11 @@ export function OutlineReview({
   const sourcesTab = hasSources(sources);
   const edited = rowsEdited(rows, gate.sections);
   const faqs = useMemo(() => readOutlineFaqs(outline), [outline]);
+  // The article's parts the gate lists to read, between the lists that are edited (task 814).
+  const readParts = useMemo(
+    () => gate.structure.filter((block) => !block.list),
+    [gate.structure],
+  );
 
   // What each edit did, for a screen reader. A new node each time, so the same words twice are
   // announced twice.
@@ -369,13 +374,27 @@ export function OutlineReview({
     ) : (
       <div aria-hidden="true" className="min-h-96" />
     )
-  ) : rows.length > 0 ? (
+  ) : rows.length > 0 || readParts.length > 0 ? (
     <div className="space-y-6">
+      {/* The parts that are only read carry the outline's own names: say whose the headings are. */}
+      {readParts.length > 0 && (
+        <p className="text-table text-muted-foreground">
+          The article's parts, in the order they are written. The writer words
+          each part's heading.
+        </p>
+      )}
       <OutlineTree
         rows={rows}
         outline={outline}
         title={title || undefined}
         addableLists={gate.addableLists}
+        structure={gate.structure}
+        renderBlock={(block) => (
+          <ReadOnlyBlock
+            block={block}
+            note="To change this part, regenerate with feedback."
+          />
+        )}
         editable={editable}
         onMove={move}
         onMoveTo={moveTo}
@@ -386,7 +405,9 @@ export function OutlineReview({
         onRemove={remove}
         onInsert={insert}
       />
-      {faqs.length > 0 && <FaqList questions={faqs} />}
+      {faqs.length > 0 && !blocksShowFaqs(readParts, faqs) && (
+        <FaqList questions={faqs} />
+      )}
     </div>
   ) : (
     <ReadOnlyOutline blocks={readOnlyBlocks(outline)} faqs={faqs} />
@@ -586,33 +607,54 @@ function ReadOnlyBlocks({ blocks }: { blocks: OutlineRenderBlock[] }) {
   return (
     <div className="space-y-6">
       {blocks.map((block) => (
-        <section key={block.heading} aria-label={block.heading}>
-          <h3 className="mb-2 text-label text-muted-foreground">
-            {block.heading}
-          </h3>
-          <ol className="divide-y divide-border rounded-md border border-border bg-card">
-            {block.items.map((item, index) => (
-              <li
-                // biome-ignore lint/suspicious/noArrayIndexKey: a read-only list that never reorders, whose labels may repeat
-                key={`${index}-${item.label}`}
-                className="space-y-1 px-3 py-2.5"
-              >
-                <p className="text-body font-medium text-foreground">
-                  {item.label}
-                </p>
-                {item.points.length > 0 && (
-                  <ul className="list-disc space-y-0.5 pl-4 text-table text-muted-foreground marker:text-muted-foreground">
-                    {item.points.map((point) => (
-                      <li key={point}>{point}</li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ol>
-        </section>
+        <ReadOnlyBlock key={block.heading} block={block} />
       ))}
     </div>
+  );
+}
+
+/**
+ * One part of the outline that is read, not edited. Between lists that are edited it says how to
+ * change it (`note`), as the FAQ's list does: a list without controls otherwise reads as broken.
+ */
+function ReadOnlyBlock({
+  block,
+  note,
+}: {
+  block: OutlineRenderBlock;
+  note?: string;
+}) {
+  return (
+    <section aria-label={block.heading}>
+      <h3 className="mb-2 text-label text-muted-foreground">{block.heading}</h3>
+      <div className="rounded-md border border-border bg-card">
+        <ol className="divide-y divide-border">
+          {block.items.map((item, index) => (
+            <li
+              // biome-ignore lint/suspicious/noArrayIndexKey: a read-only list that never reorders, whose labels may repeat
+              key={`${index}-${item.label}`}
+              className="space-y-1 px-3 py-2.5"
+            >
+              <p className="text-body font-medium text-foreground">
+                {item.label}
+              </p>
+              {item.points.length > 0 && (
+                <ul className="list-disc space-y-0.5 pl-4 text-table text-muted-foreground marker:text-muted-foreground">
+                  {item.points.map((point) => (
+                    <li key={point}>{point}</li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ol>
+        {note && (
+          <p className="border-t border-border px-3 py-2.5 text-caption text-muted-foreground">
+            {note}
+          </p>
+        )}
+      </div>
+    </section>
   );
 }
 
