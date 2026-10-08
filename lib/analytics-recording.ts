@@ -90,6 +90,11 @@ function isOwnWords(text: string): boolean {
   return marks?.has(markOf(normalizeWords(text))) ?? false;
 }
 
+/** Whether the list has been read: until it has, nothing can be said of whose words a text is. */
+export function wordsLoaded(): boolean {
+  return marks !== null;
+}
+
 /**
  * A text as the app's source wrote it, or null when it isn't one of the app's own words (or the
  * list isn't loaded). For an event that may name a fixed sentence of ours and nothing else.

@@ -8,7 +8,7 @@ import { act, render, waitFor } from "@testing-library/react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { analytics } from "@/lib/analytics";
-import { setWords } from "@/lib/analytics-recording";
+import { setWords, wordsLoaded } from "@/lib/analytics-recording";
 import { markOf } from "@/lib/recording-words";
 
 jest.mock("@/lib/analytics", () => ({ analytics: { track: jest.fn() } }));
@@ -27,8 +27,8 @@ const realFetch = global.fetch;
 
 beforeEach(() => {
   track.mockClear();
-  // The app's own words, as the build serves them: marks, not texts.
-  setWords(null);
+  // The app's own words are in place, as a recorded session has them from its start.
+  setWords([OWN, UPDATING]);
   global.fetch = jest.fn().mockResolvedValue({
     ok: true,
     json: async () => [markOf(OWN), markOf(UPDATING)],
@@ -115,20 +115,38 @@ describe("an error toast", () => {
     expect(sent()).toEqual([]);
   });
 
-  it("quotes nothing when the app's word list could not be read", async () => {
-    global.fetch = jest
-      .fn()
-      .mockRejectedValue(
-        new TypeError("Failed to fetch"),
-      ) as unknown as typeof fetch;
+  it("is sent at once while the word list isn't read, saying nothing of whose words they were, and reads the list for the next", async () => {
+    setWords(null);
     render(<Toaster />);
 
     act(() => {
       toast.error(OWN);
     });
+    await waitFor(() => expect(sent()).toEqual([{ route: "/w/*/content/*" }]));
+    expect(global.fetch).toHaveBeenCalledWith("/api/recording-words");
+    await waitFor(() => expect(wordsLoaded()).toBe(true));
 
+    act(() => {
+      toast.error(UPDATING);
+    });
     await waitFor(() =>
-      expect(sent()).toEqual([{ route: "/w/*/content/*", own_words: false }]),
+      expect(sent()[1]).toEqual({
+        route: "/w/*/content/*",
+        own_words: true,
+        message: UPDATING,
+      }),
     );
+  });
+
+  it("goes out with the page it came up on, even when the page changes straight after", async () => {
+    render(<Toaster />);
+
+    act(() => {
+      toast.error(OWN);
+    });
+    await waitFor(() => expect(sent()).toHaveLength(1));
+    window.history.replaceState(null, "", "/settings/security");
+
+    expect(sent()[0].route).toBe("/w/*/content/*");
   });
 });
