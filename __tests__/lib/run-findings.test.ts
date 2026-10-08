@@ -1749,7 +1749,68 @@ describe("describeRun: the outline", () => {
 });
 
 describe("describeRun: the article", () => {
-  it("adds nothing to the article's stages", () => {
-    expect(view("article", ["active"], ANALYSED)).toEqual({ details: {} });
+  const searching: RunFindings = {
+    ...ANALYSED,
+    searches: [
+      { id: "a", query: "podcast intro statistics", done: true, results: 3 },
+      { id: "b", query: "podcast intro examples", done: true, results: 1 },
+      { id: "c", query: "podcast hook length", done: false },
+    ],
+  };
+
+  it("has no header: the page's own bar says the article is being written", () => {
+    expect(view("article", ["active"], ANALYSED).header).toBeUndefined();
+  });
+
+  it("says how many of the searches are done while Research runs", () => {
+    expect(view("article", ["active"], searching).details.research.live).toBe(
+      "Searching the web for facts and sources: 2 of 3 searches done.",
+    );
+    expect(view("article", ["active"], ANALYSED).details.research.live).toBe(
+      "Searching the web for facts and sources to cite.",
+    );
+  });
+
+  it("says what Research read once it is done", () => {
+    expect(
+      view("article", ["complete", "active"], searching).details.research
+        .result,
+    ).toBe("3 searches · 4 results read");
+    expect(
+      view("article", ["complete", "active"], {
+        ...ANALYSED,
+        searches: [{ id: "a", query: "one", done: true }],
+      }).details.research.result,
+    ).toBe("1 search");
+    expect(
+      view("article", ["complete", "active"], ANALYSED).details.research.result,
+    ).toBeUndefined();
+  });
+
+  it("counts the Draft's sections from the outline as approved, not as first written", () => {
+    const edited = view(
+      "article",
+      ["complete", "active"],
+      { ...ANALYSED, outline: { sections: 6, words: 1800 } },
+      { keyword: KEYWORD, country: "us", outlineSections: 4 },
+    );
+    expect(edited.details.draft.live).toBe(
+      "Writing the article's 4 sections, in the outline's order.",
+    );
+    expect(
+      view("article", ["complete", "active"], ANALYSED).details.draft.live,
+    ).toBe("Writing the article, in the outline's order.");
+  });
+
+  it("says in grey what each later stage will do, and what it is doing once it runs", () => {
+    const { details, footer } = view("article", ["active"], ANALYSED);
+    expect(details.draft.waiting).toBe(
+      "The article, written from the outline you approved.",
+    );
+    expect(details.style.waiting).toBe("A pass over the wording and the flow.");
+    expect(details.style.live).toMatch(/smoothing the wording and the flow/);
+    expect(details.checks.waiting).toBe("Readability, on-page SEO and trust.");
+    expect(details.checks.live).toMatch(/then saving the article/);
+    expect(footer).toMatch(/^You can leave this page\./);
   });
 });

@@ -716,6 +716,8 @@ export interface RunContext {
   contentType?: string | null;
   /** The search intent the page holds (the user's pick, else the analysis's). */
   intent?: unknown;
+  /** The main sections of the outline as approved (the user may have added or removed some). */
+  outlineSections?: number | null;
 }
 
 /** `RunProgress`'s props for a run's findings. */
@@ -797,9 +799,60 @@ export function describeRun(
     case "outline":
       return describeOutline(findings, type, state, startedAt);
     case "article":
-      // The article's stages sit in the editor's side panel; #703 gives them their lines.
-      return { details: {} };
+      return describeArticle(findings, context.outlineSections ?? null);
   }
+}
+
+/**
+ * The article's four stages (rext-control#703). No header: the box sits in the article page's side
+ * panel, under a bar that already says "Writing the article". The article's text isn't sent while
+ * it is written, so the Draft stage says what is being written, not how far it is.
+ */
+function describeArticle(
+  findings: RunFindings,
+  sections: number | null,
+): RunView {
+  const searches = findings.searches ?? [];
+  const finished = searches.filter((search) => search.done).length;
+  return {
+    details: {
+      research: {
+        live: searches.length
+          ? `Searching the web for facts and sources: ${formatCount(finished)} of ${count(searches.length, "search", "searches")} done.`
+          : "Searching the web for facts and sources to cite.",
+        result: researchLine(searches),
+      },
+      draft: {
+        waiting: "The article, written from the outline you approved.",
+        live: sections
+          ? `Writing the article's ${count(sections, "section")}, in the outline's order.`
+          : "Writing the article, in the outline's order.",
+      },
+      style: {
+        waiting: "A pass over the wording and the flow.",
+        live: "Checking the draft against the outline, then smoothing the wording and the flow.",
+      },
+      checks: {
+        waiting: "Readability, on-page SEO and trust.",
+        live: "Scoring readability, on-page SEO and trust, then saving the article.",
+      },
+    },
+    footer:
+      "You can leave this page. The article keeps being written, and we’ll tell you when it’s ready.",
+  };
+}
+
+/** "7 searches · 12 results read". */
+function researchLine(searches: RunSearch[]): string | undefined {
+  if (!searches.length) return undefined;
+  const results = searches.reduce(
+    (sum, search) => sum + (search.results ?? 0),
+    0,
+  );
+  return joinParts([
+    count(searches.length, "search", "searches"),
+    results ? `${count(results, "result")} read` : null,
+  ]);
 }
 
 function describeAnalysis(
