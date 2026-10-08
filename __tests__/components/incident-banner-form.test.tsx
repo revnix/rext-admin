@@ -255,4 +255,40 @@ describe("IncidentBannerForm", () => {
     await new Promise((resolve) => setTimeout(resolve, 30));
     expect(within(now()).getByText("A banner is showing")).toBeVisible();
   });
+
+  it("sends a replacement only after a switch-off that is still on its way, so the last thing asked for stays", async () => {
+    serve(showing());
+    let finishSwitchOff: () => void = () => {};
+    api.clear.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finishSwitchOff = () => {
+            // From here the backend holds no banner, until the replacement arrives.
+            serve(NONE);
+            resolve(NONE);
+          };
+        }),
+    );
+    const user = userEvent.setup();
+    renderForm();
+    await within(now()).findByText("A banner is showing");
+
+    await user.click(screen.getByRole("button", { name: "Switch it off" }));
+    await user.type(screen.getByLabelText(/Message/), "A newer notice.");
+    await user.click(
+      screen.getByRole("button", { name: "Replace the banner" }),
+    );
+    // The replacement waits: nothing is sent while the switch-off is in flight.
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(api.set).not.toHaveBeenCalled();
+
+    finishSwitchOff();
+    await waitFor(() =>
+      expect(api.set).toHaveBeenCalledWith(
+        expect.objectContaining({ message: "A newer notice." }),
+      ),
+    );
+    // The last thing asked for is what shows.
+    await waitFor(() => expect(now()).toHaveTextContent("A newer notice."));
+  });
 });
