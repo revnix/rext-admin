@@ -29,6 +29,45 @@ export function formatLabel(format: string | null | undefined): string | null {
   return (format && FORMAT_LABELS[format]) || null;
 }
 
+/** The same formats as a count reads them: "6 how-to guides". */
+const FORMAT_PLURALS: Record<string, string> = {
+  alternatives: "alternatives pages",
+  comparison: "comparisons",
+  "how-to": "how-to guides",
+  review: "reviews",
+  list: "list posts",
+  explainer: "explainers",
+  guide: "in-depth guides",
+  "home-page": "home pages",
+};
+
+/**
+ * What kinds of pages the results are, the commonest first, in one plain sentence: "Among these
+ * 10: 6 how-to guides, 2 list posts and 1 review." Null when no result's kind is known.
+ */
+export function describeRankingKinds(
+  results: readonly SerpResult[],
+): string | null {
+  const counts = new Map<string, number>();
+  for (const { format } of results) {
+    if (format && FORMAT_LABELS[format])
+      counts.set(format, (counts.get(format) ?? 0) + 1);
+  }
+  if (counts.size === 0) return null;
+  const parts = [...counts]
+    .sort((a, b) => b[1] - a[1])
+    .map(([format, count]) =>
+      count === 1
+        ? `1 ${FORMAT_LABELS[format].toLowerCase()}`
+        : `${count} ${FORMAT_PLURALS[format]}`,
+    );
+  const list =
+    parts.length === 1
+      ? parts[0]
+      : `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
+  return `Among these ${results.length}: ${list}.`;
+}
+
 /** example.com from https://www.example.com/a/b, or "" when the address doesn't parse. */
 export function domainOf(url: string | undefined): string {
   if (!url) return "";

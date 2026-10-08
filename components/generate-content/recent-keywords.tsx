@@ -51,10 +51,37 @@ export function RecentKeywords() {
   const showSkeleton = useShowAfter(library.isLoading);
 
   if (library.isLoading) {
+    // The list as it will stand (FB3.2): its heading, then rows of a keyword with its figures
+    // and its button.
     return showSkeleton ? (
-      <div className="mt-6 flex w-full flex-col gap-3" aria-hidden>
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-40 w-full" />
+      <div
+        data-slot="recent-keywords-skeleton"
+        className="mt-6 flex w-full flex-col gap-3"
+        aria-hidden
+      >
+        <div className="flex items-baseline justify-between gap-3">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+        <ul className="flex flex-col divide-y rounded-(--card-radius) border bg-card">
+          {[0, 1, 2].map((row) => (
+            <li key={row} className="flex items-start gap-3 px-4 py-3">
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <Skeleton className="h-3 w-28" />
+                <Skeleton className={row === 1 ? "h-5 w-40" : "h-5 w-56"} />
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                  <Skeleton className="h-4 w-24" />
+                  <span className="flex items-center gap-1.5">
+                    <Skeleton className="size-5 rounded-full" />
+                    <Skeleton className="h-4 w-12" />
+                  </span>
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              </div>
+              <Skeleton className="h-8 w-12 shrink-0" />
+            </li>
+          ))}
+        </ul>
       </div>
     ) : null;
   }
