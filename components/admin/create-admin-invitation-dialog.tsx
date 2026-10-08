@@ -46,7 +46,7 @@ export function CreateAdminInvitationDialog({
   const form = useZodForm(adminInvitationSchema, {
     defaultValues: {
       email: "",
-      admin_role: "support_admin",
+      admin_role: "support",
       message: "",
       expiry_days: 7,
     },
@@ -56,6 +56,8 @@ export function CreateAdminInvitationDialog({
     mutationFn: (data: AdminInvitationValues) =>
       apiClient.adminInvitations.create(data),
     onSuccess: (data) => {
+      // A 201 means the email went out: when it can't be sent the server keeps nothing and
+      // says so (task 915).
       toast.success(`Admin invitation sent to ${data.email}`);
       queryClient.invalidateQueries({ queryKey: ["admin-invitations"] });
       onOpenChange(false);
@@ -78,7 +80,9 @@ export function CreateAdminInvitationDialog({
           <DialogTitle>Invite a platform administrator</DialogTitle>
           <DialogDescription>
             An invitation that grants administrative access to the platform.
-            Only super admins can send one.
+            Only super admins can send one. The email's link works once, until
+            it expires; the person must sign in or sign up with exactly this
+            address, verified.
           </DialogDescription>
         </DialogHeader>
 
