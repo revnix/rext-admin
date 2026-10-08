@@ -9,10 +9,13 @@ import { FieldController } from "@/components/forms/field-controller";
 import { FormShell } from "@/components/forms/form-shell";
 import { useZodForm } from "@/components/forms/use-zod-form";
 import { RunProgress } from "@/components/generate-content/run-progress";
+import { CreationSteps } from "@/components/workspace/creation-steps";
+import { WorkspaceTakingShape } from "@/components/workspace/workspace-taking-shape";
 import { useCheckLimit } from "@/components/subscription/limit-check-wrapper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Notice } from "@/components/ui/notice";
+import { usePersonas } from "@/hooks/use-personas";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { analytics } from "@/lib/analytics";
 import { ApiError } from "@/lib/api-client/core";
@@ -20,7 +23,9 @@ import { log } from "@/lib/logger";
 import { subscriptionQueries, workspaceQueries } from "@/lib/query-keys";
 import {
   findFailedEvent,
+  workspaceFindings,
   workspaceRunStages,
+  workspaceStageDetails,
 } from "@/lib/workspace/workspace-run-stages";
 import { WorkspaceReviewStep } from "@/components/workspace/workspace-review-step";
 import { useSSE } from "@/providers/sse-provider";
@@ -110,6 +115,26 @@ export function WorkspaceCreateWizard() {
     };
   }, [operationId, disconnect, clearCompletedOperation]);
 
+  // The analysis as it goes (rext-control#845): where each stage stands and what it found, from
+  // the operation's events. The author personas are saved inside the brand-voice step, so they
+  // are read once that step has ended.
+  const stages = workspaceRunStages(events);
+  const findings = workspaceFindings(events);
+  const voiceStage = stages.find(
+    (stage) => stage.id === "workspace-brand-voice",
+  )?.state;
+  const personas = usePersonas(
+    voiceStage === "complete" ? idRef.current : null,
+  );
+  const people = personas.isSuccess
+    ? (personas.data?.personas ?? []).flatMap((persona) => {
+        const name = persona.full_name || persona.name;
+        return name
+          ? [{ name, title: persona.professional_title ?? undefined }]
+          : [];
+      })
+    : undefined;
+
   const handleSubmit = async (data: WorkspaceFormData) => {
     if (isLimitReached) {
       setLimitReached(true);
@@ -189,6 +214,7 @@ export function WorkspaceCreateWizard() {
   if (!operationId) {
     return (
       <div className="space-y-6">
+        <CreationSteps current={0} />
         {limitReached && (
           <Notice
             tone="warning"
@@ -242,22 +268,34 @@ export function WorkspaceCreateWizard() {
 
   if (reviewing && idRef.current && slugRef.current) {
     return (
-      <WorkspaceReviewStep
-        workspaceId={idRef.current}
-        workspaceSlug={slugRef.current}
-        website={website}
-      />
+      <div className="flex flex-col gap-8">
+        <CreationSteps current={2} />
+        <WorkspaceReviewStep
+          workspaceId={idRef.current}
+          workspaceSlug={slugRef.current}
+          website={website}
+        />
+      </div>
     );
   }
 
   const failed = findFailedEvent(events);
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      <CreationSteps current={1} />
       <p className="text-body text-muted-foreground">
         Reading {website}. It usually takes one to two minutes. The workspace is
         already created, so you can leave this page.
       </p>
-      <RunProgress stages={workspaceRunStages(events)} />
+      {/* The stages with what each found, as the run reports it. */}
+      <RunProgress
+        stages={stages}
+        details={workspaceStageDetails(
+          findings,
+          siteHost(website),
+          people?.map((person) => person.name),
+        )}
+      />
       {failed ? (
         <Notice
           tone="danger"
@@ -307,6 +345,21 @@ export function WorkspaceCreateWizard() {
           </Notice>
         )
       )}
+      {/* The workspace taking shape: each part in its shape, then the part itself. */}
+      <WorkspaceTakingShape
+        stages={stages}
+        findings={findings}
+        people={people}
+      />
     </div>
   );
+}
+
+/** "rext.ai" from the address typed, for the stages' lines. */
+function siteHost(website: string): string {
+  try {
+    return new URL(website).host.replace(/^www\./, "");
+  } catch {
+    return website || "your website";
+  }
 }
