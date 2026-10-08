@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DetailPage } from "@/components/layouts";
 import { RelatedPolicies } from "@/components/legal/related-policies";
+import { EXCEPTIONS_ON } from "@/lib/analytics-exceptions";
 import { RECORDING_ON } from "@/lib/analytics-recording";
 
 export const metadata: Metadata = {
@@ -304,6 +305,14 @@ export default function PrivacyPolicyPage() {
             the pointer, as positions on the page and nothing of what was there,
             so we can see which parts of a page are used.
           </li>
+          {EXCEPTIONS_ON && (
+            <li>
+              When it is on, it also receives that the app met an error it did
+              not handle: which kind of error, and where in our own code it
+              happened. The error&rsquo;s own message is never sent, because it
+              could hold something of yours.
+            </li>
+          )}
           <li>
             When it is off, PostHog receives only anonymous counts of the kinds
             of page opened: no account, workspace, article or keyword, and
