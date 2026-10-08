@@ -3,9 +3,11 @@
  *
  * A recording replays the page as the person saw it, so that we can see where people stop. It
  * starts strict: every typed value is hidden, and so is every text, except the app's own words on
- * its buttons, menus, labels and table headers. "The app's own words" is taken literally: a text
- * is shown only when it is in the list read from the app's source (lib/recording-words.ts), so a
- * workspace's name on a button, or a generated title in a menu, is hidden like any other text.
+ * its buttons, menus, labels and table headers. That is decided from the source, twice: the
+ * element has to carry a mark that only fixed text in the code can earn (lib/recording-marks.ts),
+ * and the text has to be on the list read from the app's source (lib/recording-words.ts). A
+ * workspace's name on a button, or a generated title in a menu, is hidden like any other text,
+ * and so is one that happens to read "Save".
  * Pictures, frames and the support chat are left out whole.
  *
  * Nothing is recorded unless NEXT_PUBLIC_SESSION_RECORDING is "true", the person allows usage
@@ -86,43 +88,28 @@ function isOwnWords(text: string): boolean {
 
 // ── Text ─────────────────────────────────────────────────────────────────────
 
-// Buttons, menus (their items, a select's options, tabs, the navigation), labels and table
-// headers. `data-rec="show"` adds an element of the app's own to them; the text inside still has
-// to be on the list.
-const SHOWN = [
-  "button",
-  '[role="button"]',
-  'a[data-slot="button"]',
-  "summary",
-  '[role="menuitem"]',
-  '[role="menuitemcheckbox"]',
-  '[role="menuitemradio"]',
-  '[role="option"]',
-  "option",
-  '[role="tab"]',
-  "nav a",
-  // The sidebar's own menu, a link of which can sit outside the navigation (Generate).
-  '[data-slot="sidebar-menu-button"]',
-  '[data-slot="sidebar-menu-sub-button"]',
-  "label",
-  "legend",
-  "th",
-  '[role="columnheader"]',
-  '[data-rec="show"]',
-].join(",");
-/** `data-rec="mask"` hides everything inside, whatever it says. */
-const HIDDEN = '[data-rec="mask"]';
+// A text may show only inside an element the source marked: `data-rec="show"` promises that the
+// element's content is fixed text written in the code (lib/recording-marks.ts proves it, and the
+// test fails where it doesn't hold), `data-rec="own"` that it is a label from a list in the code,
+// at one of the few render sites the test names. A button nobody marked is hidden, whatever it
+// says: a workspace named "Save" is not the app's "Save". The text still has to be on the list.
+const MARKED = "[data-rec]";
+/** `data-rec="mask"` hides everything inside, a marked element too. */
+const HIDDEN = '[data-rec="mask"], [data-rec="block"]';
+
+/** Whether the element sits in one the source marked as the app's own text. */
+function inMarkedElement(element: Element | null | undefined): boolean {
+  if (!element || element.closest(HIDDEN)) return false;
+  const mark = element.closest(MARKED)?.getAttribute("data-rec");
+  return mark === "show" || mark === "own";
+}
 
 const stars = (text: string) => text.replace(/\S/g, "*");
 
 /** A text as the recording keeps it: itself where it may be shown, otherwise stars of its length. */
 export function maskText(text: string, element?: Element | null): string {
   const shown =
-    element &&
-    onRecordablePage() &&
-    !element.closest(HIDDEN) &&
-    element.closest(SHOWN) &&
-    isOwnWords(text);
+    onRecordablePage() && inMarkedElement(element) && isOwnWords(text);
   return shown ? text : stars(text);
 }
 
@@ -199,12 +186,20 @@ export function maskAttribute(
 ): string {
   if (name === "style") return recordedStyle(value);
   if (STRUCTURE.has(name)) return value;
-  const hidden = !onRecordablePage() || Boolean(element?.closest(HIDDEN));
-  if (ADDRESSES.has(name)) return hidden ? "" : recordedAddress(value, element);
+  const offPage = !onRecordablePage();
+  if (ADDRESSES.has(name)) {
+    return offPage || element?.closest(HIDDEN)
+      ? ""
+      : recordedAddress(value, element);
+  }
+  // What a person can read needs the mark like a text does; a state or a name of the app's own
+  // only has to be off a hidden element.
+  const marked = !offPage && inMarkedElement(element);
+  const hidden = offPage || Boolean(element?.closest(HIDDEN));
   if (name === "value" && element && FIELDS.has(element.tagName)) {
     return stars(value);
   }
-  if (READABLE.has(name)) return !hidden && isOwnWords(value) ? value : "";
+  if (READABLE.has(name)) return marked && isOwnWords(value) ? value : "";
   // A state ("open"), a measure ("40"), a variant ("outline"), or the app's own words.
   if (STATE.test(value) || (!hidden && isOwnWords(value))) return value;
   return name === "value" ? stars(value) : "";
