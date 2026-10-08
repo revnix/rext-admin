@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DetailPage } from "@/components/layouts";
 import { RelatedPolicies } from "@/components/legal/related-policies";
+import { RECORDING_ON } from "@/lib/analytics-recording";
 
 export const metadata: Metadata = {
   title: "Privacy Policy - Payments & Billing",
@@ -284,6 +285,18 @@ export default function PrivacyPolicyPage() {
             or the article), together with your account ID, email, name and
             role. It keeps an identifier in your browser&rsquo;s storage.
           </li>
+          {RECORDING_ON && (
+            <li>
+              When it is on, it includes recordings of your screen on the
+              app&rsquo;s working pages, so we can see where people get stuck. A
+              recording hides everything you type and all text on the page,
+              except the app&rsquo;s own words on its buttons, menus, labels and
+              table headers; pictures are left out. Your workspace&rsquo;s
+              content, your keywords and your articles are not readable in it.
+              The sign-in, password, invitation and checkout pages are never
+              recorded.
+            </li>
+          )}
           <li>
             When it is off, PostHog receives only anonymous counts of the kinds
             of page opened: no account, workspace, article or keyword, and
