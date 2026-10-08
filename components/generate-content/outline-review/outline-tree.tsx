@@ -276,6 +276,10 @@ function OutlineGroup({
     : (listRows[0]?.key ?? null);
   const canAdd = canAddSection(rows);
   const added = addedSections(rows);
+  // The cap counts every list's additions together: they are named by this list's noun only when
+  // they are all its own, so a Tools list never claims the steps that were added.
+  const ownOnly = added === listRows.filter((row) => row.id === null).length;
+  const counted = ownOnly ? `new ${noun}s` : "additions";
 
   const registerRow = useCallback(
     (key: string, element: HTMLElement | null) => {
@@ -610,7 +614,7 @@ function OutlineGroup({
                       levelAbove === "H3"
                         ? "Add a subsection here"
                         : levelAbove === "H2"
-                          ? "Add a section here"
+                          ? `Add a ${noun} here`
                           : null
                     }
                     actions={rowActions({
@@ -742,8 +746,11 @@ function OutlineGroup({
             )}
             {added > 0 && (
               <span className="text-caption text-muted-foreground num">
-                {added} of {MAX_ADDED_SECTIONS} new {noun}s
-                {!canAdd && ` · ${ADD_CAP_REASON.toLowerCase()}`}
+                {added} of {MAX_ADDED_SECTIONS} {counted}
+                {!canAdd &&
+                  ` · one approval adds at most ${MAX_ADDED_SECTIONS}${
+                    ownOnly ? ` ${noun}s` : " in all"
+                  }`}
               </span>
             )}
           </div>
@@ -819,7 +826,7 @@ function rowActions({
     ? false
     : noun === "section"
       ? ADD_CAP_REASON
-      : `One approval adds at most ${MAX_ADDED_SECTIONS} ${noun}s`;
+      : `One approval adds at most ${MAX_ADDED_SECTIONS} in all`;
   // After the row's whole block (an H2's subsections, an H3's H4s), at its own level.
   const below = addable ? placeBelow(listRows, index) : null;
   return [
