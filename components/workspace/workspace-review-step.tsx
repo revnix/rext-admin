@@ -35,11 +35,14 @@ export function WorkspaceReviewStep({
   workspaceId,
   workspaceSlug,
   website,
+  withoutSite = false,
   after,
 }: {
   workspaceId: string;
   workspaceSlug: string;
   website?: string;
+  /** Made from a description of the business: there is no website (rext-control#853). */
+  withoutSite?: boolean;
   /** Under the fields, before Finish: what the draft showed that the fields don't hold. */
   after?: ReactNode;
 }) {
@@ -88,9 +91,9 @@ export function WorkspaceReviewStep({
       <Notice
         tone="danger"
         title={
-          website?.trim()
-            ? "The details from your website couldn't be loaded"
-            : "The brand voice couldn't be loaded"
+          withoutSite
+            ? "The brand voice couldn't be loaded"
+            : "The details from your website couldn't be loaded"
         }
         action={
           <Button
@@ -117,6 +120,7 @@ export function WorkspaceReviewStep({
         workspaceId={workspaceId}
         workspaceSlug={workspaceSlug}
         website={website}
+        withoutSite={withoutSite}
         competitors={data?.brand_voice?.competitors}
         closing="Check each part, change anything that's off, then finish."
       />

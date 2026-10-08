@@ -3,7 +3,7 @@ import {
   workspaceFormSchema,
 } from "@/schemas/workspace-schemas";
 
-const validWorkspace = { url: "https://example.com" };
+const validWorkspace = { from: "website", url: "https://example.com" };
 
 describe("workspace name validation", () => {
   it.each(["Workspace 2026", "R&D #1", "Café @ Home!"])(
