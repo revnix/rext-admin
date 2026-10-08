@@ -9,6 +9,14 @@
  * number, its rating and how the page was reached, and the page as its address's shape. Every
  * `$web_vitals` event passes through here on its way out (the provider's before_send).
  *
+ * Which page a measure is about: the app moves between its pages without loading a new document,
+ * and the browsers measure a document. The two paints are of the page the document was loaded on,
+ * once; the slowest answer and the jump are of the whole stay in the tab, sent when it is hidden.
+ * So an event names two pages: the one the document was loaded on (`loaded_route`), which is the
+ * one the paints are about, and the one on screen when the measure was recorded (`route`). The
+ * library's trial of a measure for each page moved to needs a part of the browser most people's
+ * don't have yet, and is not switched on.
+ *
  * Nothing is measured unless NEXT_PUBLIC_WEB_VITALS is "true" and the person allows usage
  * analytics.
  */
@@ -39,23 +47,29 @@ function numberOf(given: unknown): number | undefined {
     : undefined;
 }
 
-/** The page a measure was taken on: the event's own address, which is that page's and not the next. */
-function pageOf(address: unknown): string {
+/** The page this document was loaded on, read once as the app's code starts. */
+const LOADED_ON =
+  typeof window !== "undefined" ? window.location.pathname : null;
+
+/** The page of an address, where it is one. */
+function pageOf(address: unknown): string | undefined {
   try {
     if (typeof address === "string") return new URL(address).pathname;
   } catch {
-    // Not an address: the page on screen, below.
+    // Not an address.
   }
-  return typeof window !== "undefined" ? window.location.pathname : "/";
+  return undefined;
 }
 
 /**
  * A page's measures as they may leave. Of everything the library puts on the event about them
  * (the properties named `$web_vitals…`), each measure's number goes, and beside it the measure
  * rebuilt from its number, its rating and how the page was reached; the rest of the event is what
- * every event carries. The page is added as its address's shape, for a chart to be split by. An
- * event that isn't a page's measures is returned as it came; one with no number in it is not
- * sent.
+ * every event carries. Two pages are added as their addresses' shapes, for a chart to be split
+ * by: the one the document was loaded on, and the one a measure was recorded on. That second one
+ * is read from the address the library wrote into the measure as it arrived, then from the
+ * event's own, and only then from the screen, where the person may have moved on. An event that
+ * isn't a page's measures is returned as it came; one with no number in it is not sent.
  */
 export function webVitalsNumbers(event: CaptureResult): CaptureResult | null {
   if (event.event !== "$web_vitals") return event;
@@ -64,6 +78,7 @@ export function webVitalsNumbers(event: CaptureResult): CaptureResult | null {
     Object.entries(given).filter(([key]) => !key.startsWith("$web_vitals")),
   );
   let measured = 0;
+  let recordedOn: string | undefined;
   for (const measure of MEASURES) {
     const value = numberOf(given[`$web_vitals_${measure}_value`]);
     if (value === undefined) continue;
@@ -74,6 +89,7 @@ export function webVitalsNumbers(event: CaptureResult): CaptureResult | null {
         ? (whole as Record<string, unknown>)
         : {};
     const delta = numberOf(parts.delta);
+    recordedOn = recordedOn ?? pageOf(parts.$current_url);
     kept[`$web_vitals_${measure}_value`] = value;
     kept[`$web_vitals_${measure}_event`] = {
       name: measure,
@@ -89,6 +105,9 @@ export function webVitalsNumbers(event: CaptureResult): CaptureResult | null {
     };
   }
   if (measured === 0) return null;
-  kept.route = pathShape(pageOf(given.$current_url));
+  const onScreen =
+    typeof window !== "undefined" ? window.location.pathname : "/";
+  kept.route = pathShape(recordedOn ?? pageOf(given.$current_url) ?? onScreen);
+  if (LOADED_ON !== null) kept.loaded_route = pathShape(LOADED_ON);
   return { ...event, properties: kept };
 }

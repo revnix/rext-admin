@@ -119,6 +119,7 @@ describe("posthog-js's own event for a page's measures", () => {
       navigationType: "navigate",
     });
     expect(sent.route).toBe("/w/*/content/*");
+    expect(sent.loaded_route).toBe("/w/*/content/*");
     expect(
       Object.keys(sent)
         .filter((key) => key.startsWith("$web_vitals"))
@@ -135,6 +136,33 @@ describe("posthog-js's own event for a page's measures", () => {
     ]);
     // The emailed link's key that the page's address held is nowhere in it.
     expect(JSON.stringify(seen)).not.toContain("entry-secret");
+  });
+
+  it("names the page a measure was recorded on when the person has moved on before it is sent", () => {
+    const seen = recordEvents("moved-on", true);
+    const loadedOn = window.location.href;
+    const report = (name: Measure, value: number) => {
+      for (const tell of told[name]) {
+        tell({ name, value, delta: value, rating: "good" });
+      }
+    };
+
+    try {
+      report("FCP", 420);
+      // The app moves to another of its pages without loading a document; the library sends
+      // what it holds for the first page when a measure arrives on the second.
+      window.history.pushState({}, "", "/settings/plan");
+      report("LCP", 1834.5);
+
+      expect(seen).toHaveLength(1);
+      expect(window.location.pathname).toBe("/settings/plan");
+      expect(seen[0].properties.$web_vitals_FCP_value).toBe(420);
+      expect(seen[0].properties.$web_vitals_LCP_value).toBeUndefined();
+      expect(seen[0].properties.route).toBe("/w/*/content/*");
+      expect(seen[0].properties.loaded_route).toBe("/w/*/content/*");
+    } finally {
+      window.history.pushState({}, "", loadedOn);
+    }
   });
 
   it("would carry the page's raw address inside each measure without the cleaning (so the test above can see a leak)", () => {
