@@ -136,9 +136,18 @@ async function attach(websiteId: string, identity: Identity | null) {
       publishOpen(false);
     },
   ]);
-  queue.push(["on", "chat:opened", () => publishOpen(true)]);
-  // A reply that arrives, and the chat being read, change the unread mark.
-  for (const event of ["session:loaded", "message:received", "chat:opened"]) {
+  // Crisp keeps one callback per event, the last one registered: each event is registered once.
+  // The box opening also means the chat is being read, which changes the unread mark.
+  queue.push([
+    "on",
+    "chat:opened",
+    () => {
+      publishOpen(true);
+      publishUnread();
+    },
+  ]);
+  // A reply that arrives changes the unread mark.
+  for (const event of ["session:loaded", "message:received"]) {
     queue.push(["on", event, publishUnread]);
   }
   if (identity) identify(queue, identity);
