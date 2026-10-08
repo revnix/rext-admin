@@ -210,10 +210,12 @@ function ArticleEditor({
     [workspaceId, contentId, title, saveArticle, onSaved],
   );
 
-  const { state, savedAt, change, rebase, saveNow } = useAutosave({
-    initial: serverMarkdown,
-    save,
-  });
+  const { state, savedAt, change, rebase, saveNow, hold, resume } = useAutosave(
+    {
+      initial: serverMarkdown,
+      save,
+    },
+  );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: read once, when the editor opens
   useEffect(() => {
@@ -271,6 +273,19 @@ function ArticleEditor({
     clearLocalDraft(contentId);
     setFound(null);
   };
+
+  // What a restore takes with it: the text still unsaved here, this editor's own saving stopped
+  // meanwhile so the two can't cross.
+  const takeUnsaved = useCallback(async () => {
+    const held = await hold();
+    if (!held) return null;
+    return {
+      title,
+      body_markdown: held.value,
+      body_html: articleHtml(held.value),
+      images_data: deriveImagesData(held.value),
+    };
+  }, [hold, title]);
 
   const guard = useLeaveGuard(state !== "saved");
   const isMobile = useIsMobile();
@@ -608,7 +623,8 @@ function ArticleEditor({
           workspaceId={workspaceId}
           contentId={contentId}
           versions={versions}
-          beforeRestore={saveNow}
+          takeUnsaved={takeUnsaved}
+          onNotRestored={resume}
           onRestored={onRestored}
         />
       ) : null}

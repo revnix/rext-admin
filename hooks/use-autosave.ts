@@ -135,6 +135,27 @@ export function useAutosave<T>({
     return start();
   }, [start]);
 
+  /**
+   * Stops saving by itself and hands over what is still unsaved, for an action that takes the
+   * unsaved value to the server its own way (a version's restore keeps it as a version). A save
+   * under way is waited for first. Null when nothing is unsaved. `resume` lets the saving go on
+   * when that action didn't happen.
+   */
+  const hold = useCallback(async () => {
+    if (running.current) await running.current;
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    return Object.is(latest.current, saved.current)
+      ? null
+      : { value: latest.current };
+  }, []);
+
+  const resume = useCallback(() => {
+    if (!Object.is(latest.current, saved.current) && !inFlight.current) {
+      schedule(delay);
+    }
+  }, [delay, schedule]);
+
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -144,5 +165,5 @@ export function useAutosave<T>({
     };
   }, []);
 
-  return { state, savedAt, change, rebase, saveNow };
+  return { state, savedAt, change, rebase, saveNow, hold, resume };
 }

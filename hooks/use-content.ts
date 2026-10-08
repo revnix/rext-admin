@@ -10,6 +10,7 @@ import type {
   ContentListResponse,
   CreateContentRequest,
   UpdateContentRequest,
+  RestoreUnsaved,
 } from "@/types/content";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 
@@ -242,11 +243,20 @@ export function useRestoreContentVersion() {
       workspaceId,
       contentId,
       versionId,
+      unsaved,
     }: {
       workspaceId: string;
       contentId: string;
       versionId: string;
-    }) => apiClient.content.restoreVersion(workspaceId, contentId, versionId),
+      /** What the editor holds unsaved: kept as a version by the same call. */
+      unsaved?: RestoreUnsaved | null;
+    }) =>
+      apiClient.content.restoreVersion(
+        workspaceId,
+        contentId,
+        versionId,
+        unsaved,
+      ),
     retry: false,
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({

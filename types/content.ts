@@ -214,6 +214,19 @@ export interface ContentVersion {
   word_count: number;
 }
 
+/**
+ * What the editor still holds unsaved, sent with a restore: the backend keeps it as a version,
+ * restores the chosen one and trims the history in one step, so the version being restored can't
+ * be lost to a save made just before it. Each field whole; none means nothing was unsaved.
+ */
+export interface RestoreUnsaved {
+  title?: string;
+  introduction?: string;
+  body_markdown?: string;
+  body_html?: string;
+  images_data?: Record<string, unknown>;
+}
+
 /** A version with its text, as GET …/versions/{id} gives it. */
 export interface ContentVersionDetail extends ContentVersion {
   introduction?: string | null;
