@@ -19,6 +19,7 @@ import {
   type EventContext,
   environmentOf,
   eventContext,
+  isTeamBrowser,
   workspaceSlugOf,
 } from "@/lib/analytics-context";
 import {
@@ -486,6 +487,8 @@ function beforeSend(event: CaptureResult | null): CaptureResult | null {
     surface: "app",
     source: "client",
     environment: environmentOf(window.location.hostname),
+    // A browser of our own team, marked on rext.ai: left out of the numbers by this.
+    ...(isTeamBrowser() ? { internal: true } : {}),
   };
   return shown;
 }

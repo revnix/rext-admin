@@ -548,6 +548,25 @@ describe("every event that leaves", () => {
     });
   });
 
+  it("says when the browser is one of the team's own, and nothing of it otherwise", async () => {
+    mode.mockResolvedValue("full");
+    renderProvider();
+    await waitFor(() => expect(mockPosthog.init).toHaveBeenCalled());
+    const beforeSend = mockPosthog.init.mock.calls[0][1].before_send;
+    const sent = () =>
+      beforeSend({ event: "title_selected", properties: {} }).properties;
+
+    expect("internal" in sent()).toBe(false);
+    // biome-ignore lint/suspicious/noDocumentCookie: the mark as rext.ai sets it
+    document.cookie = "rext-internal=1; Path=/";
+    try {
+      expect(sent().internal).toBe(true);
+    } finally {
+      // biome-ignore lint/suspicious/noDocumentCookie: the test's own reset
+      document.cookie = "rext-internal=; Max-Age=0; Path=/";
+    }
+  });
+
   it("says so for someone counted without an identity too", async () => {
     mode.mockResolvedValue("anonymous");
     renderProvider();
