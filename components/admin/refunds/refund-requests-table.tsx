@@ -359,6 +359,8 @@ export function RefundRequestsTable({
           {/* Before the decision and before the money moves: the payment this refund leaves out. */}
           {(decision === "approve" || decision === "process") && (
             <PlanChangeNotice
+              // Its own height: on a phone the dialog fills the screen and stretches its rows.
+              className="self-start"
               charges={active?.plan_change_charges}
               // The request takes all that is left of the order: the plan ends with it.
               full={
