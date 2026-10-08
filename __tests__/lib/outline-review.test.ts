@@ -24,7 +24,9 @@ import {
   moveTarget,
   nearestGap,
   placeBelow,
+  isSectionList,
   outlineIsEmpty,
+  outlineParts,
   readOnlyBlocks,
   readOutlineFaqs,
   readOutlineGate,
@@ -1709,5 +1711,133 @@ describe("outlineIsEmpty", () => {
     expect(readOutlineGate({ type: "topic_selection" }).open).toBe(false);
     expect(readOutlineGate(undefined).open).toBe(false);
     expect(readOutlineGate({ type: "outline_review" }).open).toBe(true);
+  });
+});
+
+describe("the article's parts, as the gate lists them (task 814)", () => {
+  const structure = [
+    {
+      key: "best_picks",
+      heading: " Best Picks ",
+      items: [
+        { label: "Quick Kettle", points: ["Best overall", "", 3] },
+        { label: "", points: [] },
+        "not an item",
+      ],
+    },
+    {
+      key: "alternatives",
+      heading: "Alternatives",
+      list: "alternatives.alternatives",
+    },
+    { key: "pricing", heading: "Pricing", list: "pricing" },
+    { key: "use_cases", heading: "Use Cases", items: [] },
+    { key: "", heading: "No key", items: [{ label: "x", points: [] }] },
+    { heading: "No key at all" },
+    null,
+  ];
+  const gate = readOutlineGate({
+    type: "outline_review",
+    editable_sections: [
+      {
+        id: "alternatives.alternatives:0",
+        list: "alternatives.alternatives",
+        heading: "Tall Kettle",
+      },
+      {
+        id: "alternatives.alternatives:1",
+        list: "alternatives.alternatives",
+        heading: "Slow Kettle",
+      },
+      { id: "tools:0", list: "tools", heading: "A scale" },
+    ],
+    structure,
+  });
+
+  it("reads a part to read with its items, and a list by its path", () => {
+    expect(gate.structure).toEqual([
+      {
+        key: "best_picks",
+        heading: "Best Picks",
+        items: [{ label: "Quick Kettle", points: ["Best overall"] }],
+      },
+      {
+        key: "alternatives",
+        heading: "Alternatives",
+        list: "alternatives.alternatives",
+        items: [],
+      },
+    ]);
+  });
+
+  it("leaves out a part with nothing to show, and a list the gate offers no rows for", () => {
+    const keys = gate.structure.map((block) => block.key);
+    expect(keys).not.toContain("use_cases");
+    expect(keys).not.toContain("pricing");
+  });
+
+  it("is empty for a gate that sends none, or something else", () => {
+    expect(readOutlineGate({ type: "outline_review" }).structure).toEqual([]);
+    expect(readOutlineGate({ structure: "all of it" }).structure).toEqual([]);
+  });
+
+  it("puts each list in its place among the parts, and a list no part names after them", () => {
+    const rows = rowsFromGate(gate.sections);
+    expect(
+      outlineParts(gate.structure, rows).map((part) =>
+        part.kind === "list" ? `list ${part.list}` : `read ${part.block.key}`,
+      ),
+    ).toEqual([
+      "read best_picks",
+      "list alternatives.alternatives",
+      "list tools",
+    ]);
+  });
+
+  it("is the lists alone, in their order, without the gate's parts", () => {
+    const rows = rowsFromGate(gate.sections);
+    expect(outlineParts([], rows).map((part) => part.kind)).toEqual([
+      "list",
+      "list",
+    ]);
+  });
+
+  it("leaves out a list whose every row was removed", () => {
+    const rows = rowsFromGate(gate.sections).map((row) =>
+      row.list === "tools" ? { ...row, removed: true as const } : row,
+    );
+    expect(
+      outlineParts(gate.structure, rows).filter((part) => part.kind === "list"),
+    ).toHaveLength(1);
+  });
+
+  it("knows a list of sections from a list of entries", () => {
+    const rows = rowsFromGate([
+      {
+        id: "structure.sections:0",
+        list: "structure.sections",
+        heading: "One",
+      },
+      { id: "modules:0", list: "modules", heading: "Two", heading_level: "H2" },
+      { id: "steps:0", list: "steps", heading: "Three" },
+    ]);
+    expect(isSectionList("structure.sections", rows)).toBe(true);
+    expect(isSectionList("modules", rows)).toBe(true);
+    expect(isSectionList("steps", rows)).toBe(false);
+    expect(isSectionList("alternatives.alternatives", rows)).toBe(false);
+  });
+
+  it("is not empty with a part to read and no list (task 783)", () => {
+    const readOnly = readOutlineGate({
+      type: "outline_review",
+      structure: [structure[0]],
+    });
+    expect(outlineIsEmpty({ title: "Best kettles" }, readOnly)).toBe(false);
+    expect(
+      outlineIsEmpty(
+        { title: "Best kettles" },
+        readOutlineGate({ type: "outline_review" }),
+      ),
+    ).toBe(true);
   });
 });

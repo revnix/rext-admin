@@ -643,6 +643,171 @@ describe("OutlineReview, the outline tree", () => {
   });
 });
 
+describe("OutlineReview, an outline the gate lists whole (task 814)", () => {
+  // A product roundup: the picks the article reviews are a part to read; the alternatives are a
+  // list to edit. Before, the step drew the alternatives alone, headed "Sections".
+  const roundup = {
+    ...outline,
+    title: "Best budget kettles",
+    structure: undefined,
+    alternatives: {
+      alternatives: [
+        { name: "Tall Kettle", reason_to_consider: "A step up." },
+        { name: "Slow Kettle", reason_to_consider: "Quieter." },
+      ],
+    },
+    faqs: { faqs: [{ question: "How long does a kettle last?" }] },
+  } as unknown as Outline;
+  const roundupGate = {
+    type: "outline_review",
+    editable_sections: ["Tall Kettle", "Slow Kettle"].map((heading, index) => ({
+      id: `alternatives.alternatives:${index}`,
+      list: "alternatives.alternatives",
+      heading,
+    })),
+    structure: [
+      {
+        key: "methodology",
+        heading: "Methodology",
+        items: [{ label: "Criteria", points: ["Boil time", "Noise"] }],
+      },
+      {
+        key: "best_picks",
+        heading: "Best Picks",
+        items: [
+          { label: "Quick Kettle", points: ["Best overall"] },
+          { label: "Small Kettle", points: ["Best for one cup"] },
+        ],
+      },
+      {
+        key: "alternatives",
+        heading: "Alternatives",
+        list: "alternatives.alternatives",
+      },
+      {
+        key: "social_proof",
+        heading: "Social Proof",
+        items: [{ label: "User reviews summary", points: [] }],
+      },
+    ],
+  };
+
+  it("shows every part in the article's order: the picks to read, the alternatives to edit", () => {
+    renderReview({ gate: roundupGate, current: roundup });
+    const parts = screen
+      .getAllByRole("region")
+      .map((region) => region.getAttribute("aria-label") ?? region.textContent)
+      .filter((name) =>
+        ["Methodology", "Best Picks", "Alternatives", "Social Proof"].some(
+          (wanted) => name?.startsWith(wanted),
+        ),
+      );
+    expect(parts.map((name) => name?.replace(/2 alternatives.*/, ""))).toEqual([
+      "Methodology",
+      "Best Picks",
+      "Alternatives",
+      "Social Proof",
+    ]);
+    const picks = screen.getByRole("region", { name: "Best Picks" });
+    expect(within(picks).getByText("Quick Kettle")).toBeInTheDocument();
+    expect(within(picks).getByText("Best for one cup")).toBeInTheDocument();
+    // The list is headed by its own name and counts what it holds: never "Sections".
+    const list = screen.getByRole("region", { name: "Alternatives" });
+    expect(list).toHaveTextContent("2 alternatives");
+    expect(screen.queryByRole("region", { name: "Sections" })).toBeNull();
+    expect(
+      Array.from(
+        list.querySelectorAll('[data-slot="outline-heading"]'),
+        (heading) => heading.textContent,
+      ),
+    ).toEqual(["Tall Kettle", "Slow Kettle"]);
+  });
+
+  it("says a part that is only read can't be edited here, and whose the headings are", () => {
+    renderReview({ gate: roundupGate, current: roundup });
+    expect(
+      within(screen.getByRole("region", { name: "Best Picks" })).getByText(
+        "To change this part, regenerate with feedback.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "The article's parts, in the order they are written. The writer words each part's heading.",
+      ),
+    ).toBeInTheDocument();
+    // The list that is edited has its own controls, and no such note.
+    expect(
+      within(screen.getByRole("region", { name: "Alternatives" })).queryByText(
+        /regenerate with feedback/,
+      ),
+    ).toBeNull();
+  });
+
+  it("still sends an edit to the list, and nothing for the parts that are read", async () => {
+    const user = userEvent.setup();
+    const { approve } = renderReview({ gate: roundupGate, current: roundup });
+    await chooseFromMenu(user, "Slow Kettle", "Move up");
+    expect((await approve(user)).sections).toEqual([
+      { id: "alternatives.alternatives:1", heading: "Slow Kettle" },
+      { id: "alternatives.alternatives:0", heading: "Tall Kettle" },
+    ]);
+  });
+
+  it("shows the parts to read when the gate offers no list at all", () => {
+    renderReview({
+      gate: {
+        ...roundupGate,
+        editable_sections: [],
+        structure: roundupGate.structure.filter((block) => !block.list),
+      },
+      current: roundup,
+    });
+    expect(
+      within(screen.getByRole("region", { name: "Best Picks" })).getByText(
+        "Small Kettle",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /approve and generate/i }),
+    ).toBeEnabled();
+  });
+
+  it("lists the FAQ once, after the parts", () => {
+    renderReview({ gate: roundupGate, current: roundup });
+    expect(screen.getAllByText("How long does a kettle last?")).toHaveLength(1);
+  });
+
+  it("draws the lists alone, as before, for a gate that lists no parts", () => {
+    renderReview({
+      gate: { ...roundupGate, structure: undefined },
+      current: roundup,
+    });
+    expect(screen.queryByRole("region", { name: "Best Picks" })).toBeNull();
+    // A list of entries is headed by its own name even alone.
+    expect(
+      screen.getByRole("region", { name: "Alternatives" }),
+    ).toHaveTextContent("2 alternatives");
+    expect(screen.queryByText(/The article's parts/)).toBeNull();
+  });
+
+  it("keeps a blog's one list of sections headed Sections", () => {
+    renderReview({
+      gate: {
+        ...baseGate,
+        structure: [
+          {
+            key: "structure",
+            heading: "Structure",
+            list: "structure.sections",
+          },
+        ],
+      },
+    });
+    expect(sectionList()).toBeInTheDocument();
+    expect(screen.queryByText(/The article's parts/)).toBeNull();
+  });
+});
+
 describe("OutlineReview, the brief", () => {
   it("preselects the recommended prominence and sends the one chosen", async () => {
     const user = userEvent.setup();

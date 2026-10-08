@@ -27,6 +27,7 @@ import {
 import {
   Fragment,
   type KeyboardEvent,
+  type ReactNode,
   useCallback,
   useEffect,
   useId,
@@ -48,12 +49,14 @@ import {
   canChangeLevel,
   canRemoveRow,
   dropGaps,
-  groupRows,
+  type GateBlock,
   type HeadingLevel,
   insertLevelAt,
+  isSectionList,
   levelRank,
   listLabel,
   listSummary,
+  outlineParts,
   MAX_ADDED_SECTIONS,
   moveTarget,
   nearestGap,
@@ -73,6 +76,12 @@ export interface OutlineTreeProps {
   title?: string;
   /** Lists a section may be added to (the gate says which). */
   addableLists: string[];
+  /**
+   * The article's parts in order, where the gate lists them (task 814): each list takes its place
+   * among the parts that are only read, which `renderBlock` draws.
+   */
+  structure?: GateBlock[];
+  renderBlock?: (block: GateBlock) => ReactNode;
   /** False while the outline streams or the step is busy: rows show, nothing moves. */
   editable: boolean;
   /** Each edit says whether it happened; the outline announces what it did. */
@@ -111,32 +120,49 @@ export function OutlineTree({
   outline,
   title,
   addableLists,
+  structure = [],
+  renderBlock,
   editable,
   ...edits
 }: OutlineTreeProps) {
   const hintsId = useId();
-  const groups = groupRows(rows);
-  const named = groups.length > 1;
+  const parts = outlineParts(structure, rows);
+  const lists = parts.filter((part) => part.kind === "list");
+  // One list of sections alone is "Sections"; beside another list, or a part that is only read,
+  // each is headed by its own name, and so is a list of entries (a roundup's alternatives).
+  const named = parts.length > 1;
   // A How-to's Steps and Tools have no heading levels: the level keys are named only where a list has them.
-  const anyLevels = groups.some((group) => group.rows.some((row) => row.level));
+  const anyLevels = lists.some((group) => group.rows.some((row) => row.level));
+  const lastList = lists[lists.length - 1]?.list;
   return (
     <div className="space-y-6">
-      {groups.map((group, index) => (
-        <OutlineGroup
-          key={group.list}
-          list={group.list}
-          label={named ? listLabel(group.list) : "Sections"}
-          listRows={group.rows}
-          rows={rows}
-          outline={outline}
-          title={index === 0 ? title : undefined}
-          editable={editable}
-          addable={editable && addableLists.includes(group.list)}
-          hintsId={hintsId}
-          hints={index === groups.length - 1 ? { level: anyLevels } : undefined}
-          {...edits}
-        />
-      ))}
+      {parts.map((part, index) =>
+        part.kind === "block" ? (
+          <Fragment key={`part-${part.block.key}`}>
+            {renderBlock?.(part.block)}
+          </Fragment>
+        ) : (
+          <OutlineGroup
+            key={part.list}
+            list={part.list}
+            label={
+              named || !isSectionList(part.list, rows)
+                ? listLabel(part.list)
+                : "Sections"
+            }
+            listRows={part.rows}
+            rows={rows}
+            outline={outline}
+            // The title is the outline's root: atop the first part when that is a list.
+            title={index === 0 ? title : undefined}
+            editable={editable}
+            addable={editable && addableLists.includes(part.list)}
+            hintsId={hintsId}
+            hints={part.list === lastList ? { level: anyLevels } : undefined}
+            {...edits}
+          />
+        ),
+      )}
     </div>
   );
 }

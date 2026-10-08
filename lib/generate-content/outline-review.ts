@@ -41,11 +41,25 @@ export const BRAND_PROMINENCE_LEVELS: readonly BrandProminence[] = [
   "none",
 ];
 
+/**
+ * One part of the article, as the gate lists them in the order they are written (`structure`): a
+ * list the reviewer may edit names its `list` (its rows are in `sections`), any other part has
+ * `items` to read. `heading` is the part's name in the outline, not the article's own heading.
+ */
+export interface GateBlock {
+  key: string;
+  heading: string;
+  list?: string;
+  items: OutlineRenderBlock["items"];
+}
+
 /** The outline gate's offer, read defensively: every part may be missing. */
 export interface OutlineGate {
   /** Whether this is the outline's own gate; false before it opens (an earlier step's gate, or none). */
   open: boolean;
   sections: EditableSectionRow[];
+  /** The article's parts in order; empty from a backend that sends none (the lists alone show). */
+  structure: GateBlock[];
   /** The lists a new section may be added to; empty while the backend takes no additions. */
   addableLists: string[];
   /** The level to preselect; null when the gate names none (an older backend). */
@@ -83,17 +97,46 @@ function readRow(value: unknown): EditableSectionRow | null {
   };
 }
 
+function readBlock(value: unknown): GateBlock | null {
+  if (!isRecord(value)) return null;
+  const { key, heading, list, items } = value;
+  if (typeof key !== "string" || !key) return null;
+  if (typeof heading !== "string" || !heading.trim()) return null;
+  const read = (Array.isArray(items) ? items : [])
+    .filter(isRecord)
+    .map((item) => ({
+      label: typeof item.label === "string" ? item.label.trim() : "",
+      points: nonEmptyStrings(item.points).map((point) => point.trim()),
+    }))
+    .filter((item) => item.label || item.points.length > 0);
+  const editable = typeof list === "string" && list !== "";
+  // A part with neither rows to edit nor anything to read has nothing to show.
+  if (!editable && read.length === 0) return null;
+  return {
+    key,
+    heading: heading.trim(),
+    ...(editable ? { list } : {}),
+    items: editable ? [] : read,
+  };
+}
+
 export function readOutlineGate(value: unknown): OutlineGate {
   const gate = isRecord(value) ? value : {};
   const prominence = gate.recommended_brand_prominence;
+  const sections = (
+    Array.isArray(gate.editable_sections) ? gate.editable_sections : []
+  )
+    .map(readRow)
+    .filter((row): row is EditableSectionRow => row !== null);
+  const offered = new Set(sections.map((row) => row.list));
   return {
     open: gate.type === "outline_review",
-    sections: (Array.isArray(gate.editable_sections)
-      ? gate.editable_sections
-      : []
-    )
-      .map(readRow)
-      .filter((row): row is EditableSectionRow => row !== null),
+    sections,
+    structure: (Array.isArray(gate.structure) ? gate.structure : [])
+      .map(readBlock)
+      .filter((block): block is GateBlock => block !== null)
+      // A list the gate names but offers no rows for has nothing to draw.
+      .filter((block) => !block.list || offered.has(block.list)),
     addableLists: nonEmptyStrings(gate.section_additions),
     recommendedProminence: BRAND_PROMINENCE_LEVELS.includes(
       prominence as BrandProminence,
@@ -165,6 +208,51 @@ export function groupRows(
   return groupAll(rows)
     .map((group) => ({ ...group, rows: group.rows.filter(shown) }))
     .filter((group) => group.rows.length > 0);
+}
+
+/** What the outline step draws, top to bottom: a list of rows to edit, or a part to read. */
+export type OutlinePart =
+  | { kind: "list"; list: string; rows: TreeRow[] }
+  | { kind: "block"; block: GateBlock };
+
+/**
+ * The article's parts in the order the gate lists them (`structure`): each editable list in its
+ * place among the parts that are only read. A list the gate offers rows for and doesn't place
+ * follows them, so no row is ever left out; with no `structure` (an older backend, a restored
+ * run) the parts are the lists alone, as before.
+ */
+export function outlineParts(
+  structure: GateBlock[],
+  rows: TreeRow[],
+): OutlinePart[] {
+  const groups = groupRows(rows);
+  const placed = new Set<string>();
+  const parts: OutlinePart[] = [];
+  for (const block of structure) {
+    if (!block.list) {
+      parts.push({ kind: "block", block });
+      continue;
+    }
+    const group = groups.find((found) => found.list === block.list);
+    if (!group || placed.has(group.list)) continue;
+    placed.add(group.list);
+    parts.push({ kind: "list", ...group });
+  }
+  for (const group of groups)
+    if (!placed.has(group.list)) parts.push({ kind: "list", ...group });
+  return parts;
+}
+
+/**
+ * Whether a list is one of sections (rows with heading levels, or the outline's own `sections`):
+ * alone on the page it is headed "Sections". A list of entries (a roundup's alternatives, a how-to's
+ * steps) is always headed by its own name.
+ */
+export function isSectionList(list: string, rows: TreeRow[]): boolean {
+  return (
+    list.split(".").pop() === "sections" ||
+    rows.some((row) => row.list === list && row.level)
+  );
 }
 
 /** One list's shown rows, in order: what the tree draws and what the positions count. */
@@ -920,11 +1008,14 @@ export function readOnlyBlocks(outline: unknown): OutlineRenderBlock[] {
  */
 export function outlineIsEmpty(
   outline: unknown,
-  gate: Pick<OutlineGate, "open" | "sections">,
+  gate: Pick<OutlineGate, "open" | "sections"> &
+    Partial<Pick<OutlineGate, "structure">>,
 ): boolean {
   if (!gate.open || !isRecord(outline)) return false;
   return (
     gate.sections.length === 0 &&
+    // The parts the step draws to read, where the gate lists them (`structure`).
+    !(gate.structure ?? []).some((block) => block.items.length > 0) &&
     !readOnlyBlocks(outline).some(blockShowsSomething) &&
     readOutlineFaqs(outline).length === 0
   );
