@@ -20,6 +20,8 @@ import type {
   CaptureResult,
   PostHogConfig,
 } from "posthog-js";
+import { apiPathShape } from "@/lib/analytics-failures";
+import { sharedPath } from "@/lib/analytics-redact";
 import { markOf, normalizeWords } from "@/lib/recording-words";
 
 /** Off unless the deploy says "true": merged switched off, and switched on by a variable. */
@@ -168,7 +170,11 @@ const STATE =
   /^(?:true|false|on|off|open|closed|checked|unchecked|indeterminate|mixed|active|inactive|horizontal|vertical|top|bottom|left|right|start|end|center|visible|hidden|page|step|location|date|time|polite|assertive|none|both|inline|list|dialog|menu|listbox|tree|grid|ascending|descending|other|delayed-open|instant-open|from-start|from-end|to-start|to-end|ltr|rtl|auto|-?\d+(?:\.\d+)?(?:px|%|rem|em|ms|s)?)$/;
 const FIELDS = new Set(["INPUT", "TEXTAREA", "SELECT", "OPTION"]);
 
-/** An address without what follows the path. Only this site's, and a stylesheet's or a script's. */
+/**
+ * An address without what follows the path. Only this site's, and a stylesheet's or a script's.
+ * One of the app's own pages leaves as the events' addresses do (`sharedPath`): a link to a
+ * keyword's page names the keyword, and the Library lists one such link for every keyword.
+ */
 function recordedAddress(value: string, element?: Element | null): string {
   let url: URL;
   try {
@@ -182,7 +188,12 @@ function recordedAddress(value: string, element?: Element | null): string {
   // a picture's source, does not go into a recording.
   const asset = element?.tagName === "LINK" || element?.tagName === "SCRIPT";
   if (!ours && !asset) return "";
-  return asset ? url.href : url.origin + url.pathname;
+  return asset ? url.href : url.origin + pagePath(url.pathname);
+}
+
+/** One of this site's paths as a recording keeps it: the build's own files as they are. */
+function pagePath(pathname: string): string {
+  return pathname.startsWith("/_next/") ? pathname : sharedPath(pathname);
 }
 
 /** A `style` with every picture from elsewhere taken out. */
@@ -264,7 +275,9 @@ export function hideTypedValues(event: CaptureResult): CaptureResult {
 
 /**
  * A request's or a page's address as the recording keeps it: no query, no fragment, no headers
- * and no body. A page that isn't recorded doesn't leave its address either.
+ * and no body. A page that isn't recorded doesn't leave its address either. A page's path
+ * leaves with a star where a person's words stood (a keyword's page), and a request to the API
+ * as its route's shape, since the same key can stand in it.
  */
 export function maskNetworkRequest(
   request: CapturedNetworkRequest,
@@ -280,9 +293,14 @@ export function maskNetworkRequest(
     !url.pathname.startsWith("/_next/") &&
     !url.pathname.startsWith("/api/");
   if (page && !recordableRoute(url.pathname)) return null;
+  const path = page
+    ? sharedPath(url.pathname)
+    : url.pathname.startsWith("/api/")
+      ? apiPathShape(url.pathname)
+      : url.pathname;
   return {
     ...request,
-    name: url.origin + url.pathname,
+    name: url.origin + path,
     requestHeaders: undefined,
     requestBody: undefined,
     responseHeaders: undefined,
