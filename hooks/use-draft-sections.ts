@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   type DraftSection,
+  isSectionReset,
   readSectionEvent,
   sectionsInOrder,
   sectionsMarkdown,
@@ -24,7 +25,8 @@ interface Held {
  * The first draft's sections as the run's stream brings them, for the page to show before the
  * whole draft is there (task 773, part B).
  *
- * `add` takes any custom event of the stream and keeps the ones that are a section. `body` is
+ * `add` takes any custom event of the stream and keeps the ones that are a section; a reset (the
+ * writer asked again) lets go of the ones held. `body` is
  * the article's text so far: the sections that may be shown, in the article's order. Empty before
  * the article's first section, for another thread, and once the article is final (a later run
  * starts clean).
@@ -43,6 +45,13 @@ export function useDraftSections({
   if (stale) setHeld({ thread, sections: [], givenUp: 0 });
 
   const add = useCallback((event: unknown) => {
+    if (isSectionReset(event)) {
+      // The answer is being written again: a section it leaves out this time must not stay.
+      setHeld((was) =>
+        was.sections.length > 0 ? { ...was, sections: NONE, givenUp: 0 } : was,
+      );
+      return;
+    }
     const section = readSectionEvent(event);
     if (!section) return;
     setHeld((was) => ({

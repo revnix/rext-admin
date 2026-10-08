@@ -39,6 +39,16 @@ export function readSectionEvent(data: unknown): DraftSection | null {
 }
 
 /**
+ * The writer begins its answer again after sections of the answer before were sent: those are
+ * no longer the draft, and the new answer's follow from its first one.
+ */
+export function isSectionReset(data: unknown): boolean {
+  if (!data || typeof data !== "object") return false;
+  const event = data as Record<string, unknown>;
+  return event.type === "section" && event.phase === "reset";
+}
+
+/**
  * `held` with `section` at its place, in the article's order. A second one for a place replaces
  * the first: when the writer's answer is refused and asked for again, every section comes again.
  */

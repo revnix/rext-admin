@@ -113,6 +113,19 @@ describe("useDraftSections (task 773, part B)", () => {
     expect(result.current.body).toBe("## Section 1\n\nWritten again.");
   });
 
+  it("lets go of the sections when the writer starts its answer again, and takes the new ones", () => {
+    const { result } = start();
+    act(() => {
+      result.current.add(event(1));
+      result.current.add(event(2));
+    });
+    act(() => result.current.add({ type: "section", phase: "reset" }));
+    expect(result.current.body).toBe("");
+    // The new answer leaves the second section out: it doesn't stay from the answer before.
+    act(() => result.current.add(event(1, { markdown: "Written again." })));
+    expect(result.current.body).toBe("## Section 1\n\nWritten again.");
+  });
+
   it("carries nothing to another thread", () => {
     const { result, rerender } = start();
     act(() => result.current.add(event(1)));
