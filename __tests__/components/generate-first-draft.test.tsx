@@ -345,11 +345,14 @@ describe("the writing page and the writer's first draft (task 773)", () => {
       "The writer's first words.",
     );
 
-    // A long article: the stream ends after five minutes, and the page asks for its own run again.
+    // A long article: the stream ends after five minutes. The page is busy unwinding it for a
+    // second and a half, and would join again by itself soon after; in between, it is asked for
+    // its own run again, which is the path a fresh run's page takes.
     await act(async () => {
       run.end();
-      await new Promise((resolve) => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 1900));
     });
+    expect(mockRuns).toHaveLength(1);
     act(() => {
       window.dispatchEvent(
         new CustomEvent(BACKGROUND_GENERATION_RESTORE_EVENT, {
@@ -361,9 +364,13 @@ describe("the writing page and the writer's first draft (task 773)", () => {
     expect(screen.getByTestId("body")).toHaveTextContent(
       "The writer's first words.",
     );
+    // The page did go through the restore: it joins the run a second time.
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      for (let tries = 0; tries < 60 && mockRuns.length < 2; tries += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
     });
+    expect(mockRuns).toHaveLength(2);
     expect(screen.getByTestId("body")).toHaveTextContent(
       "The writer's first words.",
     );
