@@ -11,11 +11,21 @@ import { AppShell } from "./app-shell";
  * The shell for a route layout. It reads the sidebar's saved state on the server, so the first
  * paint is already collapsed or expanded. Every area that has the shell renders this from its
  * layout (`app/w`, `app/(home)`, the account pages, legal, admin); a page never mounts it.
+ *
+ * `sidebar="collapsed"` is for an area that wants the room (the article editor, task 839): the
+ * sidebar starts as icons there whatever was saved, and opens from its trigger as anywhere. Only
+ * that click is saved, so the choice made on the other pages comes back on leaving.
  */
-export async function ShellLayout({ children }: { children: ReactNode }) {
+export async function ShellLayout({
+  children,
+  sidebar,
+}: {
+  children: ReactNode;
+  sidebar?: "collapsed";
+}) {
   const cookieStore = await cookies();
-  const preference = parseSidebarPreference(
-    cookieStore.get(SIDEBAR_COOKIE_NAME)?.value,
-  );
+  const preference =
+    sidebar ??
+    parseSidebarPreference(cookieStore.get(SIDEBAR_COOKIE_NAME)?.value);
   return <AppShell defaultPreference={preference}>{children}</AppShell>;
 }

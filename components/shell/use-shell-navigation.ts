@@ -307,7 +307,13 @@ export function useShellNavigation(): ShellNavigation {
       setup,
       settings,
       admin,
-      activeUrl: findActiveUrl(pathname, urls),
+      // The article editor (/edit/<workspace>/<article>) is part of Content.
+      activeUrl: findActiveUrl(
+        workspaceSlug && pathname.startsWith("/edit/")
+          ? `/w/${workspaceSlug}/content`
+          : pathname,
+        urls,
+      ),
     };
   }, [filtered, pathname, workspaceSlug]);
 }

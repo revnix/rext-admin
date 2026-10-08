@@ -1,17 +1,17 @@
 import type { Metadata, Route } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { AnalyticsConsentPrompt } from "@/components/privacy/analytics-consent-prompt";
-import { IncidentBanner } from "@/components/shell/incident-banner";
+import { ShellLayout } from "@/components/shell/shell-layout";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { WorkspaceProvider } from "@/providers/workspace-provider";
 
 export const metadata: Metadata = { title: "Edit article" };
 
 /**
- * The full-screen article editor (task 706): a workspace's pages without the app shell, so the
- * writing has the whole window. A page under /w always gets the shell (app/w/layout.tsx), which is
- * why the editor lives here. The same sign-in check and workspace context as app/w/[workspaceSlug].
+ * The article editor (tasks 706 and 839): a workspace's page inside the app's shell like every
+ * other, with the sidebar collapsed by default so the writing has the room; it opens from its
+ * trigger. It lives outside /w because that area's layout mounts the shell with the saved sidebar
+ * state. The same sign-in check and workspace context as app/w/[workspaceSlug].
  */
 export default async function EditLayout({
   children,
@@ -27,19 +27,10 @@ export default async function EditLayout({
   const { workspaceSlug } = await params;
 
   return (
-    <WorkspaceProvider workspaceId={workspaceSlug}>
-      {/* The editor's frame is the whole window. The shell asks the analytics question on every
-          other signed-in page and shows the incident banner; the editor has no shell, so both are
-          here, and the editor takes the height that is left under them. */}
-      <div className="flex h-dvh flex-col bg-background">
-        <div className="shrink-0 pb-4 empty:hidden">
-          <IncidentBanner />
-          <AnalyticsConsentPrompt />
-        </div>
-        <div className="min-h-0 flex-1">
-          <ErrorBoundary framed>{children}</ErrorBoundary>
-        </div>
-      </div>
-    </WorkspaceProvider>
+    <ShellLayout sidebar="collapsed">
+      <WorkspaceProvider workspaceId={workspaceSlug}>
+        <ErrorBoundary framed>{children}</ErrorBoundary>
+      </WorkspaceProvider>
+    </ShellLayout>
   );
 }
