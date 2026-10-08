@@ -152,6 +152,75 @@ describe("useAutosave", () => {
     expect(save).toHaveBeenCalledTimes(1);
   });
 
+  it("waits for a save under way when asked to save at once, then says yes", async () => {
+    let finish: () => void = () => {};
+    const save = jest.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const { result } = renderHook(() =>
+      useAutosave({ initial: "", save, delay: 2000 }),
+    );
+    act(() => result.current.change("a"));
+    await act(async () => jest.advanceTimersByTime(2000));
+    expect(result.current.state).toBe("saving");
+
+    // Asked in the middle of the autosave (a Publish choice, a restore): no answer yet.
+    let answer: boolean | undefined;
+    act(() => {
+      void result.current.saveNow().then((saved) => {
+        answer = saved;
+      });
+    });
+    await flush();
+    expect(answer).toBeUndefined();
+
+    await act(async () => finish());
+    await flush();
+    expect(answer).toBe(true);
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(result.current.state).toBe("saved");
+  });
+
+  it("then saves what that save left, before it answers", async () => {
+    const finishes: Array<() => void> = [];
+    const save = jest.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finishes.push(resolve);
+        }),
+    );
+    const { result } = renderHook(() =>
+      useAutosave({ initial: "", save, delay: 2000 }),
+    );
+    act(() => result.current.change("a"));
+    await act(async () => jest.advanceTimersByTime(2000));
+    act(() => result.current.change("ab"));
+
+    let answer: boolean | undefined;
+    act(() => {
+      void result.current.saveNow().then((saved) => {
+        answer = saved;
+      });
+    });
+    await act(async () => finishes[0]());
+    await flush();
+    // The first save left "ab" unsaved: it goes at once, not after the delay.
+    expect(save).toHaveBeenCalledTimes(2);
+    expect(save).toHaveBeenLastCalledWith("ab");
+    expect(answer).toBeUndefined();
+
+    await act(async () => finishes[1]());
+    await flush();
+    expect(answer).toBe(true);
+    expect(result.current.state).toBe("saved");
+    // And no third save comes from the first one's own timer.
+    await act(async () => jest.advanceTimersByTime(5000));
+    expect(save).toHaveBeenCalledTimes(2);
+  });
+
   it("says no when a save on request fails", async () => {
     const save = jest.fn().mockRejectedValue(new Error("offline"));
     const { result } = renderHook(() => useAutosave({ initial: "", save }));

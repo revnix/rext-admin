@@ -420,6 +420,33 @@ describe("The editor's Publish menu", () => {
     expect(push).toHaveBeenCalledWith("/w/nextly/content/c1?publish=schedule");
   });
 
+  it("waits for a save already under way, then goes with the choice", async () => {
+    let finish: () => void = () => {};
+    update.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = () => resolve({});
+        }),
+    );
+    const user = renderPage();
+    await user.type(screen.getByLabelText("Article text"), "?");
+    // The menu is opened, and the autosave starts before a choice is made.
+    screen.getByRole("button", { name: "Publish" }).focus();
+    await user.keyboard("{Enter}");
+    const choice = await screen.findByRole("menuitem", { name: "Publish" });
+    await wait(2000);
+    expect(update).toHaveBeenCalledTimes(1);
+
+    await user.click(choice);
+    await wait(50);
+    expect(push).not.toHaveBeenCalled();
+
+    await act(async () => finish());
+    await wait(50);
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(push).toHaveBeenCalledWith("/w/nextly/content/c1?publish=publish");
+  });
+
   it("stays in the editor when that save fails", async () => {
     update.mockRejectedValue(new Error("offline"));
     const user = renderPage();

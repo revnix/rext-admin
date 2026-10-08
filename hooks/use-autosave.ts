@@ -36,18 +36,33 @@ export function useAutosave<T>({
   const saveRef = useRef(save);
   saveRef.current = save;
   const runRef = useRef<() => Promise<boolean>>(async () => true);
+  // The save under way, for a caller that has to wait for it (`saveNow`).
+  const running = useRef<Promise<boolean> | null>(null);
   // False once the page is gone: a save still in flight then ends quietly, and nothing is tried
   // again, so an abandoned editor can never write its old text over a newer one.
   const alive = useRef(true);
 
-  const schedule = useCallback((ms: number) => {
-    if (timer.current) clearTimeout(timer.current);
-    if (!alive.current) return;
-    timer.current = setTimeout(() => {
-      timer.current = null;
-      void runRef.current();
-    }, ms);
+  /** Starts a save and keeps hold of it while it runs. */
+  const start = useCallback(() => {
+    const run = runRef.current();
+    running.current = run;
+    void run.finally(() => {
+      if (running.current === run) running.current = null;
+    });
+    return run;
   }, []);
+
+  const schedule = useCallback(
+    (ms: number) => {
+      if (timer.current) clearTimeout(timer.current);
+      if (!alive.current) return;
+      timer.current = setTimeout(() => {
+        timer.current = null;
+        void start();
+      }, ms);
+    },
+    [start],
+  );
 
   runRef.current = async () => {
     if (inFlight.current || !alive.current) return false;
@@ -107,12 +122,18 @@ export function useAutosave<T>({
     latest.current = value;
   }, []);
 
-  /** Saves at once: "Retry now", or the way out of the page. True when nothing is left unsaved. */
+  /**
+   * Saves at once: "Retry now", or the way out of the page. True when nothing is left unsaved. A
+   * save already under way is waited for first, then whatever it left is saved: asked for in the
+   * middle of an autosave, it must not answer "not saved" and drop what the person chose to do.
+   */
   const saveNow = useCallback(async () => {
+    if (running.current) await running.current;
+    // The save just ended may have set a timer for what it left: this is that save.
     if (timer.current) clearTimeout(timer.current);
     timer.current = null;
-    return runRef.current();
-  }, []);
+    return start();
+  }, [start]);
 
   useEffect(() => {
     alive.current = true;
