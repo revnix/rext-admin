@@ -381,7 +381,7 @@ export function WorkspaceCreateWizard({
     activity: workspaceActivity(events, site, kind),
   };
   const plan = withoutSite
-    ? "When you create the workspace, we draft its brand voice from what you tell us. It takes a few seconds, and you review everything before any of it is used. You can add a website later in the workspace's settings, and we read it then."
+    ? "When you create the workspace, we draft its brand voice from what you tell us. It takes under half a minute, and you review everything before any of it is used. You can add a website later in the workspace's settings, and we read it then."
     : "When you create the workspace, we read your website and draft its brand voice, author personas and competitors. It takes about a minute, you can leave the page meanwhile, and you review everything before any of it is used.";
 
   let main: ReactNode;
@@ -559,7 +559,7 @@ export function WorkspaceCreateWizard({
       <div className="space-y-6">
         <p className="text-body text-muted-foreground">
           {withoutSite
-            ? "Drafting your brand voice from your description. It takes a few seconds."
+            ? "Drafting your brand voice from your description. It takes under half a minute."
             : `Reading ${website}. It usually takes about a minute.`}{" "}
           The workspace is already created, so you can leave this page.
         </p>
