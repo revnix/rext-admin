@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  type FocusEvent,
   type ReactNode,
   useCallback,
   useEffect,
@@ -448,16 +449,20 @@ export function WorkspaceCreateWizard({
             required
           >
             {(field) => (
-              // The caret waits here on arrival: plainly empty, and the place to start. Losing the
-              // focus before anything was typed (the first-login questions open over the form
-              // and take it) is not leaving the field: no "required" beside a field nobody has
-              // had the chance to fill.
+              // The caret waits here on arrival: plainly empty, and the place to start. Having the
+              // focus taken before anything was typed (the first-login questions open over the
+              // form and take it) is not leaving the field: no "required" beside a field nobody
+              // has had the chance to fill. A person who tabs or clicks out of it has left it.
               <Input
                 {...field}
                 autoFocus
                 maxLength={200}
-                onBlur={() => {
-                  if (field.value || form.formState.submitCount > 0) {
+                onBlur={(event) => {
+                  if (
+                    field.value ||
+                    form.formState.submitCount > 0 ||
+                    !focusWasTaken(event)
+                  ) {
                     field.onBlur();
                   }
                 }}
@@ -677,6 +682,19 @@ export function WorkspaceCreateWizard({
 // once, and the longest step (the competitor search) says something within a minute.
 const FIRST_EVENT_WAIT_MS = 20_000;
 const QUIET_WAIT_MS = 150_000;
+
+/**
+ * Whether a field lost the focus without the person leaving it: a dialog opened over the form and
+ * took it, or the window itself lost it (the field is then still the document's active element,
+ * and has the caret again when the person comes back).
+ */
+function focusWasTaken(event: FocusEvent<HTMLElement>): boolean {
+  const next = event.relatedTarget;
+  if (next instanceof Element) {
+    return next.closest('[role="dialog"]') !== null;
+  }
+  return document.activeElement === event.target;
+}
 
 /** "rext.ai" from the address typed, for the stages' lines. */
 function siteHost(website: string): string {
