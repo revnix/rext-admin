@@ -150,8 +150,19 @@ describe("SuggestionsSection", () => {
     expect(
       within(pane).getByRole("link", { name: "Best SEO tools for 2026" }),
     ).toBeInTheDocument();
+    // Each result at a glance: its position, its site, the kind of page it is.
+    const result = within(pane).getByRole("listitem");
+    expect(within(result).getByText("Position")).toBeInTheDocument();
+    expect(within(result).getByText("example.com")).toBeInTheDocument();
+    expect(within(result).getByText("List post")).toBeInTheDocument();
+    // What the list is, in the customer's words, and the kinds of pages in it.
     expect(
-      within(pane).getByText("example.com · List post"),
+      within(pane).getByText(
+        "The pages Google shows first for this keyword. Your article will compete with them.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(pane).getByText("Among these 1: 1 list post."),
     ).toBeInTheDocument();
     // A malformed result is left out.
     expect(within(pane).getAllByRole("listitem")).toHaveLength(1);
@@ -197,13 +208,13 @@ describe("SuggestionsSection", () => {
       ).toBeInTheDocument();
     });
 
-    it("sit beside the status while the keyword's data is missing", () => {
+    it("sit on the keyword card while the keyword's data is missing", () => {
       renderSuggestions({ gate, seoResult: null, suggestedKeywords: [] });
 
-      const button = screen.getByRole("button", {
-        name: "Top search results",
-      });
-      expect(screen.getByRole("status").parentElement).toContainElement(button);
+      const card = screen.getByRole("region", { name: "seo tools" });
+      expect(
+        within(card).getByRole("button", { name: "Top search results" }),
+      ).toBeInTheDocument();
     });
 
     it("have no button without results", () => {
@@ -212,6 +223,33 @@ describe("SuggestionsSection", () => {
         screen.queryByRole("button", { name: "Top search results" }),
       ).toBeNull();
     });
+  });
+
+  it("shows the card and the keyword table as placeholders while the data is missing", () => {
+    const { container } = renderSuggestions({
+      seoResult: null,
+      suggestedKeywords: [],
+    });
+
+    // The card stands with the keyword, each figure a placeholder of its own shape.
+    const card = screen.getByRole("region", { name: "seo tools" });
+    expect(within(card).getByText("Searched keyword")).toBeInTheDocument();
+    expect(
+      card.querySelectorAll('[data-slot="keyword-fact-pending"]'),
+    ).toHaveLength(5);
+    expect(within(card).queryByText("—")).toBeNull();
+    // "Other keywords" is there as its heading and rows to come; nothing acts yet.
+    const others = screen.getByRole("region", { name: "Other keywords" });
+    expect(others).toHaveAttribute("aria-busy", "true");
+    expect(
+      within(others).getByRole("heading", { name: "Other keywords" }),
+    ).toBeInTheDocument();
+    expect(within(others).queryByRole("button")).toBeNull();
+    expect(container.querySelector("table")).toBeNull();
+    // Said once for a screen reader.
+    expect(
+      screen.getByText("Fetching the keyword's data..."),
+    ).toBeInTheDocument();
   });
 
   it("says so when there is nothing to suggest", () => {

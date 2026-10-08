@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Loader2 } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { type ReactNode, useId, useMemo } from "react";
 import { KeywordCard } from "@/components/keywords/keyword-card";
 import {
@@ -8,10 +8,14 @@ import {
   type KeywordRow,
   KeywordTable,
 } from "@/components/keywords/keyword-table";
-import { SerpSnapshot } from "@/components/keywords/serp-snapshot";
+import {
+  SerpSnapshot,
+  SerpSnapshotSkeleton,
+} from "@/components/keywords/serp-snapshot";
 import { SidePaneTrigger, WithSidePane } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTimedOut } from "@/hooks/use-timed-out";
 import {
   intentLabel,
@@ -23,11 +27,16 @@ import type { RunFindings } from "@/lib/generate-content/run-findings";
 import type { RunStage } from "@/lib/generate-content/run-stages";
 import { fillKeywordFacts } from "@/lib/generate-content/step-fill";
 import { serpResultsFromGate } from "@/lib/keywords/serp-results";
+import { cn } from "@/lib/utils";
 import type { KeywordCluster, SEORESULT } from "@/types/generate-content";
 import { StageCostTooltip } from "./run-cost";
 
 // No loading state on this step outlives this; then it says what is missing.
 const LOADING_TIMEOUT_MS = 30_000;
+
+// What the search results are and why the step shows them, in the customer's words (FB3.2).
+const RESULTS_INTRO =
+  "The pages Google shows first for this keyword. Your article will compete with them.";
 
 const same = (a: string, b: string) =>
   a.trim().toLowerCase() === b.trim().toLowerCase();
@@ -116,26 +125,28 @@ export function SuggestionsSection({
             </StageCostTooltip>
           }
         />
-      ) : (
+      ) : analysisTimedOut ? (
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p
-            role="status"
-            className="flex items-center gap-2 text-body text-muted-foreground"
-          >
-            {analysisTimedOut ? (
-              "The keyword analysis didn't return its data."
-            ) : (
-              <>
-                <Loader2
-                  className="size-4 animate-spin motion-reduce:animate-none"
-                  aria-hidden
-                />
-                Fetching the keyword's data...
-              </>
-            )}
+          <p role="status" className="text-body text-muted-foreground">
+            The keyword analysis didn't return its data.
           </p>
           {resultsButton}
         </div>
+      ) : (
+        // The card and the list as they will stand, until the keyword's data is here.
+        <>
+          <p role="status" className="sr-only">
+            Fetching the keyword's data...
+          </p>
+          <KeywordCard
+            keyword={primaryKeyword}
+            metrics={keywordMetrics(null)}
+            pending={{ metrics: "Loading", intent: "Loading" }}
+            eyebrow="Searched keyword"
+            action={resultsButton}
+          />
+          <OtherKeywordsSkeleton />
+        </>
       )}
 
       {seoResult && (
@@ -170,7 +181,14 @@ export function SuggestionsSection({
       sideTitle="Top search results"
       showTitle
       trigger="inline"
-      side={<SerpSnapshot results={serpTitles} heading={null} />}
+      side={
+        <SerpSnapshot
+          results={serpTitles}
+          heading={null}
+          intro={RESULTS_INTRO}
+          kinds
+        />
+      }
     >
       {step}
     </WithSidePane>
@@ -209,7 +227,12 @@ export function SuggestionsFilling({
         // The same space above as the card beside it: the box would else touch the search field.
         <div className="space-y-6 pt-4">
           {progress}
-          {results.length > 0 && <SerpSnapshot results={results} />}
+          {results.length > 0 ? (
+            <SerpSnapshot results={results} intro={RESULTS_INTRO} kinds />
+          ) : (
+            // The list's shape until the results are read, so nothing jumps when they are.
+            <SerpSnapshotSkeleton intro={RESULTS_INTRO} />
+          )}
         </div>
       }
     >
@@ -246,7 +269,56 @@ export function SuggestionsFilling({
             <SidePaneTrigger />
           </div>
         )}
+        <OtherKeywordsSkeleton />
       </div>
     </WithSidePane>
+  );
+}
+
+/**
+ * "Other keywords" before the suggestions arrive, shaped like their table (FB3.2): the heading, the
+ * header row, and rows of a keyword, its monthly searches, its difficulty and the button.
+ */
+function OtherKeywordsSkeleton({ rows = 5 }: { rows?: number }) {
+  return (
+    <section
+      data-slot="other-keywords-skeleton"
+      aria-label="Other keywords"
+      aria-busy="true"
+      className="flex flex-col gap-3"
+    >
+      <h2 className="text-section text-foreground">Other keywords</h2>
+      <div
+        className="overflow-hidden rounded-(--card-radius) border bg-card"
+        aria-hidden
+      >
+        <div className="flex items-center gap-4 border-b bg-surface-inset px-4 py-2.5">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="ml-auto hidden h-3 w-16 sm:block" />
+          <Skeleton className="hidden h-3 w-16 sm:block" />
+          <Skeleton className="h-3 w-12" />
+        </div>
+        <ul className="divide-y">
+          {Array.from({ length: rows }, (_, row) => (
+            // The rows are alike and never reordered.
+            // biome-ignore lint/suspicious/noArrayIndexKey: see above
+            <li key={row} className="flex h-11 items-center gap-4 px-4">
+              <Skeleton
+                className={cn("h-4", row % 2 === 0 ? "w-48" : "w-36")}
+              />
+              <Skeleton className="ml-auto hidden h-4 w-12 sm:block" />
+              <span className="hidden items-center gap-1.5 sm:flex">
+                <Skeleton className="size-5 rounded-full" />
+                <Skeleton className="h-4 w-10" />
+              </span>
+              <Skeleton className="h-8 w-20" />
+            </li>
+          ))}
+        </ul>
+      </div>
+      <span className="sr-only" role="status">
+        Finding other keywords
+      </span>
+    </section>
   );
 }

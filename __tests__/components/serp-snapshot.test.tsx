@@ -1,8 +1,13 @@
 import { render, screen, within } from "@testing-library/react";
-import { SerpSnapshot } from "@/components/keywords/serp-snapshot";
 import {
+  SerpSnapshot,
+  SerpSnapshotSkeleton,
+} from "@/components/keywords/serp-snapshot";
+import {
+  describeRankingKinds,
   domainOf,
   formatLabel,
+  type SerpResult,
   serpResultsFromOrganic,
 } from "@/lib/keywords/serp-results";
 
@@ -181,5 +186,121 @@ describe("serp results", () => {
     expect(results.map((r) => r.position)).toEqual([
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
     ]);
+  });
+
+  describe("on the keyword step (task 834)", () => {
+    const results: SerpResult[] = [
+      {
+        position: 1,
+        title: "How to repot a houseplant",
+        domain: "example.com",
+        url: "https://example.com/repot",
+        format: "how-to",
+      },
+      {
+        position: 2,
+        title: "Repotting, step by step",
+        domain: "plants.example.org",
+        format: "how-to",
+      },
+      {
+        position: 3,
+        title: "10 repotting mistakes",
+        domain: "",
+        format: "list",
+      },
+      { position: 4, title: "A forum thread", domain: "forum.example.net" },
+    ];
+
+    it("says what the list is, counts its kinds, and shows each result at a glance", () => {
+      render(
+        <SerpSnapshot
+          results={results}
+          intro="The pages Google shows first for this keyword."
+          kinds
+        />,
+      );
+
+      expect(
+        screen.getByText("The pages Google shows first for this keyword."),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Among these 4: 2 how-to guides and 1 list post."),
+      ).toBeInTheDocument();
+
+      const [first, second, third, fourth] = screen.getAllByRole("listitem");
+      expect(first).toHaveTextContent("Position 1");
+      expect(
+        within(first).getByRole("link", { name: "How to repot a houseplant" }),
+      ).toHaveAttribute("href", "https://example.com/repot");
+      expect(within(first).getByText("example.com")).toBeInTheDocument();
+      expect(within(first).getByText("How-to guide")).toBeInTheDocument();
+      // No address: the title is text. No site: only the kind. No kind: only the site.
+      expect(within(second).queryByRole("link")).toBeNull();
+      expect(within(third).getByText("List post")).toBeInTheDocument();
+      expect(within(fourth).getByText("forum.example.net")).toBeInTheDocument();
+      expect(within(fourth).queryByText("·")).toBeNull();
+    });
+
+    it("counts no kinds when none is known", () => {
+      const { container } = render(
+        <SerpSnapshot results={[results[3]]} kinds />,
+      );
+      expect(container.querySelector('[data-slot="serp-kinds"]')).toBeNull();
+    });
+
+    it("keeps the plain list where the step doesn't ask for more", () => {
+      render(<SerpSnapshot results={results.slice(0, 1)} />);
+      expect(
+        screen.getByText("example.com · How-to guide"),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/Among these/)).toBeNull();
+    });
+
+    it("stands as rows to come until the results arrive", () => {
+      const { container } = render(
+        <SerpSnapshotSkeleton intro="The pages Google shows first." rows={6} />,
+      );
+      const waiting = screen.getByRole("region", {
+        name: "Top search results",
+      });
+      expect(waiting).toHaveAttribute("aria-busy", "true");
+      expect(container.querySelectorAll("li")).toHaveLength(6);
+      expect(
+        screen.getByText("The pages Google shows first."),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Reading the search results",
+      );
+    });
+  });
+
+  describe("the kinds of pages among the results", () => {
+    const of = (...formats: (string | null)[]): SerpResult[] =>
+      formats.map((format, index) => ({
+        position: index + 1,
+        title: `Result ${index + 1}`,
+        domain: "example.com",
+        format,
+      }));
+
+    it("are counted, the commonest first, in one sentence", () => {
+      expect(
+        describeRankingKinds(
+          of("list", "how-to", "how-to", "review", null, "how-to", "list"),
+        ),
+      ).toBe("Among these 7: 3 how-to guides, 2 list posts and 1 review.");
+      expect(describeRankingKinds(of("guide", "guide"))).toBe(
+        "Among these 2: 2 in-depth guides.",
+      );
+      expect(describeRankingKinds(of("home-page"))).toBe(
+        "Among these 1: 1 home page.",
+      );
+    });
+
+    it("are left unsaid when no result's kind is known", () => {
+      expect(describeRankingKinds(of(null, "something-new"))).toBeNull();
+      expect(describeRankingKinds([])).toBeNull();
+    });
   });
 });

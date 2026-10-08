@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   describeMonthlyVolume,
   formatCompactVolume,
@@ -133,13 +134,30 @@ function Fact({
   );
 }
 
-/** A fact its step hasn't sent yet: a dash, and what it waits for. */
-function Pending({ note }: { note: string }) {
+/**
+ * A fact its step hasn't sent yet: a placeholder shaped like what will stand there (a figure, the
+ * difficulty's ring and level, the intent's choice), and what it waits for (FB3.2, task 834).
+ */
+function Pending({
+  note,
+  shape = "figure",
+}: {
+  note: string;
+  shape?: "figure" | "ring" | "choice";
+}) {
   return (
-    <span className="flex flex-col gap-0.5">
-      <span className="text-muted-foreground" aria-hidden="true">
-        {UNKNOWN}
-      </span>
+    <span className="flex flex-col gap-1.5" data-slot="keyword-fact-pending">
+      {shape === "ring" ? (
+        <span className="flex items-center gap-3" aria-hidden="true">
+          <Skeleton className="size-16 rounded-full" />
+          <Skeleton className="h-5 w-12" />
+        </span>
+      ) : (
+        <Skeleton
+          aria-hidden="true"
+          className={shape === "choice" ? "h-8 w-full max-w-48" : "h-7 w-20"}
+        />
+      )}
       <span className="text-caption text-muted-foreground">{note}</span>
     </span>
   );
@@ -284,14 +302,14 @@ export function KeywordCard({
         </Fact>
         <Fact label="Difficulty">
           {pending?.metrics ? (
-            <Pending note={pending.metrics} />
+            <Pending note={pending.metrics} shape="ring" />
           ) : (
             <KeywordDifficulty score={metrics.difficulty} />
           )}
         </Fact>
         <Fact label="Search intent" className="col-span-2 sm:col-span-1">
           {pending?.intent ? (
-            <Pending note={pending.intent} />
+            <Pending note={pending.intent} shape="choice" />
           ) : (
             <Intent
               intents={metrics.intents}

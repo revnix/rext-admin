@@ -76,6 +76,20 @@ describe("the Select keyword step while its analysis runs", () => {
     expect(within(pane).getByText("The run's stages")).toBeVisible();
     expect(within(pane).queryByRole("link")).toBeNull();
     expect(screen.getByText("The run's stages, one line")).toBeVisible();
+    // The list's shape stands where the results will (task 834): ten rows to come, and the line
+    // that says what the list is.
+    const waiting = pane.querySelector('[data-slot="serp-snapshot-skeleton"]');
+    expect(waiting).toHaveAttribute("aria-busy", "true");
+    expect(waiting?.querySelectorAll("li")).toHaveLength(10);
+    expect(
+      within(pane).getByText(
+        "The pages Google shows first for this keyword. Your article will compete with them.",
+      ),
+    ).toBeVisible();
+    // And the keyword table's, under the card.
+    expect(
+      screen.getByRole("region", { name: "Other keywords" }),
+    ).toHaveAttribute("aria-busy", "true");
   });
 
   it("fills in: the results first, then the intent, then the figures", () => {
@@ -88,6 +102,11 @@ describe("the Select keyword step while its analysis runs", () => {
         "Vegetable Garden Planner | The Old Farmer's Almanac",
       ),
     ).toBeVisible();
+    // The results took the placeholder's place.
+    expect(
+      pane.querySelector('[data-slot="serp-snapshot-skeleton"]'),
+    ).toBeNull();
+    expect(within(pane).getByText("almanac.com")).toBeVisible();
     expect(screen.getAllByText("Measured next")).toHaveLength(4);
 
     const filling = (findings: RunFindings) => (
