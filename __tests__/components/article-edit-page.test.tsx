@@ -586,13 +586,11 @@ describe("The editor's History", () => {
       ...VERSIONS[1],
       body_markdown: "The first text",
     });
+    // As the route answers: the article itself, not under `content` as a save's answer is.
     contentApi.restoreVersion.mockResolvedValue({
       id: "c1",
-      content: {
-        id: "c1",
-        title: "The first title",
-        body_markdown: "The first text",
-      },
+      title: "The first title",
+      body_markdown: "The first text",
     });
     const user = renderPage();
     await user.type(screen.getByLabelText("Article text"), "?");
@@ -729,6 +727,41 @@ describe("The editor's History", () => {
     await wait(50);
     expect(contentApi.restoreVersion).toHaveBeenCalledTimes(1);
     expect(screen.getByLabelText("Article text")).toHaveValue("The first text");
+  });
+
+  it("takes an answer with no article in it as a restore that failed, in words the person sees", async () => {
+    contentApi.versions.mockResolvedValue({ versions: VERSIONS });
+    contentApi.version.mockResolvedValue({
+      ...VERSIONS[1],
+      body_markdown: "The first text",
+    });
+    contentApi.restoreVersion.mockResolvedValue({
+      message: "Version restored",
+    });
+    const user = renderPage();
+
+    const drawer = await openHistory(user);
+    await user.click(
+      within(drawer).getByRole("button", { name: /As first written/ }),
+    );
+    await within(drawer).findByLabelText("Version text");
+    await user.click(
+      within(drawer).getByRole("button", { name: "Restore this version" }),
+    );
+    await user.click(
+      within(await screen.findByRole("alertdialog")).getByRole("button", {
+        name: "Restore version",
+      }),
+    );
+    await wait(50);
+
+    // The version is still open, with what went wrong said under it: nothing is left looking
+    // as if the restore had done nothing.
+    expect(within(drawer).getByLabelText("Version text")).toBeInTheDocument();
+    expect(
+      within(drawer).getByText(/The version wasn't restored/),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Article text")).toHaveValue("Hello");
   });
 
   it("says so when the restore itself fails, and changes nothing", async () => {

@@ -129,14 +129,14 @@ export function HistoryDrawer({
     // version being restored.
     const unsaved = await takeUnsaved();
     try {
-      const response = await restore.mutateAsync({
+      const article = await restore.mutateAsync({
         workspaceId,
         contentId,
         versionId,
         unsaved,
       });
-      back();
-      onRestored(response.content);
+      // The editor starts again on the restored article, and this drawer goes with it.
+      onRestored(article);
     } catch (error) {
       onNotRestored();
       setProblem(
