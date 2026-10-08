@@ -16,27 +16,43 @@ import {
 export function useGenerateStepViewed({
   index,
   threadId,
-  restored,
+  openedRun,
   fromLibrary,
 }: {
   index: number;
   threadId: string | null;
-  /** The page was opened on a run that already existed. */
-  restored: boolean;
+  /**
+   * The run the page was opened on, one it did not start itself (a reload, a job picked from the
+   * dock); null on a new article, also once that article's run has its id.
+   */
+  openedRun: string | null;
   /** The run starts from a saved keyword: its two keyword steps are never shown. */
   fromLibrary: boolean;
 }): void {
   const tracker = useRef<StepViewTracker | null>(null);
+  const opened = useRef<string | null>(null);
   const thread = useRef(threadId);
   thread.current = threadId;
-  // biome-ignore lint/correctness/useExhaustiveDependencies: an arrival is a change of step; how the page was opened is read once, when its first step is counted
+  // biome-ignore lint/correctness/useExhaustiveDependencies: an arrival is a change of step or of the run opened; a start from the Library is one for the page's life
   useEffect(() => {
-    tracker.current ??= createStepViewTracker({ restored, fromLibrary });
+    const another = tracker.current !== null && openedRun !== opened.current;
+    opened.current = openedRun;
+    if (another && openedRun !== null) {
+      // Another run was opened on this same page (a job picked from the dock): its steps are
+      // counted from the start, as on a page opened on it. The step on screen at this moment is
+      // still the one of the run left behind, so it isn't counted for this one.
+      tracker.current = createStepViewTracker({ restored: true, fromLibrary });
+      return;
+    }
+    tracker.current ??= createStepViewTracker({
+      restored: openedRun !== null,
+      fromLibrary,
+    });
     const view = tracker.current.arrive(index, Date.now());
     if (!view) return;
     analytics.track("generate_step_viewed", {
       ...view,
       thread_id: thread.current ?? undefined,
     });
-  }, [index]);
+  }, [index, openedRun]);
 }
