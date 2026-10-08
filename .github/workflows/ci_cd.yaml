@@ -17,8 +17,19 @@ name: deploy
 #     plan — no extra charge and no GitHub Actions build minutes.
 #   - `--no-wait` makes the runner trigger the deploy and exit immediately
 #     (~1 min/run) instead of idling while Vercel builds. Trade-off: a failed
-#     Vercel build will NOT show up as a failed Action — check the Vercel
-#     dashboard for build status.
+#     Vercel build will NOT show up as a failed deploy job — the smoke job
+#     below reads the build's result from Vercel and turns the run red.
+#
+# The smoke job (task FB2.34) runs after the deploy and beside it: no job needs
+# it, so a failure there turns the run red and says what failed, and can't hold
+# back or undo a deploy. It waits until the address serves this run's
+# deployment (scripts/wait-for-deploy.mjs), then opens the dashboard as a
+# visitor (playwright.smoke.config.ts): the sign-in and sign-up forms, and an
+# app address sent to sign-in. With a test account in the repository's secrets
+# (SMOKE_EMAIL and SMOKE_PASSWORD for production, SMOKE_STAGING_EMAIL and
+# SMOKE_STAGING_PASSWORD for staging) it also signs in and opens Home and
+# Generate up to the keyword step; without one that part is skipped. It never
+# starts a generation, buys or saves anything. About two minutes a run.
 
 on:
   push:
@@ -50,3 +61,56 @@ jobs:
           else
             npx vercel@latest deploy --target=staging --yes --no-wait --token=${{ secrets.VERCEL_TOKEN }}
           fi
+
+  smoke:
+    needs: deploy
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    env:
+      SMOKE_BASE_URL: ${{ github.ref == 'refs/heads/main' && 'https://app.rext.ai' || 'https://staging.rext.ai' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 12
+          cache: true
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: The browser for the smoke test
+        run: pnpm exec playwright install --with-deps --only-shell chromium
+
+      - name: Wait until Vercel serves this deploy
+        # Red when the build failed on Vercel, or when the address still serves an
+        # older deployment after eight minutes. The token only reads the list of
+        # deployments here.
+        timeout-minutes: 10
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPLOY_TARGET: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          # A deployment made since this run (or this attempt of it) began is this
+          # deploy's. If GitHub can't say when that was, the last quarter of an hour.
+          DEPLOY_SINCE=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}" --jq .run_started_at 2> /dev/null || true)
+          [ -n "$DEPLOY_SINCE" ] || DEPLOY_SINCE=$(date -u -d '15 minutes ago' +%Y-%m-%dT%H:%M:%SZ)
+          export DEPLOY_SINCE
+          node scripts/wait-for-deploy.mjs
+
+      - name: Smoke test
+        timeout-minutes: 3
+        env:
+          SMOKE_EMAIL: ${{ github.ref == 'refs/heads/main' && secrets.SMOKE_EMAIL || secrets.SMOKE_STAGING_EMAIL }}
+          SMOKE_PASSWORD: ${{ github.ref == 'refs/heads/main' && secrets.SMOKE_PASSWORD || secrets.SMOKE_STAGING_PASSWORD }}
+        run: pnpm exec playwright test -c playwright.smoke.config.ts

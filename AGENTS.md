@@ -17,7 +17,7 @@ Codex and Claude Code both read this file (`CLAUDE.md` imports it). Keep it unde
 ## Branches
 
 - **`main` is what app.rext.ai runs.** Never branch from it, target it or push to it.
-- **`staging` is the base branch.** Every branch starts from `origin/staging` and every pull request targets `staging`. **A merge is a deploy:** a push to `staging` deploys the staging app (`.github/workflows/ci_cd.yaml`, a Vercel deploy with `--no-wait`), so a broken build shows in the Vercel dashboard, not in Actions.
+- **`staging` is the base branch.** Every branch starts from `origin/staging` and every pull request targets `staging`. **A merge is a deploy:** a push to `staging` deploys the staging app (`.github/workflows/ci_cd.yaml`, a Vercel deploy with `--no-wait`), so a broken build shows in the Vercel dashboard and in the run's `smoke` job, not in its deploy job.
 - One task, one branch, one pull request, kept small. Rework branches are named `app/<task>-<slug>`, each in a worktree of its own, and are merged by `../rext-control/scripts/app/merge.sh` (rebase and merge), never by hand.
 - The team merges here daily. Rebase on `origin/staging` before your checks and before your merge, push your own branch with `--force-with-lease`, and never rewrite a commit that is not yours. A rework clone keeps no tracking ref for a task branch, so the bare flag is refused as stale: name the head you last pushed (the pull request shows it), `git push --force-with-lease=<branch>:<that sha> origin <branch>`.
 - For Claude Code sessions, `.claude/settings.json` and the hooks in `.claude/hooks/` refuse reading an env file (every `.env` name and `.envrc` but `*.example`, through any tool or program; `test -s` and `grep -c` stay allowed), every `vercel` command, a push to `main`, `staging` or `stage` or of every branch, and a forced push other than `--force-with-lease`. They read each command as text, so they stop mistakes, not a program written to get round them.
@@ -46,6 +46,7 @@ pnpm layout:check            # pages outside the five layouts, hand-written page
 pnpm api:types               # lib/api-client/schema.d.ts from api/openapi.json, the backend's spec (ARCHITECTURE.md, the API client)
 pnpm a11y                    # axe, focus and reduced motion in Playwright, on a build started with REXT_DEV_PAGES=1 (playwright.config.ts)
 pnpm perf                    # Lighthouse CI's budgets on five pages, after a build (lighthouserc.json)
+pnpm exec playwright test -c playwright.smoke.config.ts   # the smoke test a deploy ends with, against SMOKE_BASE_URL (ci_cd.yaml's smoke job)
 ```
 
 - The Husky pre-commit hook runs Biome on the staged files only (their fixes are staged with them); never skip it with `--no-verify`. The type check, the full lint and the tests run in CI (`pr-checks.yaml`) and in `check.sh`, not on commit.
