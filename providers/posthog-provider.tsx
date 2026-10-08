@@ -69,6 +69,10 @@ let routeOnScreen: string | null = null;
 const FIRST_VIEW_WAIT_MS = 3000;
 // Whether this page load's first view has gone out. The ones after it find the app's memory filled.
 let firstViewSent = false;
+// The address of the last page view sent. A list writes its search and its filters into the
+// address, and what a person typed there leaves as "redacted" (lib/analytics-redact.ts): the
+// same page under the same address is the same view, not a new one for every key pressed.
+let lastViewed: string | null = null;
 
 function PostHogPageView({ anonymous }: { anonymous: boolean }) {
   const pathname = usePathname();
@@ -124,6 +128,7 @@ function PostHogPageView({ anonymous }: { anonymous: boolean }) {
         $current_url: waiting.current,
         workspace_id: null,
       });
+      lastViewed = waiting.current;
       firstViewSent = true;
     }
     waiting.current = null;
@@ -137,6 +142,8 @@ function PostHogPageView({ anonymous }: { anonymous: boolean }) {
       return;
     }
     firstViewSent = true;
+    if (lastViewed === address) return;
+    lastViewed = address;
     posthog.capture("$pageview", { $current_url: address });
   }, [pathname, searchParams, params, anonymous, ready]);
 
@@ -144,6 +151,7 @@ function PostHogPageView({ anonymous }: { anonymous: boolean }) {
     const leave = () => {
       if (!waiting.current) return;
       posthog.capture("$pageview", { $current_url: waiting.current });
+      lastViewed = waiting.current;
       sentOnLeaving.current = waiting.current;
       waiting.current = null;
       firstViewSent = true;
@@ -725,6 +733,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       stopListening();
       forgetPostHog();
       firstViewSent = false;
+      lastViewed = null;
     };
   }, []);
 
