@@ -9,6 +9,7 @@ import {
   House,
   LayoutDashboard,
   Mail,
+  Megaphone,
   Monitor,
   Plug,
   Settings,
@@ -210,6 +211,14 @@ const ADMIN_GROUP: NavGroup = {
       url: "/admin/monitoring",
       icon: Monitor,
       permission: SECURITY_PERMISSIONS.READ,
+      prefetch: false,
+    },
+    {
+      // Switching the banner needs security.manage; the page says so to anyone who only reads.
+      title: "Incident banner",
+      url: "/admin/status",
+      icon: Megaphone,
+      permission: SECURITY_PERMISSIONS.MANAGE,
       prefetch: false,
     },
     {
