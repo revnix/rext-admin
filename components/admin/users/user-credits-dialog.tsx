@@ -309,7 +309,10 @@ function CreditAdjustmentForm({
 
   const action = form.watch("action");
   const planCredits = credits.credits_per_month;
-  const canReset = planCredits !== null && planCredits > 0;
+  // The backend says whether a reset is possible (a trial has monthly credits and still
+  // can't be reset); one that doesn't say yet is read as before.
+  const canReset =
+    credits.can_reset ?? (planCredits !== null && planCredits > 0);
   const amountMax = limits?.amount_max;
   const line = confirmationLine(
     {
