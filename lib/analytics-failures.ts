@@ -79,7 +79,7 @@ export const ROUTE_TREE: RouteTree = {
   unauthorized: {},
   unsubscribe: {},
   "verify-email": {},
-  w: { "*": { content: { "*": {}, calendar: {} }, "generate-content": {}, integrations: {}, keywords: { "*": {} }, personas: { "*": { edit: {} }, create: {} }, settings: { "brand-voice": {}, "danger-zone": {}, members: {} } }, create: {} },
+  w: { "*": { content: { "*": {}, calendar: {} }, "generate-content": {}, integrations: {}, keywords: { "*": {} }, personas: { "*": { edit: {} }, create: {} }, settings: { "brand-voice": {}, "danger-zone": {}, members: {} }, setup: {} }, create: {} },
 };
 
 /**
