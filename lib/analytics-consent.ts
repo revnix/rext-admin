@@ -13,7 +13,9 @@
  * - `rext-consent` (`granted` or `denied`), set when the person chooses: here at once, and again
  *   by `/api/consent`, because Safari keeps a cookie written by a script for seven days only.
  *   It is one cookie for rext.ai and the app (`Domain=.rext.ai`): an answer given on either is the
- *   answer on both, and nobody is asked twice. Staging and previews keep one of their own.
+ *   answer on both, and nobody is asked twice. Staging and previews keep one of their own; a host
+ *   under rext.ai that shares nothing (staging) keeps it as `rext-consent-own`, since the browser
+ *   sends it the live `.rext.ai` cookie as well.
  */
 
 export type ConsentChoice = "granted" | "denied";
@@ -27,6 +29,8 @@ export type AnalyticsMode = "full" | "anonymous" | "wait";
 
 export const REGION_COOKIE = "rext-region";
 export const CONSENT_COOKIE = "rext-consent";
+/** The name a host under rext.ai that shares nothing keeps its answer under (consentCookieName). */
+export const OWN_CONSENT_COOKIE = "rext-consent-own";
 
 /** Six months, after which the person is asked again. */
 const CONSENT_MAX_AGE = 60 * 60 * 24 * 182;
@@ -52,8 +56,23 @@ export function sharedCookieDomain(hostname: string): string | null {
 }
 
 /**
- * The `rext-consent` cookie, the same whether the page or the server sets it. With the host it is
- * set from, it is the shared one where that host has one.
+ * The name of the cookie that holds the choice on a host. A host under rext.ai that shares nothing
+ * (staging) is still sent the live `.rext.ai` cookie, and a page can't tell two cookies of one
+ * name apart: a no given on the live site would overrule a yes given while testing, and a live yes
+ * would mean staging never asks. Under a name of its own, the live answer is never read there.
+ * The website's staging host does the same, under the same name.
+ */
+export function consentCookieName(hostname: string): string {
+  const host = hostname.toLowerCase();
+  const underRext = host === "rext.ai" || host.endsWith(".rext.ai");
+  return underRext && !sharedCookieDomain(host)
+    ? OWN_CONSENT_COOKIE
+    : CONSENT_COOKIE;
+}
+
+/**
+ * The choice's cookie, the same whether the page or the server sets it. With the host it is
+ * set from, it is the shared one where that host has one, and carries that host's name for it.
  */
 export function consentCookie(
   choice: ConsentChoice,
@@ -61,7 +80,8 @@ export function consentCookie(
   hostname?: string,
 ): string {
   const domain = hostname ? sharedCookieDomain(hostname) : null;
-  return `${CONSENT_COOKIE}=${choice}; Max-Age=${CONSENT_MAX_AGE}; Path=/; SameSite=Lax${domain ? `; Domain=${domain}` : ""}${secure ? "; Secure" : ""}`;
+  const name = hostname ? consentCookieName(hostname) : CONSENT_COOKIE;
+  return `${name}=${choice}; Max-Age=${CONSENT_MAX_AGE}; Path=/; SameSite=Lax${domain ? `; Domain=${domain}` : ""}${secure ? "; Secure" : ""}`;
 }
 
 /**
@@ -128,7 +148,10 @@ function readCookie(name: string): string | null {
  * kept by this host sits beside a different one from rext.ai, a no stays a no.
  */
 export function readConsent(): ConsentChoice | null {
-  const choices = readCookies(CONSENT_COOKIE).filter(isConsentChoice);
+  if (typeof window === "undefined") return null;
+  const choices = readCookies(
+    consentCookieName(window.location.hostname),
+  ).filter(isConsentChoice);
   if (choices.length === 0) return null;
   return choices.includes("denied") ? "denied" : "granted";
 }
