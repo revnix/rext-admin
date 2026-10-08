@@ -12,6 +12,13 @@ type AnalyticsEvent =
   | "user_signed_up"
   | "oauth_started"
   | "email_verified"
+  // The sign-up and sign-in forms, which are never recorded (lib/analytics-forms.ts)
+  | "signup_started"
+  | "signup_field_filled"
+  | "signup_submitted"
+  | "signup_refused"
+  | "signin_submitted"
+  | "signin_refused"
   // Onboarding
   | "first_login_questions_shown"
   | "first_login_questions_completed"

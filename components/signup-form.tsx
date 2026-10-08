@@ -23,6 +23,14 @@ import { ApiError, apiClient } from "@/lib/api-client";
 import { getAuthHeaders } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
 import { analytics } from "@/lib/analytics";
+import {
+  firstRefusedField,
+  isDuplicateAccount,
+  SIGN_UP_FIELDS,
+  signInRefusal,
+  signUpRefusal,
+} from "@/lib/analytics-forms";
+import { useFormProgress } from "@/hooks/use-form-progress";
 import { useToast } from "@/hooks/use-toast";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { checkPasswordBreach } from "@/lib/password-utils";
@@ -66,6 +74,16 @@ export function SignupForm({
   const { setValue } = form;
   const passwordValue = form.watch("password");
 
+  // This page is never recorded: the form says how far a person got in it, and what turned them
+  // away, by kind (lib/analytics-forms.ts).
+  const invited = hasValidInvitation && !!invitationToken;
+  const progress = useFormProgress({
+    started: "signup_started",
+    fieldFilled: "signup_field_filled",
+    fields: SIGN_UP_FIELDS,
+    properties: { method: "credentials", invited },
+  });
+
   // A new password re-checks a confirmation already typed, so a mismatch shows
   // (or clears) without leaving the field first.
   useEffect(() => {
@@ -86,11 +104,19 @@ export function SignupForm({
 
   const onSubmit = async (data: SignupFormData) => {
     setIsLoading(true);
+    analytics.track("signup_submitted", { method: "credentials", invited });
+    // Once the account exists, what goes wrong after it is no refusal of the sign-up.
+    let created = false;
 
     try {
       // Check for breached password
       const breachResult = await checkPasswordBreach(data.password);
       if (breachResult.breached) {
+        analytics.track("signup_refused", {
+          kind: "password_breached",
+          field: SIGN_UP_FIELDS.password,
+          invited,
+        });
         form.setError("password", {
           message: `This password has appeared in ${breachResult.count.toLocaleString()} data breaches. Please choose a different password.`,
         });
@@ -127,6 +153,7 @@ export function SignupForm({
         throw new ApiError(400, msg);
       }
 
+      created = true;
       analytics.track("user_signed_up", {
         method: isInvitationSignup ? "invitation" : "credentials",
       });
@@ -209,6 +236,10 @@ export function SignupForm({
       } else {
         // The account exists and is verified, but the login after sign-up was refused: say so
         // and take the user to the login form with the address filled in.
+        analytics.track("signin_refused", {
+          kind: signInRefusal(result?.code),
+          after_sign_up: true,
+        });
         toast.error(
           "Your account is ready, but logging in didn't work. Log in to continue.",
         );
@@ -216,17 +247,14 @@ export function SignupForm({
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Signup failed";
+      if (!created) {
+        analytics.track("signup_refused", { ...signUpRefusal(err), invited });
+      }
 
       // Account already exists - the user is trying to "create" an account they
       // already have. Point them at sign-in instead of showing a raw error, and
       // carry the invitation through so they still land in the workspace.
-      const isDuplicateAccount =
-        (ApiError.is(err) && err.statusCode === 409) ||
-        /already (exists|registered|in use)|already have an account|email.*taken/i.test(
-          errorMessage,
-        );
-
-      if (isDuplicateAccount) {
+      if (isDuplicateAccount(err)) {
         const email = form.getValues("email");
         toast.error(
           "An account with this email already exists. Please sign in instead.",
@@ -321,7 +349,18 @@ export function SignupForm({
       />
 
       {/* A submit before the page runs is the browser's own: post keeps the fields out of the address. */}
-      <form method="post" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+      <form
+        method="post"
+        onSubmit={form.handleSubmit(onSubmit, (errors) =>
+          analytics.track("signup_refused", {
+            kind: "form",
+            field: firstRefusedField(errors, SIGN_UP_FIELDS),
+            invited,
+          }),
+        )}
+        noValidate
+        {...progress}
+      >
         <FieldGroup>
           <FieldController
             control={form.control}
