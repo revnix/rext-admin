@@ -43,6 +43,10 @@ export function SignupForm({
   ...props
 }: React.ComponentProps<"div">) {
   const [isLoading, setIsLoading] = useState(false);
+  // A field to move the focus to once the form's fields are enabled again.
+  const [focusWhenEnabled, setFocusWhenEnabled] = useState<
+    "full_name" | "email" | "password" | null
+  >(null);
   const hydrated = useHydrated();
   // Set once the account exists but can't log in until its email is verified.
   const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
@@ -94,6 +98,12 @@ export function SignupForm({
       void form.trigger("confirmPassword");
     }
   }, [passwordValue, form]);
+
+  useEffect(() => {
+    if (!focusWhenEnabled || isLoading) return;
+    form.setFocus(focusWhenEnabled);
+    setFocusWhenEnabled(null);
+  }, [focusWhenEnabled, isLoading, form]);
 
   // Pre-fill email from invitation
   useEffect(() => {
@@ -283,13 +293,12 @@ export function SignupForm({
         (field) => refused[field],
       );
       if (beside.length > 0) {
-        beside.forEach((field, index) => {
-          form.setError(
-            field,
-            { type: "server", message: refused[field] },
-            { shouldFocus: index === 0 },
-          );
-        });
+        for (const field of beside) {
+          form.setError(field, { type: "server", message: refused[field] });
+        }
+        // The fields are disabled while the request runs, and a disabled field takes no focus:
+        // the first refused one gets it once the form is enabled again (the effect above).
+        setFocusWhenEnabled(beside[0]);
         return;
       }
 

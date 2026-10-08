@@ -237,28 +237,46 @@ describe("SignupForm, what it reports", () => {
   });
 
   it("puts what the backend refused about the name beside the name, not in a toast", async () => {
-    register.mockRejectedValue(
-      new ApiError(422, "Validation failed", "validation_error", {
-        error: {
-          details: [
-            {
-              field: "full_name",
-              message: "Full name cannot contain a web address",
-              code: "field_validation_error",
-            },
-          ],
-        },
-      }),
+    // Answered after a moment, as a real request is: the fields are disabled meanwhile.
+    register.mockImplementation(
+      () =>
+        new Promise((_, reject) =>
+          setTimeout(
+            () =>
+              reject(
+                new ApiError(422, "Validation failed", "validation_error", {
+                  error: {
+                    details: [
+                      {
+                        field: "full_name",
+                        message: "Full name cannot contain a web address",
+                        code: "field_validation_error",
+                      },
+                    ],
+                  },
+                }),
+              ),
+            40,
+          ),
+        ),
     );
     show();
     await fillIn();
 
     await pressCreate();
+    await waitFor(() =>
+      expect(screen.getByLabelText(/Full name/)).toBeDisabled(),
+    );
 
     expect(
       await screen.findByText("Full name cannot contain a web address"),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText(/Full name/)).toHaveFocus();
+    // The focus goes to the refused field once the form is enabled again: a disabled field
+    // can't take it.
+    await waitFor(() =>
+      expect(screen.getByLabelText(/Full name/)).toHaveFocus(),
+    );
+    expect(screen.getByLabelText(/Full name/)).toBeEnabled();
     expect(toast.error).not.toHaveBeenCalled();
     // Counted as a refusal all the same, and never by its words.
     expect(sent("signup_refused")).toHaveLength(1);
