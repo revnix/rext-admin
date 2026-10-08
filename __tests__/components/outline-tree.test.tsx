@@ -331,25 +331,22 @@ describe("the outline as a document outline", () => {
     ).toHaveClass("max-lg:size-10");
   });
 
-  it("holds every edit while the step is busy", async () => {
-    const { user } = renderOutline({ isLoading: true });
+  it("gives way to the outline's shape while the outline is written again: nothing to edit", async () => {
+    renderOutline({ isLoading: true });
 
-    expect(grid()).toHaveAttribute("aria-readonly", "true");
+    expect(screen.queryByRole("treegrid")).toBeNull();
     expect(
       screen.queryByRole("button", { name: /^Actions for/ }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Add section" }),
     ).not.toBeInTheDocument();
-    await focusRow("Soil");
-    await user.keyboard("{Delete}{Enter}{Alt>}{ArrowUp}{/Alt}");
-    expect(headings()).toEqual(SECTIONS.map(([heading]) => heading));
-    expect(screen.queryByRole("textbox", { name: "Section heading" })).toBe(
-      null,
-    );
-    // Moving between sections still works.
-    await user.keyboard("{ArrowDown}");
-    expect(rowOf("Planning beds")).toHaveFocus();
+    expect(
+      await screen.findByText("The outline is being written."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /approve and generate/i }),
+    ).toBeDisabled();
   });
 });
 

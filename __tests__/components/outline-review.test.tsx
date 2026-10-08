@@ -577,7 +577,7 @@ describe("OutlineReview, the outline tree", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("holds the outline's shape while it is written, with approval held (FB3.4)", () => {
+  it("holds the outline's shape while it is written, with approval held (FB3.4)", async () => {
     renderReview({
       current: null,
       rawTokens:
@@ -593,9 +593,11 @@ describe("OutlineReview, the outline tree", () => {
     expect(
       screen.queryByRole("list", { name: "Sections, being written" }),
     ).toBeNull();
-    expect(screen.getByText("The outline is being written.")).toHaveClass(
-      "sr-only",
-    );
+    // Not at once: an outline that is here a moment later never flashes a shape first.
+    expect(document.querySelector('[data-slot="outline-skeleton"]')).toBeNull();
+    expect(
+      await screen.findByText("The outline is being written."),
+    ).toHaveClass("sr-only");
     expect(
       document.querySelectorAll(
         '[data-slot="outline-skeleton"] [data-slot="skeleton"]',
@@ -604,6 +606,40 @@ describe("OutlineReview, the outline tree", () => {
     expect(
       screen.getByRole("button", { name: /approve and generate/i }),
     ).toBeDisabled();
+  });
+
+  it("shows the shape, not the old outline, while the outline is written again (FB3.4)", async () => {
+    const props = {
+      rawTokens: "",
+      gate: baseGate,
+      onApprove: jest.fn(),
+      onReject: jest.fn(),
+    };
+    const { rerender } = render(
+      <OutlineReview {...props} outline={outline} isLoading />,
+    );
+
+    // The outline the page still holds is not shown: no section of it, no source of it.
+    expect(screen.queryByRole("treegrid")).toBeNull();
+    expect(screen.queryByText("Cushioning and support")).toBeNull();
+    expect(
+      await screen.findByText("The outline is being written."),
+    ).toBeInTheDocument();
+    for (const name of [/approve and generate/i, "Regenerate"]) {
+      const button = screen.getByRole("button", { name });
+      expect(button).toBeDisabled();
+      expect(button).toHaveAccessibleDescription(
+        "You can approve once the outline is written.",
+      );
+    }
+
+    // The run ends: the outline the page holds then is shown, and can be edited again.
+    rerender(<OutlineReview {...props} outline={outline} isLoading={false} />);
+    expect(headings()).toContain("Cushioning and support");
+    expect(document.querySelector('[data-slot="outline-skeleton"]')).toBeNull();
+    expect(
+      screen.getByRole("button", { name: /approve and generate/i }),
+    ).toBeEnabled();
   });
 });
 
@@ -988,6 +1024,7 @@ describe("OutlineReview, while the first outline is written", () => {
       screen.getByRole("heading", { name: "Running shoes for beginners" }),
     ).toBeInTheDocument();
     // The outline's shape: sections with nested sub-sections and points, and no words of it.
+    await screen.findByText("The outline is being written.");
     const shape = document.querySelector('[data-slot="outline-skeleton"]');
     expect(
       shape?.querySelectorAll('[data-slot="skeleton"]').length,
@@ -1029,7 +1066,7 @@ describe("OutlineReview, while the first outline is written", () => {
     }
   });
 
-  it("has no Sources tab when the run read no sources", () => {
+  it("has no Sources tab when the run read no sources", async () => {
     render(
       <OutlineReview
         outline={null}
@@ -1046,12 +1083,12 @@ describe("OutlineReview, while the first outline is written", () => {
       />,
     );
     expect(
-      document.querySelector('[data-slot="outline-skeleton"]'),
-    ).not.toBeNull();
+      await screen.findByText("The outline is being written."),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Sources" })).toBeNull();
   });
 
-  it("shows the title and the outline's shape when an outline is written again, not the model's text", () => {
+  it("shows the title and the outline's shape for a first outline without stages, not the model's text", async () => {
     render(
       <OutlineReview
         outline={null}
@@ -1069,7 +1106,7 @@ describe("OutlineReview, while the first outline is written", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText("Black tea")).toBeNull();
     expect(
-      document.querySelector('[data-slot="outline-skeleton"]'),
-    ).not.toBeNull();
+      await screen.findByText("The outline is being written."),
+    ).toBeInTheDocument();
   });
 });
