@@ -83,6 +83,8 @@ describe("webVitalsNumbers", () => {
       $current_url: page,
       plan: "growth",
       route: "/w/*/content/*",
+      // The page this test's document was loaded on.
+      loaded_route: "/w/*/keywords/*",
       $web_vitals_LCP_value: 1834.5,
       $web_vitals_LCP_event: {
         name: "LCP",
@@ -119,6 +121,20 @@ describe("webVitalsNumbers", () => {
         }),
       )?.properties.route,
     ).toBe("/settings/plan");
+    // The address the library wrote into a measure as it arrived comes first.
+    expect(
+      webVitalsNumbers(
+        measuresOf({
+          ...measure,
+          $web_vitals_FCP_event: {
+            name: "FCP",
+            value: 420,
+            $current_url: "https://app.rext.ai/w/acme-dental/content/6f1c",
+          },
+          $current_url: "https://app.rext.ai/settings/plan",
+        }),
+      )?.properties.route,
+    ).toBe("/w/*/content/*");
     // No address on the event, or none that can be read: the page on screen.
     expect(webVitalsNumbers(measuresOf(measure))?.properties.route).toBe(
       "/w/*/keywords/*",
