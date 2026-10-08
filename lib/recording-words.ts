@@ -9,7 +9,8 @@
  * The list is read from the source when the app is built (app/api/recording-words/route.ts) and
  * fetched by the browser of a person who is recorded (lib/analytics-recording.ts). A text missing
  * from it is hidden, so every shortcut below errs towards a shorter list: reading too little hides
- * one of the app's own words; nothing here can add a person's.
+ * one of the app's own words. Comments and the sample pages under app/dev are not read: they hold
+ * examples, and an example can be a real person's name.
  */
 
 /** The longest text listed: a button, a menu item, a label or a table header is shorter. */
@@ -61,50 +62,9 @@ function decodeEntities(text: string): string {
   );
 }
 
-const ESCAPES: Record<string, string> = {
-  n: "\n",
-  t: "\t",
-  r: "\r",
-  b: "\b",
-  f: "\f",
-  v: "\v",
-  0: "\0",
-};
-
-/** A string literal's value: `\"`, `\n`, `…` and the like. */
-function unescapeLiteral(body: string): string {
-  return body.replace(
-    /\\(?:u\{([0-9a-f]+)\}|u([0-9a-f]{4})|x([0-9a-f]{2})|(\r?\n)|([\s\S]))/gi,
-    (
-      _whole,
-      braced?: string,
-      four?: string,
-      two?: string,
-      newline?: string,
-      one?: string,
-    ) => {
-      const hex = braced ?? four ?? two;
-      if (hex) {
-        const code = Number.parseInt(hex, 16);
-        return code <= 0x10ffff ? String.fromCodePoint(code) : "";
-      }
-      if (newline) return "";
-      return ESCAPES[one ?? ""] ?? one ?? "";
-    },
-  );
-}
-
-// A double-quoted, a single-quoted or a backtick string with nothing put into it.
-const LITERAL =
-  /"((?:[^"\\\n]|\\[\s\S])*)"|'((?:[^'\\\n]|\\[\s\S])*)'|`((?:[^`\\$]|\\[\s\S]|\$(?!\{))*)`/g;
-// The text between a tag or an expression and the next one: `>Save<`, `>Delete {`, `} now<`.
-const JSX_TEXT = /[>}]([^<>{}]+)(?=[<{])/g;
-// Code that sits between the same characters: an arrow function's body, a comparison.
-const CODE = /=>|&&|\|\||[=!]==|[;=]|^\s*[(.?:,)\]]/;
 // A string made only of class names, keys or paths says nothing a recording would show.
 const NOT_PROSE = /^[a-z0-9!_:[\]/.%()#,&>*=+@~^$|-]+$/;
 const MARKS_OF_CODE = /[-_:[\]/.]|\d/;
-
 // One name of the app's own, as an attribute holds it: `sidebar-menu-button`, `outline`.
 const NAME = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 
@@ -122,28 +82,54 @@ function looksLikeCode(text: string): boolean {
   );
 }
 
+/** The TypeScript compiler, handed in by the caller: only the build has it. */
+type Compiler = typeof import("typescript");
+
 /**
  * Every text written in one source file: the text between JSX tags, and the string literals (a
- * label can sit in a list of menu items, far from where it is shown). Rough on purpose: it reads
- * the file as text, so it also returns scraps of code. They are harmless, since no person's text
- * equals `items.length > 0 ?`, and whatever it misses is only hidden.
+ * label can sit in a list of menu items, far from where it is shown). The file is read by the
+ * compiler's own parser, so a comment is never taken for text: comments hold examples, and an
+ * example can be somebody's name. A template with a value put into it is left out, since what
+ * the page shows then is not written in the source.
  */
-export function wordsInSource(source: string): string[] {
+export function wordsInSource(
+  ts: Compiler,
+  fileName: string,
+  source: string,
+): string[] {
   const found = new Set<string>();
   const keep = (text: string) => {
     const words = normalizeWords(text);
     if (isWords(words)) found.add(words);
   };
-  for (const match of source.matchAll(JSX_TEXT)) {
-    // Decoded first: an entity's own `;` is not code's.
-    const text = decodeEntities(match[1]);
-    if (!CODE.test(text)) keep(text);
-  }
-  for (const match of source.matchAll(LITERAL)) {
-    const text = normalizeWords(
-      unescapeLiteral(match[1] ?? match[2] ?? match[3] ?? ""),
-    );
-    if (!looksLikeCode(text)) keep(text);
-  }
+  const file = ts.createSourceFile(
+    fileName,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    fileName.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
+  );
+  const visit = (node: import("typescript").Node): void => {
+    if (ts.isJsxText(node)) {
+      keep(decodeEntities(node.text));
+    } else if (
+      (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) &&
+      // Not the path of an import: `from "@lexical/react/LexicalComposer"` is nobody's label.
+      !(
+        node.parent &&
+        (ts.isImportDeclaration(node.parent) ||
+          ts.isExportDeclaration(node.parent))
+      )
+    ) {
+      // An attribute's value in JSX is shown with its entities read, like the text between tags.
+      const text =
+        node.parent && ts.isJsxAttribute(node.parent)
+          ? decodeEntities(node.text)
+          : node.text;
+      if (!looksLikeCode(normalizeWords(text))) keep(text);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(file);
   return [...found];
 }
