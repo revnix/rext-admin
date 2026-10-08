@@ -670,26 +670,34 @@ export function FreshGenerationView({
     // When the backend was first found away (a deploy's restart), until it answers again.
     let awaySince: number | null = null;
 
+    // The thread already on the page, with its article's text there, is a reconnect and not a
+    // switch: a long article's stream is cut after five minutes and the page joins its own run
+    // again. The reader keeps what they are reading, and their place; the thread's state and
+    // the joined stream bring the rest (task 773).
+    const reconnecting =
+      threadId === backgroundThreadId && !!generatedContent?.trim();
     dispatch({ type: "SET_THREAD_ID", payload: backgroundThreadId });
-    // Clear stale content / scores / outline from a previously-viewed thread
-    // so they don't bleed into this thread's view (e.g. showing a finished
-    // article underneath a different thread's outline step).
-    dispatch({ type: "RESET_FOR_THREAD_SWITCH" });
-    // Also reset local component state that lives outside the reducer. The in-place flag belongs
-    // to the run left behind: this thread's analysis didn't start from step 2.
-    setInPlaceAnalysis(false);
-    setTokenTarget("none");
-    tokenTargetRef.current = "none";
-    outline.resetStream();
-    content.resetStream();
-    setToolCalls([]);
-    // What the run on screen had found belongs to the thread it came from.
-    runStages.seed(null);
-    dispatch({ type: "SET_MANUAL_LOADING", payload: true });
-    dispatch({
-      type: "SET_LOADING_STATUS",
-      payload: "Restoring background generation...",
-    });
+    if (!reconnecting) {
+      // Clear stale content / scores / outline from a previously-viewed thread
+      // so they don't bleed into this thread's view (e.g. showing a finished
+      // article underneath a different thread's outline step).
+      dispatch({ type: "RESET_FOR_THREAD_SWITCH" });
+      // Also reset local component state that lives outside the reducer. The in-place flag
+      // belongs to the run left behind: this thread's analysis didn't start from step 2.
+      setInPlaceAnalysis(false);
+      setTokenTarget("none");
+      tokenTargetRef.current = "none";
+      outline.resetStream();
+      content.resetStream();
+      setToolCalls([]);
+      // What the run on screen had found belongs to the thread it came from.
+      runStages.seed(null);
+      dispatch({ type: "SET_MANUAL_LOADING", payload: true });
+      dispatch({
+        type: "SET_LOADING_STATUS",
+        payload: "Restoring background generation...",
+      });
+    }
     const trackedJob = useBackgroundGenerationStore
       .getState()
       .jobs.find((job) => job.threadId === backgroundThreadId);

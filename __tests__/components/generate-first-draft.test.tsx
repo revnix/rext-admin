@@ -7,6 +7,7 @@
 
 import { act, render, screen } from "@testing-library/react";
 import { FreshGenerationView } from "@/components/generate-content/fresh-generation-view";
+import { BACKGROUND_GENERATION_RESTORE_EVENT } from "@/lib/generate-content/background-generation-sync";
 
 type Chunk = { event: string; data: unknown };
 type Run = { url: string; send: (chunk: Chunk) => void; end: () => void };
@@ -326,6 +327,46 @@ describe("the writing page and the writer's first draft (task 773)", () => {
     );
     expect(screen.getByRole("article")).toHaveAttribute("data-draft", "yes");
     expect(screen.getByRole("article")).toHaveAttribute("data-so-far", "no");
+  }, 20_000);
+
+  it("keeps the article on the page when its stream is cut and the same run is joined again", async () => {
+    running({
+      outline: { title: "A vegetable garden planner" },
+      final_content: {
+        title: "A vegetable garden planner",
+        body_markdown: DRAFT,
+      },
+    });
+    render(
+      <FreshGenerationView onBack={jest.fn()} backgroundThreadId="thread-7" />,
+    );
+    const run = await joinedRun();
+    expect(screen.getByTestId("body")).toHaveTextContent(
+      "The writer's first words.",
+    );
+
+    // A long article: the stream ends after five minutes, and the page asks for its own run again.
+    await act(async () => {
+      run.end();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent(BACKGROUND_GENERATION_RESTORE_EVENT, {
+          detail: { threadId: "thread-7" },
+        }),
+      );
+    });
+    // Before the thread's state has been read again: the reader still has the text.
+    expect(screen.getByTestId("body")).toHaveTextContent(
+      "The writer's first words.",
+    );
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+    expect(screen.getByTestId("body")).toHaveTextContent(
+      "The writer's first words.",
+    );
   }, 20_000);
 
   it("shows the text a reloaded run already has, as a draft", async () => {
