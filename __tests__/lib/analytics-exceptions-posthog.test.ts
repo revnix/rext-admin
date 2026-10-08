@@ -121,7 +121,11 @@ describe("posthog-js's own report of an error nobody caught", () => {
         ),
       ).toEqual([]);
     }
-    expect(seen[0].properties.route).toBe("/settings/plan");
+    expect(seen[0].properties).toMatchObject({
+      route: "/settings/plan",
+      error_kind: "TypeError",
+      message_kind: "property_of_nothing",
+    });
     // Of all the library says about the error, two properties are left.
     expect(
       Object.keys(seen[0].properties)

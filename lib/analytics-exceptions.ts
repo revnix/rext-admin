@@ -206,9 +206,10 @@ function entryOf(given: unknown): Bag | null {
 /**
  * An error's report as it may leave. Of everything the library puts on it about the error
  * (the properties named `$exception…`), only the list of errors goes, each rebuilt from the parts
- * named above, and the level; the rest of the event is what every event carries. The page is added
- * as its address's shape, as the other failure events have it. An event that isn't an error's is
- * returned as it came; one with no error in it is not sent.
+ * named above, and the level; the rest of the event is what every event carries. Added, as the
+ * other failure events have them: the page as its address's shape, and the first error's class and
+ * kind of message as plain properties, for a chart to be split by. An event that isn't an error's
+ * is returned as it came; one with no error in it is not sent.
  */
 export function exceptionByClass(event: CaptureResult): CaptureResult | null {
   if (event.event !== "$exception") return event;
@@ -233,6 +234,8 @@ export function exceptionByClass(event: CaptureResult): CaptureResult | null {
       $exception_list: list,
       $exception_level:
         typeof level === "string" && LEVELS.includes(level) ? level : "error",
+      error_kind: list[0].type,
+      message_kind: list[0].value,
       ...(typeof window !== "undefined"
         ? { route: pathShape(window.location.pathname) }
         : {}),

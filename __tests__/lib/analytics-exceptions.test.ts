@@ -190,6 +190,8 @@ describe("exceptionByClass", () => {
       $current_url: "https://app.rext.ai/settings/plan",
       plan: "growth",
       route: "/w/*/keywords/*",
+      error_kind: "TypeError",
+      message_kind: "property_of_nothing",
       $exception_level: "error",
       $exception_list: [
         {
@@ -293,6 +295,9 @@ describe("exceptionByClass", () => {
     const sent = exceptionByClass(report);
 
     expect(sent?.properties.$exception_level).toBe("error");
+    // The plain properties say what the first error of the list says.
+    expect(sent?.properties.error_kind).toBe("Error");
+    expect(sent?.properties.message_kind).toBe("other");
     expect(listOf(sent)).toEqual([
       {
         type: "Error",

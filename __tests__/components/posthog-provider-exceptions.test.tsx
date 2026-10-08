@@ -194,6 +194,8 @@ it("sends an error's report by its class and the kind of its message, never with
   expect(sent.properties).toMatchObject({
     surface: "app",
     source: "client",
+    error_kind: "TypeError",
+    message_kind: "not_a_function",
     $exception_level: "error",
     $exception_list: [
       {
