@@ -47,6 +47,31 @@ export default function AcceptAdminInvitationPage() {
   const token = searchParams.get("token");
   const [isAccepting, setIsAccepting] = useState(false);
   const [acceptanceComplete, setAcceptanceComplete] = useState(false);
+  // After accepting: "reading" while the session reads the new role, "unread" when it couldn't.
+  const [roleRead, setRoleRead] = useState<"reading" | "unread">("reading");
+
+  // The backend holds the role at once; the session still carries the roles it was signed in
+  // with, and the route guard reads those. They are read again from the backend, the way a role
+  // change is picked up anywhere else in the app, and the admin area is opened only once the
+  // session shows the role: a reading that fails leaves the session as it was without saying so,
+  // and the guard would turn the new admin away (task 915).
+  const openAdminArea = async (role: string) => {
+    setRoleRead("reading");
+    let held: string | undefined;
+    try {
+      const synced = await inTurnWithTokenRefresh(() =>
+        update({ authAction: AUTH_SESSION_SYNC_PERMISSIONS_ACTION }),
+      );
+      held = synced?.user?.role;
+    } catch {
+      // Said on the page, with a way to ask again.
+    }
+    if (role && held === role) {
+      window.location.assign(adminLandingRoute(role));
+      return;
+    }
+    setRoleRead("unread");
+  };
 
   // Validate token
   const {
@@ -75,18 +100,7 @@ export default function AcceptAdminInvitationPage() {
       toast.success(
         `Welcome to the admin team! You now have ${adminRoleLabel(role)} access.`,
       );
-      // The backend holds the role at once; the session still carries the roles it was signed in
-      // with, and the route guard reads those. They are read again from the backend, the way a
-      // role change is picked up anywhere else in the app, before the admin area is opened
-      // (task 915). If that reading fails the next page does it again on its own.
-      try {
-        await inTurnWithTokenRefresh(() =>
-          update({ authAction: AUTH_SESSION_SYNC_PERMISSIONS_ACTION }),
-        );
-      } catch {
-        // The landing page's own sync picks the role up.
-      }
-      window.location.assign(adminLandingRoute(role));
+      await openAdminArea(role);
     },
     onError: (error: Error) => {
       toast.error(`The invitation wasn't accepted: ${error.message}`);
@@ -158,6 +172,8 @@ export default function AcceptAdminInvitationPage() {
   // second reading of it (the window focused again) must not say "invalid" to the person it just
   // let in.
   if (acceptanceComplete) {
+    const acceptedRole =
+      acceptMutation.data?.admin_role || validationData?.admin_role || "";
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface p-4">
         <Card className="w-full max-w-md border-success-200">
@@ -169,19 +185,29 @@ export default function AcceptAdminInvitationPage() {
             </div>
             <CardTitle className="text-center">Invitation Accepted!</CardTitle>
             <CardDescription className="text-center">
-              You now have{" "}
-              {adminRoleLabel(
-                acceptMutation.data?.admin_role ||
-                  validationData?.admin_role ||
-                  "admin",
-              )}{" "}
-              access to the platform
+              You now have {adminRoleLabel(acceptedRole || "admin")} access to
+              the platform
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center text-sm text-muted-foreground">
-              Redirecting to admin dashboard...
-            </div>
+            {roleRead === "unread" ? (
+              <div className="flex flex-col items-center gap-3 text-center text-sm text-muted-foreground">
+                <p>
+                  Your role is saved, but this browser couldn't read it yet.
+                </p>
+                <Button
+                  data-rec="show"
+                  variant="outline"
+                  onClick={() => void openAdminArea(acceptedRole)}
+                >
+                  Open the admin area
+                </Button>
+              </div>
+            ) : (
+              <div className="text-center text-sm text-muted-foreground">
+                Opening the admin area...
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

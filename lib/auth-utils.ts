@@ -36,9 +36,13 @@ const CACHE_TTL_MS = 10000; // Cache for 10 seconds
 // A token with no more than this left of its time is renewed before it is sent.
 const RENEW_WITHIN_MS = 5000;
 
+// The session carries one role, the highest of the account's that this list names. A platform
+// role missing from it loses to "user", which every account holds: a support admin's session
+// then said "user", and nothing that asks for the support role let them in (task 915).
 export const ROLE_HIERARCHY = [
   "super_admin",
   "admin",
+  "support",
   "workspace_owner",
   "workspace_admin",
   "editor",
