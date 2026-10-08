@@ -5,6 +5,7 @@ import {
 import { startStages } from "@/lib/generate-content/run-stages";
 import {
   currentStepIndex,
+  showsSteps,
   runningStage,
   stepChoices,
   WORKFLOW_STEPS,
@@ -76,6 +77,41 @@ describe("currentStepIndex", () => {
     // Regenerating the titles keeps the Title step current.
     expect(currentStepIndex("topic", "titles")).toBe(3);
     expect(currentStepIndex("topic", null)).toBe(3);
+  });
+});
+
+describe("showsSteps (FB3.1: the six steps are not shown on the Article step)", () => {
+  it("shows them on steps 1 to 5", () => {
+    for (const type of [
+      "keyword",
+      "keyword Selection",
+      "content_type",
+      "topic",
+      "topic_selection",
+      "outline_review",
+      "outline_reject",
+    ]) {
+      expect(showsSteps(type)).toBe(true);
+    }
+  });
+
+  it("shows them on the wait before each of those steps", () => {
+    expect(showsSteps("keyword", "analysis")).toBe(true);
+    expect(showsSteps("keyword Selection", "content-type")).toBe(true);
+    expect(showsSteps("content_type", "titles")).toBe(true);
+    expect(showsSteps("topic", "outline")).toBe(true);
+    expect(showsSteps("outline_review", "outline")).toBe(true);
+  });
+
+  it("doesn't show them on the article's page", () => {
+    expect(showsSteps("content")).toBe(false);
+    expect(showsSteps("content", null)).toBe(false);
+  });
+
+  it("doesn't show them while the article is written, whatever step the page last named", () => {
+    // The approved outline's own update names the outline step again until the draft's first words.
+    expect(showsSteps("outline_review", "article")).toBe(false);
+    expect(showsSteps("content", "article")).toBe(false);
   });
 });
 

@@ -67,6 +67,7 @@ import ContentType from "./content-type";
 import { WorkflowStepIndicator } from "@/components/generate-content/workflow-step-indicator";
 import {
   currentStepIndex,
+  showsSteps,
   runningStage,
   stepChoices,
   WORKFLOW_STEPS,
@@ -2417,11 +2418,15 @@ export function FreshGenerationView({
     phase: runState?.phase,
   });
 
-  // The six steps (FB2.12): across the working area over each step and each wait between two, and
-  // atop the article's column on the Article step. While the page waits on a run, the step that run
-  // prepares is the current one, with the stage running for it.
-  const stepper = (waiting = false, shown = instructionType) => {
-    const current = currentStepIndex(shown, waiting ? runState?.phase : null);
+  // The six steps (FB2.12): across the working area over steps 1 to 5 and each wait before one of
+  // them. While the page waits on a run, the step that run prepares is the current one, with the
+  // stage running for it. The Article step has no steps row (FB3.1, rext-control#833): not on the
+  // wait before the draft's first words, not on the article's page.
+  const stepper = (waiting = false) => {
+    const current = currentStepIndex(
+      instructionType,
+      waiting ? runState?.phase : null,
+    );
     return (
       <WorkflowStepIndicator
         steps={WORKFLOW_STEPS}
@@ -2432,14 +2437,18 @@ export function FreshGenerationView({
     );
   };
   // At the widest step's width and gutter, so the row stays put as a step's column narrows or widens.
-  const stepperRow = (waiting: boolean, below?: React.ReactNode) => (
-    <>
-      <StepColumn withSidePane className="pt-4 md:pt-6 lg:px-8">
-        {stepper(waiting)}
-      </StepColumn>
-      {below}
-    </>
-  );
+  // Where the row doesn't show, what is below keeps the row's space above it and nothing else moves.
+  const stepperRow = (waiting: boolean, below?: React.ReactNode) =>
+    showsSteps(instructionType, waiting ? runState?.phase : null) ? (
+      <>
+        <StepColumn withSidePane className="pt-4 md:pt-6 lg:px-8">
+          {stepper(waiting)}
+        </StepColumn>
+        {below}
+      </>
+    ) : (
+      below && <div className="pt-4 md:pt-6">{below}</div>
+    );
   const editorShown = showContentStream && !restoreError && !timedOutStages;
 
   // The search field over step 2, and over that step while its analysis fills it in (`waiting`),
@@ -2848,10 +2857,6 @@ export function FreshGenerationView({
       {editorShown && (
         <div className={!isContentFinal ? "relative" : undefined}>
           <ContentEditor
-            // The editor fills the page, so the steps go atop the article's own column. It is the
-            // Article step whatever the instruction type says: an approved outline's own update
-            // names the outline step again until the draft is written (task 785).
-            steps={stepper(false, "content")}
             // The article's run, while it runs: the same stages as every other
             // phase, in the editor's side panel (the editor fills the page).
             runProgress={
