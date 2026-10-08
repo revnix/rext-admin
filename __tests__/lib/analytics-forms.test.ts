@@ -12,6 +12,7 @@ import {
   signUpRefusal,
 } from "@/lib/analytics-forms";
 import { ApiError } from "@/lib/api-client/core";
+import { SERVER_UNREACHABLE } from "@/lib/api-client/server-away";
 import { BACKEND_AWAY_CODE } from "@/lib/auth/backend-away";
 
 describe("signUpRefusal", () => {
@@ -42,6 +43,19 @@ describe("signUpRefusal", () => {
     expect(signUpRefusal(new ApiError(422, "Password too short"))).toEqual({
       kind: "rejected",
       status: 422,
+    });
+  });
+
+  it("calls the API client's own \"couldn't reach the server\" `unreachable`, never a refusal by the backend", () => {
+    expect(
+      signUpRefusal(new ApiError(0, "Couldn't reach", SERVER_UNREACHABLE)),
+    ).toEqual({ kind: "unreachable" });
+    // A gateway answering in the backend's place.
+    expect(
+      signUpRefusal(new ApiError(503, "Couldn't reach", SERVER_UNREACHABLE)),
+    ).toEqual({ kind: "unreachable" });
+    expect(signUpRefusal(new ApiError(0, "No answer"))).toEqual({
+      kind: "unreachable",
     });
   });
 

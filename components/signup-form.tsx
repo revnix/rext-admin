@@ -247,7 +247,13 @@ export function SignupForm({
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Signup failed";
-      if (!created) {
+      if (created) {
+        // The account exists: what failed is the login that follows it.
+        analytics.track("signin_refused", {
+          kind: signInRefusal(err instanceof Error ? err.message : null),
+          after_sign_up: true,
+        });
+      } else {
         analytics.track("signup_refused", { ...signUpRefusal(err), invited });
       }
 
