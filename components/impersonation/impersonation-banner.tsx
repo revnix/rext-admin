@@ -4,9 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, LogOut, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { setImpersonating } from "@/lib/analytics";
 import { apiClient } from "@/lib/api-client";
 import { impersonationQueries } from "@/lib/query-keys";
 import { useAuthStore } from "@/stores/auth-store";
@@ -49,6 +50,13 @@ export function ImpersonationBanner() {
     // Gracefully handle errors (endpoint not implemented yet)
     throwOnError: false,
   });
+
+  // Analytics is told what the backend says, on every page and in every tab: nothing is sent
+  // while an admin acts as a customer (lib/analytics.ts).
+  const impersonating = status?.is_impersonating;
+  useEffect(() => {
+    if (impersonating !== undefined) setImpersonating(impersonating);
+  }, [impersonating]);
 
   // Stop impersonation mutation
   const stopImpersonationMutation = useMutation({
@@ -98,6 +106,8 @@ export function ImpersonationBanner() {
       // session one, and the (non-retryable) second 401 would force a full
       // logout — even though the real session was still perfectly valid.
       clearTokens();
+      // The admin is themselves again: analytics may run.
+      setImpersonating(false);
 
       toast.success("Impersonation stopped", {
         description: "You have returned to your original account",

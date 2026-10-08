@@ -8,6 +8,7 @@ import { ShellBillingBanner } from "@/components/billing/billing-action-notice";
 import { ImpersonationBanner } from "@/components/impersonation/impersonation-banner";
 import { NotificationsDrawer } from "@/components/notifications-drawer";
 import { FirstLoginQuestions } from "@/components/onboarding/first-login-questions";
+import { AnalyticsConsentPrompt } from "@/components/privacy/analytics-consent-prompt";
 import {
   type SidebarPreference,
   SidebarInset,
@@ -81,6 +82,8 @@ export function AppShell({
         <AppHeader />
         <ImpersonationBanner />
         <ShellBillingBanner />
+        {/* Asked once, where the law asks for it; a band like the one above, so it covers nothing. */}
+        <AnalyticsConsentPrompt />
         <main
           id="main-content"
           tabIndex={-1}

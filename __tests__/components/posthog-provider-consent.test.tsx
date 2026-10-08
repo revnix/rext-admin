@@ -6,8 +6,9 @@
 
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { analytics } from "@/lib/analytics";
+import { analytics, setImpersonating } from "@/lib/analytics";
 import { analyticsMode, writeConsent } from "@/lib/analytics-consent";
+import { AnalyticsConsentPrompt } from "@/components/privacy/analytics-consent-prompt";
 import { PostHogProvider } from "@/providers/posthog-provider";
 
 const mockPosthog = {
@@ -78,6 +79,8 @@ beforeEach(() => {
 function renderProvider() {
   return render(
     <PostHogProvider>
+      {/* The shell shows the question; the provider acts on the answer. */}
+      <AnalyticsConsentPrompt />
       <p>The page</p>
     </PostHogProvider>,
   );
@@ -85,8 +88,7 @@ function renderProvider() {
 
 const pageViews = () =>
   mockPosthog.capture.mock.calls.filter(([event]) => event === "$pageview");
-const question = () =>
-  screen.queryByRole("heading", { name: "May we measure how you use Rext?" });
+const question = () => screen.queryByText("May we measure how you use Rext?");
 
 describe("where the person is asked first, and hasn't answered", () => {
   beforeEach(() => mode.mockResolvedValue("wait"));
@@ -94,9 +96,7 @@ describe("where the person is asked first, and hasn't answered", () => {
   it("sends nothing and asks", async () => {
     renderProvider();
 
-    expect(
-      await screen.findByRole("heading", { name: /May we measure/ }),
-    ).toBeTruthy();
+    expect(await screen.findByText(/May we measure/)).toBeTruthy();
     expect(mockPosthog.init).not.toHaveBeenCalled();
     expect(mockPosthog.capture).not.toHaveBeenCalled();
     expect(mockPosthog.identify).not.toHaveBeenCalled();
@@ -196,6 +196,27 @@ describe("where analytics is on unless switched off", () => {
         },
       }).properties.$current_url,
     ).toBe("https://app.rext.ai/w/:workspaceSlug/content");
+  });
+});
+
+describe("while an admin acts as a customer", () => {
+  afterEach(() => setImpersonating(false));
+
+  it("lets nothing leave, a page view and the identification included", async () => {
+    mode.mockResolvedValue("full");
+    renderProvider();
+    await waitFor(() => expect(mockPosthog.init).toHaveBeenCalled());
+    const beforeSend = mockPosthog.init.mock.calls[0][1].before_send;
+    const pageView = () => ({
+      event: "$pageview",
+      properties: { $current_url: "https://app.rext.ai/w/acme" },
+    });
+    expect(beforeSend(pageView())).not.toBeNull();
+
+    setImpersonating(true);
+
+    expect(beforeSend(pageView())).toBeNull();
+    expect(beforeSend({ event: "$identify", properties: {} })).toBeNull();
   });
 });
 

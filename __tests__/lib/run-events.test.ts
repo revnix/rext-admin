@@ -1,6 +1,9 @@
 import {
   isOutlineToken,
   isStoppedRunCode,
+  libraryResearchNote,
+  readLibraryResearchEvent,
+  readLibraryResearchState,
   readMessageToken,
   readRunFailedEvent,
   readStoppedRun,
@@ -323,5 +326,85 @@ describe("a refused resume (E27)", () => {
         restoresItsStep: true,
       }),
     ).toBe(true);
+  });
+});
+
+describe("readLibraryResearchEvent", () => {
+  it("reads whether a start reuses its analysis's search results", () => {
+    expect(
+      readLibraryResearchEvent({
+        type: "library",
+        step: "library.research_reused",
+        analysed_at: "2026-10-06T09:00:00+00:00",
+      }),
+    ).toEqual({ reused: true, analysedAt: "2026-10-06T09:00:00+00:00" });
+    expect(
+      readLibraryResearchEvent({
+        type: "library",
+        step: "library.research_refreshed",
+        analysed_at: null,
+      }),
+    ).toEqual({ reused: false, analysedAt: null });
+  });
+
+  it("ignores any other event", () => {
+    expect(readLibraryResearchEvent({ type: "run", step: "run.failed" })).toBe(
+      null,
+    );
+    expect(
+      readLibraryResearchEvent({ type: "library", step: "library.other" }),
+    ).toBe(null);
+    expect(readLibraryResearchEvent("library")).toBe(null);
+  });
+});
+
+describe("libraryResearchNote", () => {
+  it("says the research is reused, with its date, and not charged again", () => {
+    expect(
+      libraryResearchNote({
+        reused: true,
+        analysedAt: "2026-10-06T09:00:00+00:00",
+      }),
+    ).toBe(
+      "Using your research from Oct 6, 2026. The search results aren't read or charged again.",
+    );
+  });
+
+  it("says older research is read again", () => {
+    expect(
+      libraryResearchNote({
+        reused: false,
+        analysedAt: "2026-09-20T10:00:00+00:00",
+      }),
+    ).toBe(
+      "Your research from Sep 20, 2026 is more than a week old, so the search results are read again.",
+    );
+    expect(libraryResearchNote({ reused: false, analysedAt: null })).toBe(
+      "Reading the search results again.",
+    );
+  });
+});
+
+describe("readLibraryResearchState", () => {
+  it("restores a reuse from the run's state", () => {
+    expect(
+      readLibraryResearchState({
+        seo_result: {
+          keyword_recommendations: {
+            research_reused_at: "2026-10-06T09:00:00+00:00",
+          },
+        },
+      }),
+    ).toEqual({ reused: true, analysedAt: "2026-10-06T09:00:00+00:00" });
+  });
+
+  it("restores nothing for a refreshed or an ordinary run", () => {
+    expect(
+      readLibraryResearchState({
+        seo_result: { keyword_recommendations: { research_reused_at: null } },
+      }),
+    ).toBe(null);
+    expect(readLibraryResearchState({ seo_result: {} })).toBe(null);
+    expect(readLibraryResearchState(undefined)).toBe(null);
   });
 });

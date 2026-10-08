@@ -28,7 +28,7 @@ const RECENT = 5;
 /**
  * The start screen's second half (plans/app/E-workflow.md §4 step 0): the keywords the user
  * researched last in this workspace, each as the compact keyword card with "Use", which starts an
- * article from that keyword (the run researches it again: reusing the saved research is E24 #496).
+ * article from that keyword (the run reuses the saved research for a week, then reads the search results again: E24 #496).
  * Nothing at all before the first one.
  */
 export function RecentKeywords() {

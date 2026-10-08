@@ -116,3 +116,61 @@ describe("before the person's answer on analytics is known", () => {
     expect(capture).toHaveBeenCalledTimes(100);
   });
 });
+
+describe("while an admin acts as a customer", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it("sends nothing, and holds nothing to send later", () => {
+    const { analytics, registerPostHog, setImpersonating, isImpersonating } =
+      loadAnalytics();
+    const capture = jest.fn();
+    registerPostHog({ identify: jest.fn(), capture, reset: jest.fn() });
+
+    setImpersonating(true);
+    analytics.track("keyword_selected", { keyword: "crm" });
+    expect(isImpersonating()).toBe(true);
+    expect(capture).not.toHaveBeenCalled();
+
+    setImpersonating(false);
+    analytics.track("title_selected");
+    expect(capture.mock.calls).toEqual([["title_selected", {}]]);
+  });
+
+  it("still sends nothing when the browser refuses storage", () => {
+    const { analytics, registerPostHog, setImpersonating, isImpersonating } =
+      loadAnalytics();
+    const capture = jest.fn();
+    registerPostHog({ identify: jest.fn(), capture, reset: jest.fn() });
+    const refuse = jest
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new Error("storage is blocked");
+      });
+    const refuseRead = jest
+      .spyOn(Storage.prototype, "getItem")
+      .mockImplementation(() => {
+        throw new Error("storage is blocked");
+      });
+
+    try {
+      setImpersonating(true);
+      analytics.track("keyword_selected");
+
+      expect(isImpersonating()).toBe(true);
+      expect(capture).not.toHaveBeenCalled();
+    } finally {
+      refuse.mockRestore();
+      refuseRead.mockRestore();
+    }
+  });
+
+  it("is known to a tab opened meanwhile, from the mark the app's tabs share", () => {
+    window.localStorage.setItem("rext-impersonating", "1");
+
+    const { isImpersonating } = loadAnalytics();
+
+    expect(isImpersonating()).toBe(true);
+  });
+});

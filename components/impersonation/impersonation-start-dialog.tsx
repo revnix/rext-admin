@@ -16,6 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { setImpersonating } from "@/lib/analytics";
 import { apiClient } from "@/lib/api-client";
 import { AUTH_SESSION_TOKEN_SWAP_ACTION } from "@/lib/auth-utils";
 import { useAuthStore } from "@/stores/auth-store";
@@ -60,6 +61,8 @@ export function ImpersonationStartDialog({
       // Bridge the moment until update() lands in React state (same pattern
       // as the stop flow) — getAuthHeaders() prefers this store when set.
       setTokens(data.access_token, data.refresh_token);
+      // From here on the admin acts as the customer: nothing goes to analytics.
+      setImpersonating(true);
 
       // Swap the impersonation tokens into the NextAuth session too, so the
       // session (and middleware) agree with the API tokens instead of staying
