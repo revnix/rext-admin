@@ -6,6 +6,7 @@
  */
 import { analytics } from "@/lib/analytics";
 import { ownWords, wordsLoaded } from "@/lib/analytics-recording";
+import { API_ROUTE_TREE } from "@/lib/api-client/route-tree";
 
 /** A class from the code (`TypeError`, `ApiError`, `ChunkLoadError`): letters and digits only. */
 const CLASS = /^[A-Za-z][A-Za-z0-9]{0,39}$/;
@@ -90,13 +91,17 @@ export const ROUTE_TREE: RouteTree = {
  * star. `/w/acme/content/6f1c` keeps `w` and `content`: enough to see which kind of page failed
  * or which kind of link is broken, with nothing of whose it was.
  */
-export function pathShape(pathname: string): string {
+export function pathShape(
+  pathname: string,
+  tree: RouteTree = ROUTE_TREE,
+  longest = 8,
+): string {
   const parts = pathname.split("/").filter((part) => part !== "");
   if (parts.length === 0) return "/";
-  let node: RouteTree | undefined = ROUTE_TREE;
+  let node: RouteTree | undefined = tree;
   const shape: string[] = [];
   // A long address says no more than its first parts do.
-  for (const part of parts.slice(0, 8)) {
+  for (const part of parts.slice(0, longest)) {
     const fixed: RouteTree | undefined =
       node && part !== "*" && Object.hasOwn(node, part)
         ? node[part]
@@ -104,7 +109,65 @@ export function pathShape(pathname: string): string {
     shape.push(fixed ? part : "*");
     node = fixed ?? node?.["*"];
   }
-  return `/${shape.join("/")}${parts.length > 8 ? "/…" : ""}`;
+  return `/${shape.join("/")}${parts.length > longest ? "/…" : ""}`;
+}
+
+/**
+ * The shape of a request to the backend: its route as the backend's own spec names it
+ * (lib/api-client/route-tree.ts), with a star wherever the route takes a parameter and past
+ * anything the spec doesn't have. The query is dropped whole.
+ */
+export function apiPathShape(endpoint: string): string {
+  return pathShape(endpoint.split(/[?#]/)[0], API_ROUTE_TREE, 12);
+}
+
+/**
+ * The code on the API client's error when the server couldn't be reached (SERVER_UNREACHABLE in
+ * lib/api-client/server-away.ts). Written out here so that an error screen doesn't pull the
+ * client's modules in; a test holds the two to each other.
+ */
+export const UNREACHABLE_CODE = "SERVER_UNREACHABLE";
+
+// A page reports each kind of failed request once, and no more than a handful in all: while the
+// backend restarts, every open tab meets the same failures on every route it polls.
+const failuresReported = new Set<string>();
+const FAILURES_PER_PAGE = 30;
+
+/**
+ * Says that the backend failed a request: an answer of 500 or over, or none at all once the tries
+ * a restart is given had run out. Which route (apiPathShape), the method, the status, and `away`
+ * when it was the server not being reachable. Never the answer's words. A refusal the backend
+ * meant (400 to 499) is not a failure of its own and says nothing here; nor does a browser that
+ * is offline, whose failure is its connection's.
+ */
+export function reportApiFailure(
+  method: string | undefined,
+  endpoint: string,
+  error: unknown,
+): void {
+  if (typeof window === "undefined") return;
+  if (!(error instanceof Error) || error.name !== "ApiError") return;
+  const away = (error as { code?: unknown }).code === UNREACHABLE_CODE;
+  const status = statusOf(error) ?? 0;
+  if (status < 500 && !away) return;
+  if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+  const route = apiPathShape(endpoint);
+  const verb = (method ?? "GET").toUpperCase();
+  const kind = `${verb} ${route} ${status}`;
+  if (failuresReported.has(kind)) return;
+  if (failuresReported.size >= FAILURES_PER_PAGE) return;
+  failuresReported.add(kind);
+  analytics.track("api_request_failed", {
+    route,
+    method: verb,
+    status,
+    ...(away ? { away: true } : {}),
+  });
+}
+
+/** For the tests: a fresh page. */
+export function forgetReportedFailures(): void {
+  failuresReported.clear();
 }
 
 /** Says that the app's own error screen came up for a person: where, and the error's class. */
