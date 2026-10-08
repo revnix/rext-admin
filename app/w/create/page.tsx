@@ -2,9 +2,13 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useRef } from "react";
-import { FormPage, PageSkeleton } from "@/components/layouts";
+import {
+  FormPage,
+  PageSkeleton,
+  StepColumn,
+  WorkingSurface,
+} from "@/components/layouts";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Meter } from "@/components/ui/meter";
 import { WorkspaceCreateWizard } from "@/components/workspace";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { subscriptionQueries } from "@/lib/query-keys";
@@ -71,22 +75,19 @@ export default function CreateWorkspacePage() {
     );
   }
 
+  // A working surface: the workspace beside what happens behind the scenes (rext-control#845).
+  // The plan's count is the first step's to show: once the workspace exists it reads "1 of 1" as
+  // a full bar, which looks like an error at the very moment one is waiting.
   return (
-    <FormPage
-      centered
+    <WorkingSurface
       title="Create workspace"
       description="A workspace for one website: its brand voice, personas and content."
     >
-      {used !== null && max !== null && (
-        <div className="mb-8 space-y-2">
-          <p className="num text-table text-muted-foreground">
-            {used} of {max} {max === 1 ? "workspace" : "workspaces"} on your
-            plan
-          </p>
-          <Meter value={used} max={max} low={used + 1 >= max} />
-        </div>
-      )}
-      <WorkspaceCreateWizard />
-    </FormPage>
+      <StepColumn withSidePane>
+        <WorkspaceCreateWizard
+          planCount={used !== null && max !== null ? { used, max } : null}
+        />
+      </StepColumn>
+    </WorkingSurface>
   );
 }
