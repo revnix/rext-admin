@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FieldController } from "@/components/forms/field-controller";
 import { useZodForm } from "@/components/forms/use-zod-form";
 import { Button } from "@/components/ui/button";
@@ -82,8 +82,13 @@ export function FirstLoginQuestions() {
   const asked = Boolean(data?.should_show);
   // For the funnel from a new account to its first workspace: that the questions came up, and
   // that the person got past them.
+  const shownSent = useRef(false);
   useEffect(() => {
-    if (asked) analytics.track("first_login_questions_shown");
+    // Once per time they come up: an effect can run twice for one showing (React's strict
+    // mode replays it), and the funnel's step must not be counted twice.
+    if (!asked || shownSent.current) return;
+    shownSent.current = true;
+    analytics.track("first_login_questions_shown");
   }, [asked]);
   const close = (answers: Answers | null) => {
     setDismissed(true);
