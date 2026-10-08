@@ -38,6 +38,10 @@ describe("the pages that open without a session", () => {
     "/invitations/accept",
     "/account-recovery",
     "/unsubscribe",
+    "/legal/privacy",
+    "/legal/terms",
+    "/legal/refund-policy",
+    "/legal/subscription-terms",
   ])("counts %s", (pathname) => {
     expect(opensWithoutSession(pathname)).toBe(true);
   });

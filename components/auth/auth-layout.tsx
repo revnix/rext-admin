@@ -1,4 +1,5 @@
 import { Logo } from "@/components/brand-logo";
+import { PolicyLinks } from "@/components/legal/related-policies";
 import { VisitorChatLink } from "@/components/support/visitor-chat-link";
 
 interface AuthLayoutProps {
@@ -37,6 +38,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         <div className="w-full max-w-[420px]">
           {children}
           <VisitorChatLink />
+          <PolicyLinks />
         </div>
       </div>
     </div>
