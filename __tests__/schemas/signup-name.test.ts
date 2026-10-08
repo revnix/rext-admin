@@ -9,8 +9,8 @@ import { signupFormSchema } from "@/schemas/auth-schemas";
 const form = (full_name: string) => ({
   full_name,
   email: "new.writer@example.com",
-  password: "a-long-passphrase-1",
-  confirmPassword: "a-long-passphrase-1",
+  password: "A-long-passphrase-1",
+  confirmPassword: "A-long-passphrase-1",
 });
 const refusal = (full_name: string) =>
   signupFormSchema
