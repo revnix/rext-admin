@@ -5,10 +5,10 @@
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AnalyticsConsentPrompt } from "@/components/privacy/analytics-consent-prompt";
-import { readConsent } from "@/lib/analytics-consent";
+import { readConsent, writeConsent } from "@/lib/analytics-consent";
 
 const store = jest.fn();
 jest.mock("@/lib/api-client", () => ({
@@ -89,12 +89,82 @@ it("takes an answer given in another browser, and asks nothing", async () => {
   expect(store).toHaveBeenCalledTimes(1);
 });
 
-it("writes this browser's answer to an account that has none", async () => {
+it("writes this browser's answer to an account that has none, when it is that account's own", async () => {
   setCookie("rext-consent=denied; Path=/");
+  window.localStorage.setItem("rext-analytics-answer-of", "u1");
   renderPrompt();
 
   await waitFor(() => expect(store).toHaveBeenCalledWith("denied", "eea"));
   expect(screen.queryByText(question)).toBeNull();
+});
+
+it("never writes an answer someone else left in this browser to this account", async () => {
+  // Another account said yes here before; this one has answered nowhere.
+  setCookie("rext-consent=granted; Path=/");
+  window.localStorage.setItem("rext-analytics-answer-of", "someone-else");
+  renderPrompt();
+
+  await waitFor(() => expect(store).toHaveBeenCalledTimes(1));
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  expect(store.mock.calls).toEqual([[null, "eea"]]);
+});
+
+it("ends with the last of two quick choices on the account", async () => {
+  renderPrompt();
+  await screen.findByText(question);
+  // The account answers slowly from here on: each write waits to be let through.
+  const waiting: Array<() => void> = [];
+  store.mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        waiting.push(() => resolve(stored(null)));
+      }),
+  );
+
+  const sent = () => store.mock.calls.slice(1);
+  const standing = () =>
+    window.localStorage.getItem("rext-analytics-answer:u1");
+
+  await act(async () => {
+    writeConsent("granted");
+    writeConsent("denied");
+  });
+  // One request at a time: the second waits for the first.
+  await waitFor(() => expect(sent()).toEqual([["granted", "eea"]]));
+  await act(async () => {
+    waiting[0]();
+  });
+
+  await waitFor(() =>
+    expect(sent()).toEqual([
+      ["granted", "eea"],
+      ["denied", "eea"],
+    ]),
+  );
+  expect(standing()).toBe("unsent");
+  await act(async () => {
+    waiting[1]();
+  });
+  await waitFor(() => expect(standing()).toBe("synced"));
+});
+
+it("does nothing with an answer that comes back after the shell has gone", async () => {
+  let answer: (value: unknown) => void = () => {};
+  store.mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        answer = resolve;
+      }),
+  );
+  const view = renderPrompt();
+  await waitFor(() => expect(store).toHaveBeenCalledTimes(1));
+
+  view.unmount();
+  answer(stored("granted"));
+  await new Promise((resolve) => setTimeout(resolve, 20));
+
+  expect(readConsent()).toBeNull();
+  expect(window.localStorage.getItem("rext-analytics-answer:u1")).toBeNull();
 });
 
 it("sends a choice made here to the account", async () => {

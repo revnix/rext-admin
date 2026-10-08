@@ -307,60 +307,79 @@ describe("an answer taken over from the account", () => {
 
 describe("reconcileAnswer", () => {
   it("does nothing when the two agree, and takes the account's where this browser has none", () => {
-    expect(reconcileAnswer("granted", "granted", "new")).toEqual({
+    expect(reconcileAnswer("granted", "granted", "new", true)).toEqual({
       put: null,
       take: null,
     });
-    expect(reconcileAnswer(null, null, "new")).toEqual({
+    expect(reconcileAnswer(null, null, "new", true)).toEqual({
       put: null,
       take: null,
     });
-    expect(reconcileAnswer(null, "denied", "new")).toEqual({
+    expect(reconcileAnswer(null, "denied", "new", true)).toEqual({
       put: null,
       take: "denied",
     });
   });
 
   it("writes this browser's answer where the account has none", () => {
-    expect(reconcileAnswer("granted", null, "new")).toEqual({
+    expect(reconcileAnswer("granted", null, "new", true)).toEqual({
       put: "granted",
       take: null,
     });
-    expect(reconcileAnswer("denied", null, "synced")).toEqual({
+    expect(reconcileAnswer("denied", null, "synced", true)).toEqual({
       put: "denied",
       take: null,
     });
   });
 
   it("keeps a no on the first comparison: it may be older than anything the account knows", () => {
-    expect(reconcileAnswer("denied", "granted", "new")).toEqual({
+    expect(reconcileAnswer("denied", "granted", "new", true)).toEqual({
       put: "denied",
       take: null,
     });
     // A yes here never overrides a no on the account.
-    expect(reconcileAnswer("granted", "denied", "new")).toEqual({
+    expect(reconcileAnswer("granted", "denied", "new", true)).toEqual({
       put: null,
       take: "denied",
     });
   });
 
   it("follows the account once the two have been compared: it holds the latest answer", () => {
-    expect(reconcileAnswer("denied", "granted", "synced")).toEqual({
+    expect(reconcileAnswer("denied", "granted", "synced", true)).toEqual({
       put: null,
       take: "granted",
     });
-    expect(reconcileAnswer("granted", "denied", "synced")).toEqual({
+    expect(reconcileAnswer("granted", "denied", "synced", true)).toEqual({
       put: null,
       take: "denied",
     });
   });
 
+  it("never writes an answer that isn't known to be this account's own", () => {
+    // The cookie is the browser's: another account, or a visit to the website, may have left it.
+    for (const standing of ["new", "synced", "unsent"] as const) {
+      expect(reconcileAnswer("granted", null, standing, false)).toEqual({
+        put: null,
+        take: null,
+      });
+      expect(reconcileAnswer("denied", null, standing, false)).toEqual({
+        put: null,
+        take: null,
+      });
+      // The account's own answer still comes to this browser.
+      expect(reconcileAnswer("granted", "denied", standing, false)).toEqual({
+        put: null,
+        take: "denied",
+      });
+    }
+  });
+
   it("sends a choice made here that never reached the account, before anything else", () => {
-    expect(reconcileAnswer("granted", "denied", "unsent")).toEqual({
+    expect(reconcileAnswer("granted", "denied", "unsent", true)).toEqual({
       put: "granted",
       take: null,
     });
-    expect(reconcileAnswer("denied", "granted", "unsent")).toEqual({
+    expect(reconcileAnswer("denied", "granted", "unsent", true)).toEqual({
       put: "denied",
       take: null,
     });

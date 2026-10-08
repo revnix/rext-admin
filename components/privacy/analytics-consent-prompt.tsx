@@ -2,7 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PageBand } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
@@ -49,6 +49,27 @@ function keepStanding(userId: string, standing: AnswerStanding): void {
   }
 }
 
+// The choice's cookie is the browser's, not an account's: whoever signed in here before may have
+// left it, and so may a visit to the website. This says whose it is known to be, so that one
+// person's answer is never written to another's account.
+const OWNER_KEY = "rext-analytics-answer-of";
+
+function answerIsOf(userId: string): boolean {
+  try {
+    return window.localStorage.getItem(OWNER_KEY) === userId;
+  } catch {
+    return false;
+  }
+}
+
+function keepAnswerOf(userId: string): void {
+  try {
+    window.localStorage.setItem(OWNER_KEY, userId);
+  } catch {
+    // No storage: the answer stays this browser's alone.
+  }
+}
+
 /**
  * The one question about analytics (rext-control task 712), asked after signing in where the law
  * asks for it (the EEA, the UK and Switzerland) and nothing is chosen yet. Until it is answered
@@ -71,25 +92,66 @@ export function AnalyticsConsentPrompt() {
     mutationFn: async (answer: ConsentChoice | null) =>
       apiClient.profile.storeAnalyticsAnswer(answer, await consentRegion()),
   });
+  // Choices on their way to the account, one request at a time and always ending with the
+  // latest: two presses of the switch in quick succession must not arrive the wrong way round.
+  const sending = useRef<{ busy: boolean; latest: ConsentChoice | null }>({
+    busy: false,
+    latest: null,
+  });
 
   useEffect(() => {
     if (status !== "authenticated" || !userId || !configured()) {
       setAsking(false);
       return;
     }
+    // Once the account changes or the shell goes, nothing below acts any more: an answer that
+    // comes back late belongs to the account it was asked for.
     let cancelled = false;
+    const queue = sending.current;
+
+    const send = (choice: ConsentChoice) => {
+      queue.latest = choice;
+      if (queue.busy) return;
+      queue.busy = true;
+      void (async () => {
+        let reached = true;
+        while (queue.latest !== null && !cancelled) {
+          const next = queue.latest;
+          queue.latest = null;
+          try {
+            await store(next);
+          } catch {
+            // Sent first when the two are next brought together.
+            reached = false;
+            break;
+          }
+        }
+        queue.busy = false;
+        if (reached && !cancelled) keepStanding(userId, "synced");
+      })();
+    };
+
     const settle = async () => {
       if (!isImpersonating()) {
         try {
           // A null answer writes the region only and reads what the account holds.
           const stored = await store(null);
+          if (cancelled) return;
+          const own = readConsent();
           const { put, take } = reconcileAnswer(
-            readConsent(),
+            own,
             stored.answer,
             readStanding(userId),
+            answerIsOf(userId),
           );
           if (take) takeConsent(take);
+          // The browser's answer is this account's from here on when it was taken from it,
+          // agrees with it, or is being written to it.
+          if (take || put || (own !== null && own === stored.answer)) {
+            keepAnswerOf(userId);
+          }
           if (put) await store(put);
+          if (cancelled) return;
           keepStanding(userId, "synced");
         } catch {
           // The backend didn't answer: this browser's own answer stands until the next page.
@@ -104,16 +166,13 @@ export function AnalyticsConsentPrompt() {
     const stopListening = onConsentChange((choice, origin) => {
       setAsking(false);
       if (origin !== "chosen" || isImpersonating()) return;
+      keepAnswerOf(userId);
       keepStanding(userId, "unsent");
-      store(choice).then(
-        () => keepStanding(userId, "synced"),
-        () => {
-          // Sent first when the two are next brought together.
-        },
-      );
+      send(choice);
     });
     return () => {
       cancelled = true;
+      queue.latest = null;
       stopListening();
     };
   }, [status, userId, store]);

@@ -278,15 +278,20 @@ export type AnswerStanding = "new" | "synced" | "unsent";
  * gave it, so it wins once the two have been compared. Two cases go the other way: a choice
  * made here that never reached the account is sent first; and a browser comparing for the first
  * time keeps its own "no", which may be older than the account's record of anything.
+ *
+ * `mine`: whether this browser's answer is known to be this account's own (the person chose it
+ * while signed in to it, or it was taken over from it). The cookie is the browser's, so another
+ * account that signed in here before may have left it, and so may a visit to the website: an
+ * answer that isn't known to be this account's is never written to it.
  */
 export function reconcileAnswer(
   own: ConsentChoice | null,
   stored: ConsentChoice | null,
   standing: AnswerStanding,
+  mine: boolean,
 ): { put: ConsentChoice | null; take: ConsentChoice | null } {
-  const nothing = { put: null, take: null };
-  if (own === stored) return nothing;
-  if (own === null) return { put: null, take: stored };
+  if (own === stored) return { put: null, take: null };
+  if (own === null || !mine) return { put: null, take: stored };
   if (stored === null || standing === "unsent") return { put: own, take: null };
   if (standing === "new" && own === "denied") return { put: own, take: null };
   return { put: null, take: stored };
