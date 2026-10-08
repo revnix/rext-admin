@@ -159,10 +159,14 @@ describe("where the person is asked first, and hasn't answered", () => {
     expect(mockPosthog.init).toHaveBeenCalledTimes(1);
     // An explicit yes is counted: no option that silences the opt-in's own event.
     expect(mockPosthog.opt_in_capturing).toHaveBeenCalledWith(undefined);
+    // By the account's id, with the role: never the email or the name.
     expect(mockPosthog.identify).toHaveBeenCalledWith(
       "u1",
-      expect.objectContaining({ email: "mary@example.com" }),
+      expect.objectContaining({ role: "owner" }),
     );
+    const identified = JSON.stringify(mockPosthog.identify.mock.calls);
+    expect(identified).not.toContain("mary@example.com");
+    expect(identified).not.toContain("Mary");
     expect(question()).toBeNull();
   });
 
