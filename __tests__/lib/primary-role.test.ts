@@ -28,8 +28,13 @@ jest.mock("@/lib/logout-utils", () => ({
 }));
 jest.mock("@/lib/auth/go-to", () => ({ goTo: jest.fn() }));
 
-import { getPrimaryRole } from "@/lib/auth-utils";
+import type * as AuthUtils from "@/lib/auth-utils";
 import { ADMIN_ROLES } from "@/types/admin-invitation";
+
+// jest.setup.ts stands in for the whole module; the order under test is the real one.
+const { getPrimaryRole } = jest.requireActual(
+  "@/lib/auth-utils",
+) as typeof AuthUtils;
 
 describe("the session's one role", () => {
   it("is the platform role for every role an invitation can give, beside the account's own", () => {
