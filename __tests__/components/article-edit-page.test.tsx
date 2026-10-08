@@ -630,6 +630,59 @@ describe("The editor's History", () => {
     expect(screen.getByLabelText("Article text")).toHaveValue("Hello?");
   });
 
+  it("lets no second restore start while the save that goes first is on its way", async () => {
+    contentApi.versions.mockResolvedValue({ versions: VERSIONS });
+    contentApi.version.mockResolvedValue({
+      ...VERSIONS[1],
+      body_markdown: "The first text",
+    });
+    contentApi.restoreVersion.mockResolvedValue({
+      id: "c1",
+      content: {
+        id: "c1",
+        title: "The first title",
+        body_markdown: "The first text",
+      },
+    });
+    let finish: () => void = () => {};
+    update.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = () => resolve({});
+        }),
+    );
+    const user = renderPage();
+    await user.type(screen.getByLabelText("Article text"), "?");
+
+    const drawer = await openHistory(user);
+    await user.click(
+      within(drawer).getByRole("button", { name: /As first written/ }),
+    );
+    await within(drawer).findByLabelText("Version text");
+    await user.click(
+      within(drawer).getByRole("button", { name: "Restore this version" }),
+    );
+    await user.click(
+      within(await screen.findByRole("alertdialog")).getByRole("button", {
+        name: "Restore version",
+      }),
+    );
+    await wait(50);
+
+    // The save is slow: until it answers, the button and the way back are off.
+    expect(
+      within(drawer).getByRole("button", { name: "Restoring…" }),
+    ).toBeDisabled();
+    expect(
+      within(drawer).getByRole("button", { name: "All versions" }),
+    ).toBeDisabled();
+    expect(contentApi.restoreVersion).not.toHaveBeenCalled();
+
+    await act(async () => finish());
+    await wait(50);
+    expect(contentApi.restoreVersion).toHaveBeenCalledTimes(1);
+  });
+
   it("says so when the restore itself fails, and changes nothing", async () => {
     contentApi.versions.mockResolvedValue({ versions: VERSIONS });
     contentApi.version.mockResolvedValue({
