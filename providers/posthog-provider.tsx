@@ -106,6 +106,15 @@ const PERSON_SETTLE_MS = 1500;
 /** Where the person's properties as last sent are remembered, to send them only when they change. */
 const PERSON_SENT_KEY = "rext-analytics-person";
 
+/** With the identity goes the record of what was sent for it: the next person's are sent anew. */
+function forgetPersonSent(): void {
+  try {
+    window.localStorage.removeItem(PERSON_SENT_KEY);
+  } catch {
+    // Storage refused: nothing was kept.
+  }
+}
+
 /**
  * Puts the context on every event from here on. The workspace is taken off again on a page
  * that has none; the plan and the role stay as they were while they are still loading, so an
@@ -130,6 +139,7 @@ function AnalyticsContextSync() {
   const plan = useSubscriptionStore(
     (state) => state.subscription?.subscription,
   );
+  const userId = session?.user?.id;
   const role = session?.user?.role;
   const planName = plan?.plan_name;
   const planStatus = plan?.status;
@@ -163,7 +173,7 @@ function AnalyticsContextSync() {
   // workspaces load one after the other, and two updates would each look new to posthog-js,
   // which sends one again only when it differs from the last.
   useEffect(() => {
-    if (!planName || !planStatus) return;
+    if (!userId || !planName || !planStatus) return;
     const settle = window.setTimeout(() => {
       const properties = {
         plan: planName,
@@ -172,9 +182,10 @@ function AnalyticsContextSync() {
         trial_ends_at: trialEnds ?? null,
         workspaces: workspaceCount,
       };
-      // Once per change, not once per page load: what was sent last is remembered in the
-      // browser (signing out clears it, so the next sign-in sends it again).
-      const sent = JSON.stringify(properties);
+      // Once per person and change, not once per page load: what was sent last, and for whom,
+      // is remembered in the browser. Another person on the same plan is not the same record,
+      // and a sign-out forgets it (resetIdentity).
+      const sent = JSON.stringify({ person: userId, ...properties });
       try {
         if (window.localStorage.getItem(PERSON_SENT_KEY) === sent) return;
         window.localStorage.setItem(PERSON_SENT_KEY, sent);
@@ -184,7 +195,7 @@ function AnalyticsContextSync() {
       posthog.setPersonProperties(properties);
     }, PERSON_SETTLE_MS);
     return () => window.clearTimeout(settle);
-  }, [planName, planStatus, billingPeriod, trialEnds, workspaceCount]);
+  }, [userId, planName, planStatus, billingPeriod, trialEnds, workspaceCount]);
 
   return null;
 }
@@ -250,6 +261,7 @@ function beforeSend(event: CaptureResult | null): CaptureResult | null {
  */
 function resetIdentity(): void {
   posthog.reset();
+  forgetPersonSent();
   if (runningMode === "full") {
     posthog.opt_in_capturing({ captureEventName: false });
   } else if (runningMode === "anonymous") {
@@ -336,6 +348,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         // A no: our own events stop, the identity goes, and what is left is counted without one.
         unregisterPostHog();
         posthog.reset();
+        forgetPersonSent();
         posthog.opt_out_capturing();
       }
       setMode(next);

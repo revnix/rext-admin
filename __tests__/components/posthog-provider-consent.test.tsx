@@ -81,18 +81,14 @@ jest.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams("q=mary"),
   useParams: () => ({ workspaceSlug: "acme" }),
 }));
+const mockUser = {
+  id: "u1",
+  email: "mary@example.com",
+  name: "Mary",
+  role: "owner",
+};
 jest.mock("next-auth/react", () => ({
-  useSession: () => ({
-    status: "authenticated",
-    data: {
-      user: {
-        id: "u1",
-        email: "mary@example.com",
-        name: "Mary",
-        role: "owner",
-      },
-    },
-  }),
+  useSession: () => ({ status: "authenticated", data: { user: mockUser } }),
 }));
 jest.mock("@/lib/analytics-consent", () => ({
   ...jest.requireActual("@/lib/analytics-consent"),
@@ -113,6 +109,7 @@ afterAll(() => {
 beforeEach(() => {
   jest.clearAllMocks();
   window.localStorage.clear();
+  mockUser.id = "u1";
   // The choice is also sent to the app's own server.
   global.fetch = jest
     .fn()
@@ -275,6 +272,41 @@ describe("where analytics is on unless switched off", () => {
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
     expect(mockPosthog.setPersonProperties).toHaveBeenCalledTimes(1);
+  });
+
+  it("sends them for the next person in the same browser, though the plan is the same", async () => {
+    const first = renderProvider();
+    await waitFor(
+      () => expect(mockPosthog.setPersonProperties).toHaveBeenCalledTimes(1),
+      { timeout: 4000 },
+    );
+    first.unmount();
+
+    // Another account signs in without the page reloading (an invitation's switch of account).
+    mockUser.id = "u2";
+    renderProvider();
+
+    await waitFor(
+      () => expect(mockPosthog.setPersonProperties).toHaveBeenCalledTimes(2),
+      { timeout: 4000 },
+    );
+  });
+
+  it("forgets what was sent on a sign-out, so the next sign-in sends it again", async () => {
+    const first = renderProvider();
+    await waitFor(
+      () => expect(mockPosthog.setPersonProperties).toHaveBeenCalledTimes(1),
+      { timeout: 4000 },
+    );
+
+    analytics.reset();
+    first.unmount();
+    renderProvider();
+
+    await waitFor(
+      () => expect(mockPosthog.setPersonProperties).toHaveBeenCalledTimes(2),
+      { timeout: 4000 },
+    );
   });
 
   it("sets a page's workspace before that page's view goes out", async () => {
