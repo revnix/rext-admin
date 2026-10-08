@@ -90,7 +90,12 @@ function PostHogPageView({ anonymous }: { anonymous: boolean }) {
     // address without an emailed link's token or a sign-in page's email.
     const address = anonymous ? window.origin + routeOnScreen : redactUrl(url);
     if (waiting.current && waiting.current !== address) {
-      posthog.capture("$pageview", { $current_url: waiting.current });
+      // The page it was for never learnt its workspace, and by now the events carry the next
+      // page's (AnalyticsContextSync runs before this): it goes without one, not with another's.
+      posthog.capture("$pageview", {
+        $current_url: waiting.current,
+        workspace_id: null,
+      });
       firstViewSent = true;
     }
     waiting.current = null;
