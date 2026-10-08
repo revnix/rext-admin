@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useConfirmation } from "@/components/ui/confirmation-dialog";
 import { Notice } from "@/components/ui/notice";
@@ -80,6 +80,10 @@ export function HistoryDrawer({
     open ? (opened?.id ?? null) : null,
   );
   const restore = useRestoreContentVersion();
+  // One save-and-restore at a time, from the question to the answer: the save that goes first
+  // can be slow, and the restore only reports itself pending once that save is through.
+  const running = useRef(false);
+  const [busy, setBusy] = useState(false);
   const { confirm, ConfirmationComponent } = useConfirmation();
 
   const back = () => {
@@ -88,7 +92,17 @@ export function HistoryDrawer({
   };
 
   const restoreOpened = async () => {
-    if (!opened) return;
+    if (!opened || running.current) return;
+    running.current = true;
+    try {
+      await saveThenRestore(opened.id);
+    } finally {
+      running.current = false;
+      setBusy(false);
+    }
+  };
+
+  const saveThenRestore = async (versionId: string) => {
     setProblem(null);
     const agreed = await confirm({
       title: "Restore this version?",
@@ -99,6 +113,7 @@ export function HistoryDrawer({
       variant: "default",
     });
     if (!agreed) return;
+    setBusy(true);
     // The text as it stands has to reach the server before it can be kept as a version.
     if (!(await beforeRestore())) {
       setProblem(
@@ -110,7 +125,7 @@ export function HistoryDrawer({
       const response = await restore.mutateAsync({
         workspaceId,
         contentId,
-        versionId: opened.id,
+        versionId,
       });
       back();
       onRestored(response.content);
@@ -143,6 +158,7 @@ export function HistoryDrawer({
                   size="sm"
                   variant="ghost"
                   onClick={back}
+                  disabled={busy}
                 >
                   <ArrowLeft size={16} aria-hidden />
                   All versions
@@ -192,9 +208,9 @@ export function HistoryDrawer({
                   data-rec="show"
                   className="w-full"
                   onClick={restoreOpened}
-                  disabled={!detail.isSuccess || restore.isPending}
+                  disabled={!detail.isSuccess || busy}
                 >
-                  {restore.isPending ? "Restoring…" : "Restore this version"}
+                  {busy ? "Restoring…" : "Restore this version"}
                 </Button>
               </div>
             </div>
