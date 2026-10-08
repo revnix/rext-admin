@@ -217,6 +217,15 @@ describe("where analytics is on unless switched off", () => {
     expect(question()).toBeNull();
   });
 
+  it("loads no code from PostHog's servers: the project's settings are read as data", async () => {
+    renderProvider();
+    await waitFor(() => expect(mockPosthog.init).toHaveBeenCalled());
+
+    expect(mockPosthog.init.mock.calls[0][1]).toMatchObject({
+      disable_external_dependency_loading: true,
+    });
+  });
+
   it("puts the workspace, the plan and the role on every event, and the plan on the person", async () => {
     renderProvider();
     await waitFor(() => expect(mockPosthog.identify).toHaveBeenCalled());
