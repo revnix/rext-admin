@@ -138,6 +138,34 @@ describe("while an admin acts as a customer", () => {
     expect(capture.mock.calls).toEqual([["title_selected", {}]]);
   });
 
+  it("still sends nothing when the browser refuses storage", () => {
+    const { analytics, registerPostHog, setImpersonating, isImpersonating } =
+      loadAnalytics();
+    const capture = jest.fn();
+    registerPostHog({ identify: jest.fn(), capture, reset: jest.fn() });
+    const refuse = jest
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new Error("storage is blocked");
+      });
+    const refuseRead = jest
+      .spyOn(Storage.prototype, "getItem")
+      .mockImplementation(() => {
+        throw new Error("storage is blocked");
+      });
+
+    try {
+      setImpersonating(true);
+      analytics.track("keyword_selected");
+
+      expect(isImpersonating()).toBe(true);
+      expect(capture).not.toHaveBeenCalled();
+    } finally {
+      refuse.mockRestore();
+      refuseRead.mockRestore();
+    }
+  });
+
   it("is known to a tab opened meanwhile, from the mark the app's tabs share", () => {
     window.localStorage.setItem("rext-impersonating", "1");
 

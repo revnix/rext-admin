@@ -1,6 +1,7 @@
 import type { Metadata, Route } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { AnalyticsConsentPrompt } from "@/components/privacy/analytics-consent-prompt";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { WorkspaceProvider } from "@/providers/workspace-provider";
 
@@ -26,6 +27,8 @@ export default async function EditLayout({
 
   return (
     <WorkspaceProvider workspaceId={workspaceSlug}>
+      {/* The shell asks this on every other signed-in page; the editor has no shell. */}
+      <AnalyticsConsentPrompt />
       <ErrorBoundary framed>{children}</ErrorBoundary>
     </WorkspaceProvider>
   );
